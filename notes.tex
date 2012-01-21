@@ -24,37 +24,35 @@
 
 \section{Introduction}
 
-Viewing interactions among entities as a network is an increasingly useful approach for studying  phenomenon ranging from people communicating online to protein interactions. One class of statistical models for network data use latent variables for each node to help capture unobserved heterogeneity.  For example, the stochastic blockmodel \cite{Nowicki2001} and its nonparametric extension \cite{Kemp2006} assume each node in the network belongs to some block (or cluster) and models the probability of edges between blocks.   Such approaches are especially useful for large-scale network data where higher order dependencies can cause models such as exponential random graph models to be too complex to fit.%\cite{Schweinberger2011}.
+Methods for analyzing network data have become increasingly useful for studying  phenomenon ranging from people communicating online to protein interactions. One class of statistical models for network data uses latent variables for each node to help capture unobserved heterogeneity.  For example, the stochastic blockmodel \cite{Nowicki2001} and its nonparametric extension \cite{Kemp2006} assume each node in the network belongs to some block (or cluster) and models the probability of edges between blocks.   Such approaches are especially useful for large-scale network data where higher-order dependencies can cause models such as exponential random graph models to be too complex to fit.
 
-Network data, however, is often collected as a sequence of events occurring over time.   Recently several works have adapted models from survival analysis and event history analysis to provide continuous time models of network-based event data \cite{Butts2008,Brandes2009,Stadtfeld2010,Stadtfeld2011,Opsahl2011,Vu2011}.  These models are often semiparametric and allow one to specify the dependence of the process on the previous history of events.  In this way we can incorporate theories about the underlying processes and make predictions about future data conditioned on the past.
+Network data, however, is often collected as a sequence of events occurring over time.   Recently several works have adapted models from survival analysis and event history analysis to provide continuous time models of network-based event data \cite{Butts2008,Brandes2009,Stadtfeld2010,Stadtfeld2011,Opsahl2011,Vu2011}.  These models allow one to specify the dependence of the process on the previous history of events.  In this way one may incorporate theories about the underlying processes and make predictions about future data conditioned on the past.
 
 The above continuous time network models have two major drawbacks: 1) the entire network is assumed to have identical dynamics, and 2) the occurrence of any event can affect the rate at which any other event occurs.  Both aspects may be unrealistic.  Consider email communication in a small organization comprised of several teams.  Each team may have a different pattern for collaborating via email, and in many cases emails within one team will not affect emailing behavior within a separate team.
 
-Borrowing from the intuition of stochastic blockmodels, we propose a hierarchical model of continuous time network data that learns latent clusters of nodes which share similar patterns of interaction with the rest of the network.  This combines a latent variable model with a local dependence model for modeling the event sequence among nearby nodes, a view which reveals its relationship to hierarchical extensions to latent position models \cite{Handcock2007} and exponential random graph models \cite{Schweinberger2011}.
+Borrowing from the intuition of stochastic blockmodels, we propose a hierarchical model of continuous time network data that learns latent clusters of nodes which share similar patterns of interaction.  This combines a latent variable with a local dependence model for modeling the event sequence among nearby nodes. 
+
+TODO: this view which reveals relationships between our approach and hierarchical extensions to latent position models \cite{Handcock2007} and exponential random graph models \cite{Schweinberger2011}.
 
 \section{Model}
 
 %Each interaction then has a set of periods $d \in D_{ij}$ each with a start time $a_d$, an end time $b_d$, and a rate $\lambda_d$.
 Consider a nonhomogeneous Poisson process with  intensity $\lambda(t)$ that is piecewise constant with respect to a set of knots $\tau$.  We can then write the likelihood of $M$ events as
 \begin{align}
-\mathcal{L}(A|\theta) &= \prod_{m=1}^M \lambda(t_m) \exp\left\{ - \int_{0}^{t_M} \lambda(s)ds \right\} \\
+\mathcal{L}(\mathcal{A}|\theta) &= \prod_{m=1}^M \lambda(t_m) \exp\left\{ - \int_{0}^{t_M} \lambda(s)ds \right\} \\
 &= \prod_{m=1}^M \lambda(t_m|\cdot) \prod_{k=1}^{|\tau|} \exp\left\{ - (\tau_{k} - \tau_{k-1}) \lambda(\tau_k) \right\}
 \end{align}
-\noindent where the $m$th event occurs at time $t_m$ and the intensity function $\lambda(t)$ is right continuous.
+\noindent where the $m$th event occurs at time $t_m$, the intensity function $\lambda(t)$ is right continuous, and each $\tau_k \in [0,t_m]$.
 % \begin{align}
 % \mathcal{L}(A|\theta) &= \prod_{m=1}^M \lambda_{i_m}(t_m|\cdot) \prod_{i \in \mathcal{R}}  \exp\left\{ - \int_{0}^{t_M} \lambda_{i}(\tau | \cdot)d\tau \right\} \\
 % &= \prod_{m=1}^M \lambda_{i_m}(t_m|\cdot) \prod_{i \in \mathcal{R}} \prod_{v \in D_{i}} \exp\left\{ - (b_v - a_v) \lambda_{i}(b_v | \cdot ) \right\}
 % \end{align}
 
-In general, we may have different types of events that can occur.  Let  the \emph{risk set}  $\mathcal{R}$ be the set of possible events.   In the context of relational events occurring among $N$ nodes, for example, we let $\mathcal{R}$ include all dyads.\footnote{We exclude self-loops.}  Let each dyad $(i,j) \in \mathcal{R}$ have an intensity function $\lambda_{ij}(t|\cdot)$ which is piecewise constant.
-
-For network data, we capture the notion that some events have no effect on the intensity of other events by assuming 1) each node $i$ belongs to some latent cluster $z_i$, and 2) each intensity function $\lambda_{ij}(t)$ may only change following an event involving a member of either $z_i$ or $z_j$.  See Figure \ref{fig:example}.
-
- In this case, the likelihood becomes
+In general, we may have different types of events that can occur.   In the context of relational events occurring among $N$ nodes, for example, we let the \emph{risk set} $\mathcal{R}$ include all allowed dyads.  Let each dyad $(i,j) \in \mathcal{R}$ have an intensity function $\lambda_{ij}(t|\cdot)$ which is piecewise constant.  As shown in Figure \ref{fig:example}, we assume each intensity function $\lambda_{ij}(t)$ may only change following an event involving either $i$ or $j$.  Letting $ \mathcal{R}_{k_1,k_2}$ be the set of events that can occur from $k_1$ to $k_2$ and  $\boldsymbol{\tau}_{i,j}$ is the set of knots where the respective intensities may change, we may write the likelihood as follows:
 
 \begin{align}
-\mathcal{L}(A|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}} \prod_{k=1}^{|\boldsymbol{\tau}_{ij}|} \exp\{ - (\tau_{i,j,k} - \tau_{i,j,k-1}) \lambda_{ij}(\tau_{i,j,k} | \cdot) \} \\
-&= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{k_1=1}^K \prod_{k_2=1}^K \prod_{(i,j) \in \mathcal{R_{k_1,k_2}}} \prod_{k=1}^{|\boldsymbol{\tau}_{ij}|} \exp\{ - (\tau_{i,j,k} - \tau_{i,j,k-1}) \lambda_{ij}(\tau_{i,j,k} | \cdot) \} \\
+\mathcal{L}(\mathcal{A}|\theta) %&= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}} \prod_{k=1}^{|\boldsymbol{\tau}_{ij}|} \exp\{ - (\tau_{i,j,k} - \tau_{i,j,k-1}) \lambda_{ij}(\tau_{i,j,k} | \cdot) \} \\
+&= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{k_1=1}^K \prod_{k_2=1}^K \prod_{(i,j) \in \mathcal{R}_{k_1,k_2}} \prod_{r=1}^{|\boldsymbol{\tau}_{i,j}|} \exp\{ - (\tau_{k_1,k_2,r} - \tau_{k_1,k_2,r-1}) \lambda_{ij}(\tau_{i,j,r} | \cdot) \} \\
 \end{align}
 
 
@@ -66,7 +64,8 @@ For network data, we capture the notion that some events have no effect on the i
 %\includegraphics[width=6in]{example}
 \end{figure}
 
-For a given dyad $(i,j)$ and time $t$ we may also have a vector of statistics $s_{ij}(t|A_t,\mathbf{z})$ that is a function of the previous history of events $A_t$ and the latent cluster assignments $z$.  We model the intensity functions via a log linear model conditioned on this information
+Define the event history $\mathcal{A}_t = \{e_m: t_m \in [0,t)\}$.
+For a given dyad $(i,j)$ and time $t$ we may also have a vector of statistics $s_{ij}(t|\mathcal{A}_t,\mathbf{z})$ that is a function of the previous history of events $\mathcal{A}_t$ and the latent cluster assignments $z$.  Note the statistics $s_{ij}$ also do not change until an event involving either $z_i$ or $z_j$ occurs.  We model the intensity functions via a log linear model conditioned on this information
 \begin{align}
 \log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{z}) = \boldsymbol{\beta}_{z_i,z_j} \mathbf{s}_{ij}(t|\mathcal{A}_t,\mathbf{z}).
 \end{align}
