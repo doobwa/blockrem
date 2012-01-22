@@ -48,18 +48,22 @@ Consider a nonhomogeneous Poisson process with  intensity $\lambda(t)$ that is p
 % &= \prod_{m=1}^M \lambda_{i_m}(t_m|\cdot) \prod_{i \in \mathcal{R}} \prod_{v \in D_{i}} \exp\left\{ - (b_v - a_v) \lambda_{i}(b_v | \cdot ) \right\}
 % \end{align}
 
-In general, we may have different types of events that can occur.   In the context of relational events occurring among $N$ nodes, for example, we let the \emph{risk set} $\mathcal{R}$ include all allowed dyads.  Let each dyad $(i,j) \in \mathcal{R}$ have an intensity function $\lambda_{ij}(t|\cdot)$ which is piecewise constant.  As shown in Figure \ref{fig:example}, we assume each intensity function $\lambda_{ij}(t)$ may only change following an event involving either $i$ or $j$.  Letting $ \mathcal{R}_{k_1,k_2}$ be the set of events that can occur from $k_1$ to $k_2$ and  $\boldsymbol{\tau}_{i,j}$ is the set of knots where the respective intensities may change, we may write the likelihood as follows:
-
+In general, we may have different types of events that can occur.   In the context of relational events occurring among $N$ nodes, for example, we let the \emph{risk set} $\mathcal{R}$ include all allowed dyads.  Let each dyad $(i,j) \in \mathcal{R}$ have an intensity function $\lambda_{ij}(t|\cdot)$ which is piecewise constant.  As shown in Figure \ref{fig:example}, we assume each intensity function $\lambda_{ij}(t)$ may only change following an event involving either $i$ or $j$.  Let $\tau_{i,j,m}$ be the time that event $(i,j)$ occurred before the $m$th event.  % Letting $ \mathcal{R}_{k_1,k_2}$ be the set of events that can occur from $k_1$ to $k_2$ and  $\boldsymbol{\tau}_{i,j}$ is the set of knots where the respective intensities may change, we may write the likelihood as follows:
+% \begin{align}
+% \mathcal{L}(\mathcal{A}|\theta) %&= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}} \prod_{k=1}^{|\boldsymbol{\tau}_{ij}|} \exp\{ - (\tau_{i,j,k} - \tau_{i,j,k-1}) \lambda_{ij}(\tau_{i,j,k} | \cdot) \} \\
+% &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{k_1=1}^K \prod_{k_2=1}^K \prod_{(i,j) \in \mathcal{R}_{k_1,k_2}} \prod_{r=1}^{|\boldsymbol{\tau}_{i,j}|} \exp\{ - (\tau_{k_1,k_2,r} - \tau_{k_1,k_2,r-1}) \lambda_{ij}(\tau_{i,j,r} | \cdot) \} 
+% \end{align}
+% \begin{align}
+% \mathcal{L}(\mathcal{A}|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{r=1}^N \exp\{ - (t_m - \tau_{i,r,m}) \lambda_{ir}(t_m | z_i,z_r)  - (t_m - \tau_{r,j,m}) \lambda_{rj}(t_m | z_r,z_j) \} 
+% \end{align}
 \begin{align}
-\mathcal{L}(\mathcal{A}|\theta) %&= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}} \prod_{k=1}^{|\boldsymbol{\tau}_{ij}|} \exp\{ - (\tau_{i,j,k} - \tau_{i,j,k-1}) \lambda_{ij}(\tau_{i,j,k} | \cdot) \} \\
-&= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{k_1=1}^K \prod_{k_2=1}^K \prod_{(i,j) \in \mathcal{R}_{k_1,k_2}} \prod_{r=1}^{|\boldsymbol{\tau}_{i,j}|} \exp\{ - (\tau_{k_1,k_2,r} - \tau_{k_1,k_2,r-1}) \lambda_{ij}(\tau_{i,j,r} | \cdot) \} \\
+\mathcal{L}(\mathcal{A}|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{s=1}^N\exp\{ - (t_m - \tau_{s,j,m}) \lambda_{sj}(t_m | z_s,z_j) \} \prod_{r=1}^N \exp\{ - (t_m - \tau_{i,r,m}) \lambda_{ir}(t_m | z_i,z_r) \}
 \end{align}
-
 
 \begin{figure}
  \def\svgwidth{6in}
-  \input{example.pdf_tex}
-\caption{Illustration of the event data and the model assumptions.  Left: An event sequence among four nodes belonging to two clusters (circles and squares): (4,3) occurs at time $t_1$ and (2,1) occurs at time $t_2$.  Right: The intensity functions $\lambda_{21}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  Note $\lambda_{34}$ only can change when events occur involving a node in its cluster (square).}
+  \input{example1.pdf_tex}
+\caption{Illustration of event data and the assumptions of the model.  Left: An sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Center: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  Note $\lambda_{34}$ can only change when events occur involving either node 3 or node 4.  Right: Illustration of the block model, where events in cluster 1 (circles) are governed by the vector $\beta_{1,1}$, events in cluster 2 (squares) are governed by $\beta_{2,2}$, and an circle-to-square event governed by $\beta_{1,2}$.}
 \label{fig:example}
 %\includegraphics[width=6in]{example}
 \end{figure}
