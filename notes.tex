@@ -73,7 +73,7 @@ For a given dyad $(i,j)$ and time $t$ we may also have a vector of statistics $s
 \begin{align}
 \log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{z}) = \boldsymbol{\beta}_{z_i,z_j} \mathbf{s}_{ij}(t|\mathcal{A}_t,\mathbf{z}).
 \end{align}
-where for each pair of clusters $(z_i,z_j)$ we have a vector of parameters $\beta_{z_i,z_j}$ that corresponds to the covariate vector $s_{ij}(t|\cdot)$.  This is reminiscent of the stochastic blockmodel \cite{Nowicki2001, Kemp2006} which models the probability of a dyad as $p(y_{ij}) =\mbox{logit}^{-1}( \eta_{z_i,z_j})$ where $\eta_{z_i,z_j}$ is essentially a mixing rate between group $z_i$ and group $z_j$.  Here, however, we use a blockmodel structure facilitates the study of intra-group and inter-group dynamics via a continuous-time network model.
+where for each pair of clusters $(z_i,z_j)$ we have a vector of parameters $\beta_{z_i,z_j}$ that corresponds to the covariate vector $s_{ij}(t|\cdot)$.  This is reminiscent of the stochastic blockmodel \cite{Nowicki2001, Kemp2006} which models the probability of a dyad as $p(y_{ij}) =\mbox{logit}^{-1}( \eta_{z_i,z_j})$ where $\eta_{z_i,z_j}$ is essentially a mixing rate between group $z_i$ and group $z_j$.  Here, however, the blockmodel structure facilitates the study of intra-group and inter-group dynamics via a continuous-time network model.
 
 TODO: Discuss possible variations on the prior structure of $\beta$: 1. Enforce $\beta_{k,l} = \beta_{l,k}$. 2. Assume $\beta_{k,l,p} \sim \mbox{Normal}(\beta_p,\sigma_p^2)$. 3. Place other priors that provide different kinds of regularization. 
 
@@ -87,19 +87,25 @@ TODO: Discuss if the semiparametric partial likelihood approach can be used in t
 
 \subsection{Model specification}
 
-We include a similar set of statistics in $s_{ij}$ as used in \cite{Butts2008,Vuy2011}.
-Note that the model assumptions imply $s_{ij}(t|\mathcal{A}_t,\mathbf{z}) = f(\mathcal{A}$.
+We include a similar set of statistics in $s_{ij}$ as used in \cite{Butts2008,Vuy2011}.  Let $v_{ijm}$ be the index of the last event where $(i,j)$ occurred; if $(i,j)$ has never occurred, we set $v_{ijm}=0$.
+%Note that the model assumptions imply $s_{ij}(t|\mathcal{A}_t,\mathbf{z}) = f(\mathcal{A}$.
 
-Let $r$ be the last event from a $z_i$ node to a $z_j$ node, that is $r = \mbox{argmax}_{r \in \{1, \ldots, m\}}I(t_r < t, z_{i_r} = z_i, z_{j_r} = z_j)$
+%Let $r$ be the last event from a $z_i$ node to a $z_j$ node, that is $r = \mbox{argmax}_{r \in \{1, \ldots, m\}}I(t_r < t, z_{i_r} = z_i, z_{j_r} = z_j)$
 
-\begin{itemize}
-\item In and out degree of sender and receiver
-\item Reciprocity
-\item Transitivity, triangle closure
-\item Shared contacters, contactees
-\end{itemize}
+\begin{enumerate}
+\item Sender out-degree: $s_{ij1}(t) = \sum_{m:t_m<t} I(i_m=i)$
+\item Sender in-degree: $s_{ij2}(t) = \sum_{m:t_m<t} I(j_m=i)$
+\item Receiver out-degree: $s_{ij3}(t) = \sum_{m:t_m<t} I(i_m=j)$
+\item Receiver in-degree: $s_{ij4}(t) = \sum_{m:t_m<t} I(j_m=j)$
+\item Reciprocity (AB-BA): $s_{ij5}(t) = \sum_{m:t_m<t} I(i_m=i,j_m=j,i_{v_{ijm}}=j,j_{v_{ijm}}=i)$
+\item Turn-taking (AB-BY): $s_{ij6}(t) = \sum_{m:t_m<t} I(i_m=i,j_m=j,i_{v_{ijm}}=j,j_{v_{ijm}}=i)$
+\item Turn* (AB-XA): $s_{ij7}(t) = \sum_{m:t_m<t} I(i_m=i,j_m=j,i_{v_{ijm}}=j,j_{v_{ijm}}=i)$
+\item  (AB-XB): $s_{ij8}(t) = \sum_{m:t_m<t} I(i_m=i,j_m=j,i_{v_{ijm}}=j,j_{v_{ijm}}=i)$
+\item  (AB-AY): $s_{ij9}(t) = \sum_{m:t_m<t} I(i_m=i,j_m=j,i_{v_{ijm}}=j,j_{v_{ijm}}=i)$
+\item TODO: Shared contacters, contactees (also Facebook-like terms.) 
+\item TODO: Recency or functions of time-windows
+\end{enumerate}
 
-TODO: Would like things that combine shared contacts with recency. (i.e. Facebook-like terms.) 
 
 \section{Inference}
 
@@ -130,13 +136,19 @@ Simulation from the model follows the typical racing exponentials idea with a fe
 \begin{enumerate}
 \item $t_0 = 0$, all $s_{ij} = 1$
 \item For $i = 1, \ldots, N$, draw $z_i \sim \mbox{Categorical}(\theta)$
+\item Initialize $v = 0$
 \item For $m = 1, \ldots, M$:
   \begin{enumerate}
-  \item For all $(i,j)$ such that $z_i,z_j \in \{z_{i_{m-1}},z_{j_{m-1}}\}$:
+  \item For all $r \ne i$:
     \begin{enumerate}
-    \item Compute $s_{ij}^*$ using events $1$ through $m-1$
-    \item Set $\lambda_{ij}^* \leftarrow \exp\{ \beta_{z_i,z_j} s_{ij}^*\}$ 
+    \item Compute $s_{rj}^*$ using event $0$ through $v_{rj}$
+    \item Set $\lambda_{rj}^* \leftarrow \exp\{ \beta_{z_r,z_j} s_{rj}^*\}$ 
     \end{enumerate}
+  \item For all $r \ne j$:
+    \begin{enumerate}
+    \item Compute $s_{ir}^*$ using event $0$ through $v_{ir}$
+    \item Set $\lambda_{ir}^* \leftarrow \exp\{ \beta_{z_i,z_r} s_{ir}^*\}$ 
+    \end{enumerate}    
   \item Draw $t_m \sim \mbox{Exponential}\left(\sum_{ij} \lambda_{ij}^*\right)$
   \item Draw $(i_m,j_m) \sim \mbox{Categorical}\left(\lambda_{ij}^* / \sum_{ij}\lambda_{ij}^*\right)$
   \item Save $s_{ij}(t_m) \leftarrow s_{ij}^*$
