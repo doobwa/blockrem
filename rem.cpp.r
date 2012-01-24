@@ -8,7 +8,7 @@ int threeDIndex(int j, int k, int l, int J, int K, int L) {
 }
 double computeLambda(int i, int j, int a, int b, Rcpp::NumericVector beta) {
   double lam = 0;
-  lam += beta[0];
+  //lam += beta[0];
   if (i!=a & i==b & j==a & j!=b) { // ab-ba
     lam += beta[1];
   }

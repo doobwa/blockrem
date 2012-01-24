@@ -240,7 +240,7 @@ brem.mcmc <- function(A,N,K,P,niter=5,mcmc.sd=.1,init=NULL) {
     
     # For each effect sample via MH
     olp <- brem.lpost(A,N,z,current)
-    for (p in 1:P) {
+    for (p in 2:P) {
       cand <- current
       cand[,,p]  <- cand[,,p] + rnorm(K^2,0,mcmc.sd)
       clp <- brem.lpost(A,N,z,cand)
