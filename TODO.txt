@@ -1,7 +1,9 @@
 Need to change block.ps to instead look at dyad-specific p-shifts.
-Use a visualization of these p-shifts to explore the properities of the synthetic data.
+[done?] Use a visualization of these p-shifts to explore the properities of the synthetic data.
+[done] Fix llk, writeup to account for sender/receiver for both i and j
+Fix pshift to account for self link issue
 Clean up write up and send to Padhraic.  
 Get sense of size of dataset we can use.
-Write sampler for dyad-indpenent REM model.  (Double check llk function.)
+[done] Write mle for dyad-indpenent REM model.  (Double check llk function.)
 Write sampler for blockmodel.
 Fit blockmodel to synthetic data.
