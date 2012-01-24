@@ -1,9 +1,21 @@
-Need to change block.ps to instead look at dyad-specific p-shifts.
+[done] Need to change block.ps to instead look at dyad-specific p-shifts.
 [done?] Use a visualization of these p-shifts to explore the properities of the synthetic data.
 [done] Fix llk, writeup to account for sender/receiver for both i and j
-Fix pshift to account for self link issue
-Clean up write up and send to Padhraic.  
-Get sense of size of dataset we can use.
+[done] Fix pshift to account for self link issue
+[done] Clean up write up and send to Padhraic.  
+[done] Get sense of size of dataset we can use.
 [done] Write mle for dyad-indpenent REM model.  (Double check llk function.)
-Write sampler for blockmodel.
-Fit blockmodel to synthetic data.
+[done] Write sampler for blockmodel.
+[done] Fit blockmodel to synthetic data.
+
+Week 2: 
+Write SBM code.
+Fit SBM to Eckmann (dyadic only)
+Fit REM separately to each block.
+Fit REM to all Eckmann.
+Setup experiment comparing submodels: k=1 and just intercept, k=1, beta for diag and gamma for off diag, and full model.
+Setup prediction llk experiment and ranking code. Handle case where we have draws from posterior.
+Port simulator over to Rcpp.
+Consider MIT dataset or classroom dataset.
+Write up other possibilities for layering additional types of data, DP, or other extensions.
+
