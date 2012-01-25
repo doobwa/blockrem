@@ -37,10 +37,11 @@ niter <- 100
 beta.init <- beta + rnorm(length(beta),0,1)
 fit0 <- brem.mcmc(sim$A,N,K,P,px,model.type="baserates",niter=niter,init=beta.init)
 fit1 <- brem.mcmc(sim$A,N,K,P,px,model.type="diag.rem",niter=niter,init=beta.init)
+px[1] <- 0
 fit2 <- brem.mcmc(sim$A,N,K,P,px,model.type="full",niter=niter,init=beta.init)
 
 # Compare llk and lpost of true and fit
-fit <- fit1
+fit <- fit2
 brem.llk(sim$A,N,z,beta,px)
 brem.llk(sim$A,N,fit$z,fit$beta,px)
 brem.lpost(sim$A,N,z,beta,px)
