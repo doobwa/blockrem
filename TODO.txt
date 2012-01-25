@@ -13,6 +13,7 @@ Write SBM code.
 Fit SBM to Eckmann (dyadic only)
 Fit REM separately to each block.
 Fit REM to all Eckmann.
+Implement BREM for submodels by modifying MH call in MCMC.
 Setup experiment comparing submodels: k=1 and just intercept, k=1, beta for diag and gamma for off diag, and full model.
 Setup prediction llk experiment and ranking code. Handle case where we have draws from posterior.
 Port simulator over to Rcpp.

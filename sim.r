@@ -23,25 +23,28 @@ sim <- simulate.brem(M,N,z,beta)
 mat <- table(sim$A[,2],sim$A[,3])
 mat <- melt(as.matrix(mat))
 colnames(mat) <- c("X1","X2","value")
+require(releventhier)
 plotmat(mat)
 #ggsave("figs/syn-mat.pdf",width=3,height=3)
 
-brem.llk(sim$A,N,z,beta,q=2)
-brem.lpost(sim$A,N,z,beta)
+
+px <- rep(1,7)
+brem.llk(sim$A,N,z,beta,px)
+brem.lpost(sim$A,N,z,beta,px)
 
 set.seed(4)
 niter <- 100
 beta.init <- beta + rnorm(length(beta),0,1)
-fit0 <- brem.mcmc(sim$A,N,K,P,"baserates",niter=niter,init=beta.init)
-fit1 <- brem.mcmc(sim$A,N,K,P,"diag.rem",niter=niter,init=beta.init)
-fit2 <- brem.mcmc(sim$A,N,K,P,"full",niter=niter,init=beta.init)
+fit0 <- brem.mcmc(sim$A,N,K,P,px,model.type="baserates",niter=niter,init=beta.init)
+fit1 <- brem.mcmc(sim$A,N,K,P,px,model.type="diag.rem",niter=niter,init=beta.init)
+fit2 <- brem.mcmc(sim$A,N,K,P,px,model.type="full",niter=niter,init=beta.init)
 
 # Compare llk and lpost of true and fit
-fit <- fit2
-brem.llk(sim$A,N,z,beta)
-brem.llk(sim$A,N,fit$z,fit$beta)
-brem.lpost(sim$A,N,z,beta)
-brem.lpost(sim$A,N,fit$z,fit$beta)
+fit <- fit1
+brem.llk(sim$A,N,z,beta,px)
+brem.llk(sim$A,N,fit$z,fit$beta,px)
+brem.lpost(sim$A,N,z,beta,px)
+brem.lpost(sim$A,N,fit$z,fit$beta,px)
 
 pdf("figs/syn-llk.pdf",width=4,height=4)
 plot(fit$llk[1:100],type="l",ylab="loglikelihood",xlab="iteration")
