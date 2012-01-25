@@ -177,25 +177,25 @@ simulate.brem <- function(M,N,z,beta) {
 
 # ix: unique senders
 # jx: unique receivers
-drem.llk <- function(A,N,beta,ix,jx) {
+drem.llk <- function(A,N,beta,ix,jx,q=1) {
   M <- nrow(A)
   times <- A[,1]
   sen <- A[,2]-1
   rec <- A[,3]-1
   ix <- ix-1
   jx <- jx-1
-  drem$llk(beta,times,sen,rec,ix,jx,N,M,P)$llk
+  drem$llk(beta,times,sen,rec,ix,jx,N,M,P,q)$llk
 }
-drem.mle <- function(A,N,beta,ix,jx) {
+drem.mle <- function(A,N,beta,ix,jx,q=1) {
   fn <- function(par) {
     p <- array(0,c(1,1,length(par)))
     p[1,1,] <- par
-    -drem.llk(A,par,ix,jx)
+    -drem.llk(A,par,ix,jx,q)
   }
   optim(as.vector(beta),fn)$par
 }
 # FIX LLK functions to accept vector of unique senders and unique receivers
-brem.llk <- function(A,N,z,beta) {
+brem.llk <- function(A,N,z,beta,q=1) {
   llks <- matrix(0,K,K)
   z1 <- z[A[,2]]
   z2 <- z[A[,3]]
@@ -205,19 +205,19 @@ brem.llk <- function(A,N,z,beta) {
       ix <- which(z1 == k1 & z2 == k2)
       if (length(ix) > 0 & length(zs[[k1]]) > 0 & length(zs[[k2]]) > 0) {
         B <- A[ix,]
-        llks[k1,k2] <- drem.llk(B,N,beta[k1,k2,],zs[[k1]],zs[[k2]])
+        llks[k1,k2] <- drem.llk(B,N,beta[k1,k2,],zs[[k1]],zs[[k2]],q)
       }
     }
   }
   llks
 }
-brem.lpost <- function(A,N,z,beta) {
-  llks <- brem.llk(A,N,z,beta)
+brem.lpost <- function(A,N,z,beta,q=1) {
+  llks <- brem.llk(A,N,z,beta,q)
   lprior <- sum(dnorm(beta,0,5,log=TRUE)) + N * log(1/K)
   sum(llks)+lprior
 }
 
-brem.mcmc <- function(A,N,K,P,niter=5,mcmc.sd=.1,init=NULL) {
+brem.mcmc <- function(A,N,K,P,niter=5,model.type="full",mcmc.sd=.1,init=NULL) {
   llks <- rep(0,niter)
   z <- sample(1:K,N,replace=TRUE)
   param <- array(0,c(niter,K,K,P))
@@ -234,35 +234,67 @@ brem.mcmc <- function(A,N,K,P,niter=5,mcmc.sd=.1,init=NULL) {
       }
       ps <- exp(ps - max(ps))
       z[i] <- sample(1:K,size=1,prob=ps)
-      #print(z)
-      #       print(llks[iter])
     }
     
     # For each effect sample via MH
-    olp <- brem.lpost(A,N,z,current)
-    for (p in 2:P) {
-      cand <- current
-      cand[,,p]  <- cand[,,p] + rnorm(K^2,0,mcmc.sd)
-      clp <- brem.lpost(A,N,z,cand)
-      if (clp - olp > log(runif(1))) {
-        current <- cand
-        olp <- clp
-      }
-    }
+    current <- brem.mh(A,N,z,current,model.type,mcmc.sd)
     
     # Sample empty cluster parameters from prior
-    for (k in 1:K) {
-      if (length(which(z==k))==0) {
-        current[k,,] <- rnorm(K*P,0,5)
-        current[,k,] <- rnorm(K*P,0,5)
-      }
-    }
+#     for (k in 1:K) {
+#       if (length(which(z==k))==0) {
+#         current[k,,] <- rnorm(K*P,0,5)
+#         current[,k,] <- rnorm(K*P,0,5)
+#       }
+#     }
     
     param[iter,,,] <- current
-    llks[iter] <- olp
+    llks[iter] <- brem.lpost(A,N,z,current)
     
     cat("iter",iter,":",llks[iter],"z:",table(z),"\n")
     
   }
   return(list(z=z,llks=llks,param=param,beta=current))
+}
+brem.mh <- function(A,N,z,current,model.type="baserates",mcmc.sd=.1) {
+  olp <- brem.lpost(A,N,z,current)
+  cand <- current
+  if (model.type=="baserates") {
+    cand[,,1] <- cand[,,1] + rnorm(K^2,0,mcmc.sd)
+    cand[,,-1] <- 0
+    clp <- brem.lpost(A,N,z,cand,q=0)
+    if (clp - olp > log(runif(1))) {
+      current <- cand
+      olp <- clp
+    }
+  }
+  if (model.type=="diag.rem") {
+    a <- cand[1,1,] + rnorm(P,0,mcmc.sd)
+    b <- cand[1,2,] + rnorm(P,0,mcmc.sd)
+    for (k1 in 1:K) {
+      for (k2 in 1:K) {
+        if (k1==k2) {
+          cand[k1,k2,] <- a
+        } else {
+          cand[k1,k2,] <- b
+        }
+      }
+    }
+    clp <- brem.lpost(A,N,z,cand)
+    if (clp - olp > log(runif(1))) {
+      current <- cand
+      olp <- clp
+    }
+  }
+  if (model.type=="full") {
+    for (p in 1:P) {
+      cand <- current
+      cand[,,p]  <- cand[,,p] + rnorm(K^2,0,mcmc.sd)
+      clp <- brem.lpost(A,N,z,cand,q=1)
+      if (clp - olp > log(runif(1))) {
+        current <- cand
+        olp <- clp
+      }
+    }
+  }
+  return(current)
 }

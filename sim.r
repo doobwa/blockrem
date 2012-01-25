@@ -24,17 +24,20 @@ mat <- table(sim$A[,2],sim$A[,3])
 mat <- melt(as.matrix(mat))
 colnames(mat) <- c("X1","X2","value")
 plotmat(mat)
-ggsave("figs/syn-mat.pdf",width=3,height=3)
+#ggsave("figs/syn-mat.pdf",width=3,height=3)
 
-brem.llk(sim$A,N,z,beta)
+brem.llk(sim$A,N,z,beta,q=2)
 brem.lpost(sim$A,N,z,beta)
 
 set.seed(4)
 niter <- 100
 beta.init <- beta + rnorm(length(beta),0,1)
-fit <- brem.mcmc(sim$A,N,K,P,niter=niter,init=beta.init)
+fit0 <- brem.mcmc(sim$A,N,K,P,"baserates",niter=niter,init=beta.init)
+fit1 <- brem.mcmc(sim$A,N,K,P,"diag.rem",niter=niter,init=beta.init)
+fit2 <- brem.mcmc(sim$A,N,K,P,"full",niter=niter,init=beta.init)
 
 # Compare llk and lpost of true and fit
+fit <- fit2
 brem.llk(sim$A,N,z,beta)
 brem.llk(sim$A,N,fit$z,fit$beta)
 brem.lpost(sim$A,N,z,beta)
