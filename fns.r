@@ -129,6 +129,15 @@ simulate.brem <- function(M,N,z,beta) {
   return(list(A=A,lrm=lrm))
 }
 
+drem.lrm <- function(A,N,beta,ix,jx,px) {
+  M <- nrow(A)
+  times <- A[,1]
+  sen <- A[,2]-1
+  rec <- A[,3]-1
+  ix <- ix-1
+  jx <- jx-1
+  drem$lrm(beta,times,sen,rec,ix,jx,px,N,M,length(P))
+}
 # ix: unique senders
 # jx: unique receivers
 drem.llk <- function(A,N,beta,ix,jx,px) {
@@ -138,7 +147,7 @@ drem.llk <- function(A,N,beta,ix,jx,px) {
   rec <- A[,3]-1
   ix <- ix-1
   jx <- jx-1
-  drem$llk(beta,times,sen,rec,ix,jx,px,N,M,P)$llk
+  drem$llk(beta,times,sen,rec,ix,jx,px,N,M,length(P))$llk
 }
 drem.mle <- function(A,N,beta,ix,jx,px) {
   fn <- function(par) {
@@ -148,7 +157,23 @@ drem.mle <- function(A,N,beta,ix,jx,px) {
   }
   optim(as.vector(beta),fn)$par
 }
-# FIX LLK functions to accept vector of unique senders and unique receivers
+brem.lrm <- function(A,N,z,beta,px) {
+  M <- nrow(A)
+  lrm <- array(0,c(M,N,N))
+  z1 <- z[A[,2]]
+  z2 <- z[A[,3]]
+  zs <- lapply(1:K,function(k) which(z==k))
+  for (k1 in 1:K) {
+    for (k2 in 1:K) {
+      ix <- which(z1 == k1 & z2 == k2)
+      if (length(ix) > 0 & length(zs[[k1]]) > 0 & length(zs[[k2]]) > 0) {
+        B <- A[ix,]
+        lrm[ix,,] <- lrm[ix,,] + drem.lrm(B,N,beta[k1,k2,],zs[[k1]],zs[[k2]],px)
+      }
+    }
+  }
+  lrm
+}
 brem.llk <- function(A,N,z,beta,px) {
   llks <- matrix(0,K,K)
   z1 <- z[A[,2]]
