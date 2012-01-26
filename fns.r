@@ -243,7 +243,7 @@ brem.mh <- function(A,N,K,P,z,current,px,model.type="baserates",mcmc.sd=.1,first
     }
   }
   if (model.type=="full") {
-    for (p in 1:P) {
+    for (p in which(px==1)) {
       cand <- current
       cand[,,p]  <- cand[,,p] + rnorm(K^2,0,mcmc.sd)
       clp <- brem.lpost(A,N,z,cand,px)
