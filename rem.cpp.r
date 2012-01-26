@@ -6,6 +6,9 @@ fx <- cxxfunction(,"",includes=
 int threeDIndex(int j, int k, int l, int J, int K, int L) { 
   return l*J*K + k*J + j;
 }
+int threeDIndexOld(int j, int k, int l, int J, int K, int L) { 
+    return j*K*L + k*L + l;
+}
 Rcpp::IntegerVector testThreeDIndex() {
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(Dimension(3,4,5));
   mp[threeDIndex(1,1,1,3,4,5)] = 1;

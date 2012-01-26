@@ -32,11 +32,11 @@ brem.lpost(sim$A,N,z,beta,px)
 set.seed(4)
 niter <- 100
 beta.init <- beta + rnorm(length(beta),0,1)
-# fit0 <- brem.mcmc(sim$A,N,K,P,px,model.type="baserates",niter=niter,init=beta.init)
+px0 <- px1 <- rep(1,7)
+px2 <- c(0,1,1,1,1,1,1)
 fit0 <- sbm.mcmc(sim$A,N,K)
 fit1 <- brem.mcmc(sim$A,N,K,P,px,model.type="diag.rem",niter=niter,init=beta.init)
-px[1] <- 0
-fit2 <- brem.mcmc(sim$A,N,K,P,px,model.type="full",niter=niter,init=beta.init)
+fit2 <- brem.mcmc(sim$A,N,K,P,px,model.type="full",niter=niter,z=z,beta=beta)
 
 # Compare llk and lpost of true and fit
 fit <- fit2
@@ -77,18 +77,19 @@ qplot(X1,value,data=ds,geom="line",colour=factor(X2)) + theme_bw()
 library(releventhier)
 test <- simulate.brem(M,N,z,beta)
 lrms <- list(unif = array(1,c(M,N,N)),
-             true = brem.lrm(test$A,N,z,beta,rep(1,7)),
+             true = brem.lrm(test$A,N,z,beta,px0),
              base = sbm.lrm(test$A,N,fit0$z,fit0$beta),
-             diag = brem.lrm(test$A,N,fit1$z,fit1$beta,rep(1,7)),
-             full = brem.lrm(test$A,N,fit2$z,fit2$beta,rep(1,7)))
+             diag = brem.lrm(test$A,N,fit1$z,fit1$beta,px1),
+             full = brem.lrm(test$A,N,fit2$z,fit2$beta,px2))
 ps <- lapply(lrms,function(lrm) {
   precision(ranks(test$A,-lrm,ties.method="random"))
 })
 res <- melt(ps,id.vars=c("k"),measure.vars="precision")
 qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw()
 
-lposts <- list(true = brem.lpost(test$A,N,z,beta,rep(1,7)),
+# Compute out of sample log posterior
+lposts <- list(true = brem.lpost(test$A,N,z,beta,px0),
                base = sbm.lpost(test$A,N,K,fit0$z,fit0$beta),
-               diag = brem.lpost(test$A,N,fit1$z,fit1$beta,rep(1,7)),
-               full = brem.lpost(test$A,N,fit2$z,fit2$beta,rep(1,7)))
+               diag = brem.lpost(test$A,N,fit1$z,fit1$beta,px1),
+               full = brem.lpost(test$A,N,fit2$z,fit2$beta,px2))
 lposts

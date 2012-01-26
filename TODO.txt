@@ -12,10 +12,11 @@ Week 2:
 [done] Write SBM code.
 [done] Fit SBM to subset of Eckmann (dyadic only)
 [done] Fit REM separately to each block.
-Understand collinearity/identifiability issue.
 [done] Implement BREM for submodels by modifying MH call in MCMC.
-Setup prediction llk experiment and ranking code. Handle case where we have draws from posterior.
-Setup experiment comparing submodels on synthetic data: k=1 and just intercept, k=1, beta for diag and gamma for off diag, and full model.
+[done] Setup prediction llk experiment and ranking code. Handle case where we have draws from posterior.
+[done] Setup experiment comparing submodels on synthetic data: k=1 and just intercept, k=1, beta for diag and gamma for off diag, and full model.
+Debug issues with whether to include intercept term or not. (Understand collinearity/identifiability issue.)
+Compare submodels for eckmann subset
 Explore performance of approximate likelihood.
 Consider MIT dataset or classroom dataset.
 Write up other possibilities for layering additional types of data, DP, or other extensions.

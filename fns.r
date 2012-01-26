@@ -192,16 +192,17 @@ brem.llk <- function(A,N,z,beta,px) {
 }
 brem.lpost <- function(A,N,z,beta,px) {
   llks <- brem.llk(A,N,z,beta,px)
-  lprior <- sum(dnorm(beta,0,5,log=TRUE)) + N * log(1/K)
+  lprior <- sum(dnorm(beta,0,1,log=TRUE)) + N * log(1/K)
   sum(llks)+lprior
 }
 
-brem.mcmc <- function(A,N,K,P,px,niter=5,model.type="full",mcmc.sd=.1,init=NULL) {
+brem.mcmc <- function(A,N,K,P,px,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL) {
   llks <- rep(0,niter)
-  z <- sample(1:K,N,replace=TRUE)
   param <- array(0,c(niter,K,K,P))
   current <- array(rnorm(K^2*P),c(K,K,P))
-  if (!is.null(init)) current <- init
+  if (!is.null(z))    z <- sample(1:K,N,replace=TRUE)
+  if (!is.null(beta)) current <- beta
+  
   for (iter in 1:niter) {
     
     # Gibbs sample assignments
@@ -220,12 +221,12 @@ brem.mcmc <- function(A,N,K,P,px,niter=5,model.type="full",mcmc.sd=.1,init=NULL)
     current <- brem.mh(A,N,K,P,z,current,px,model.type,mcmc.sd,first.iter)
     
     # Sample empty cluster parameters from prior
-#     for (k in 1:K) {
-#       if (length(which(z==k))==0) {
-#         current[k,,] <- rnorm(K*P,0,5)
-#         current[,k,] <- rnorm(K*P,0,5)
-#       }
-#     }
+    for (k in 1:K) {
+      if (length(which(z==k))==0) {
+        current[k,,] <- rnorm(K*P,0,5)
+        current[,k,] <- rnorm(K*P,0,5)
+      }
+    }
     
     param[iter,,,] <- current
     llks[iter] <- brem.lpost(A,N,z,current,px)
