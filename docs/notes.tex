@@ -101,6 +101,12 @@ where $ \lambda_{ij} = \exp\{\boldsymbol{\beta}_{z_i,z_j}\}$.  Each block in thi
 
 Another important model is one where within group interactions are governed via a set of parameters while all between group interactions are governed by a different set.  In this case $\boldsymbol{\beta}_{k1,k2} = \boldsymbol{\gamma}$ for all $k1 \ne k2$. 
 
+\subsection{Extensions}
+TODO: Explain difficulties in doing a mixed membership model.  As in the mixed-membership stochastic blockmodel \cite{Airoldi2008}, one could assume that each node has vector of probabilities, $\boldsymbol{\pi}_i$, for being assigned to each of the latent clusters.  In that case $z_i \sim \mbox{Categorical}(\boldsymbol{\pi}_i)$ for each node $i$ and $j$, and the ties are modeled via a stochastic blockmodel $\mbox{logit} p(y_{ij}) = \eta_{z_i,z_j}$.  One could extend our current framework by assuming that after the $m$th event, $i_m$ and $j_m$ redraw their latent class.
+
+TODO: Discuss other variants, e.g. HMM that guides which latent class over time?
+
+TODO: What about different clusters for senders and receivers (cite our KDD paper)?
 \section{Inference}
 
 We use Markov chain Monte Carlo to get samples from the posterior distribution of our parameters.  
@@ -112,7 +118,13 @@ $z_i | A, z_{-i} \propto p(A|z,\beta) p(z_i)$
 \end{enumerate}
 
 To perform Gibbs sampling for a given cluster assignment $z_i$, we need to compute the likelihood for each possible assignment of $z_i$. 
-This operation can be done in parallel, and only the portion of the likelihood involving the newly assigned cluster  need to be recomputed.  Computing the likelihood is then $O(T \cdot P \cdot 4N)$, though we essentially split this computation into $K^2$ pieces.
+This operation can be done in parallel, and only the portion of the likelihood involving the newly assigned cluster  need to be recomputed.  Computing the likelihood is then $O(T \cdot P \cdot 4N)$ (though this computation is split into $K^2$ pieces) and must computed $N \cdot K$ times per Gibbs iteration.
+
+\subsection{Approximate likelihood methods}
+
+TODO: Discuss how one might sample the likelihood.  Cite Raftery paper.
+
+TODO: Look at performance of this with respect to bias and performance measures.
 
 % This involves recomputing each $\boldsymbol{\tau}$ and possibly each $\mathbf{s}_{ij}$ if it also depends on $\mathbf{z}$.
 
@@ -169,6 +181,7 @@ Possible future work could extend the present framework to a mixed-membership mo
 TODO: Discuss possible variations on the prior structure of $\beta$: 1. Enforce $\beta_{k,l} = \beta_{l,k}$. 2. Assume $\beta_{k,l,p} \sim \mbox{Normal}(\beta_p,\sigma_p^2)$. 3. Place other priors that provide different kinds of regularization. 
 
 TODO: Discuss if the semiparametric partial likelihood approach can be used in this framework.
+
 
 \appendix
 \section{Simulation}
