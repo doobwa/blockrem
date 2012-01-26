@@ -5,7 +5,7 @@ sbm.llk <- function(A,N,K,z,beta) {
   zr <- factor(z[A[,3]],1:K)
   mat <- table(zs,zr)
   t_M <- A[nrow(A),1]
-  R <- table(z)
+  R <- table(factor(z,1:K))
   R <- outer(R,R)
   mat * log(beta) - t_M * R * beta
   #dmultinom(mat,size=sum(mat),prob=eta,log=TRUE)  
@@ -15,7 +15,7 @@ sbm.lpost <- function(A,N,K,z,beta,alpha=1) {
   sum(sbm.llk(A,N,K,z,beta)) + sum(dgamma(beta,1,1,log=TRUE))
 }
 
-sbm.mcmc <- function(A,N,K,niter=100,z=NULL) {
+sbm.mcmc <- function(A,N,K,niter=100,z=NULL,mcmc.sd=.1) {
   if (is.null(z)) z <- sample(1:K,N,replace=TRUE)
   beta <- matrix(rnorm(K^2),K,K)
   llks <- rep(0,niter)
