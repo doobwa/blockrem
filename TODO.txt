@@ -18,10 +18,14 @@ Week 2:
 Debug issues with whether to include intercept term or not. (Understand collinearity/identifiability issue.)
 Compare submodels for eckmann subset
 Explore performance of approximate likelihood.
-Consider MIT dataset or classroom dataset.
 Write up other possibilities for layering additional types of data, DP, or other extensions.
 Try random groups and see if REM still picks out (significantly) different parameters
-Port simulator over to Rcpp.
+
+Download some twitter data
+Consider MIT dataset or classroom dataset.
 Add other statistics other than pshifts
 Initialize with guess at z's, rather than guess at beta.
 Research maximization of beta rather than sampling.
+
+Low priority:
+Port simulator over to Rcpp.
