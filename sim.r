@@ -1,11 +1,8 @@
-# 
-# beta <- c(1,0)
-# effects <- names(beta) <- c("PSAB-BA","PSAB-BY")
-# A <- simulate.rem(1000,10,effects,beta)
-# 
+library(releventhier)
 library(ggplot2)
 source("rem.cpp.r")
 source("fns.r")
+source("sbm.r")
 N <- 10
 K <- 2
 P <- 7
@@ -35,7 +32,8 @@ brem.lpost(sim$A,N,z,beta,px)
 set.seed(4)
 niter <- 100
 beta.init <- beta + rnorm(length(beta),0,1)
-fit0 <- brem.mcmc(sim$A,N,K,P,px,model.type="baserates",niter=niter,init=beta.init)
+# fit0 <- brem.mcmc(sim$A,N,K,P,px,model.type="baserates",niter=niter,init=beta.init)
+fit0 <- sbm.mcmc(sim$A,N,K)
 fit1 <- brem.mcmc(sim$A,N,K,P,px,model.type="diag.rem",niter=niter,init=beta.init)
 px[1] <- 0
 fit2 <- brem.mcmc(sim$A,N,K,P,px,model.type="full",niter=niter,init=beta.init)
@@ -73,3 +71,24 @@ ds <- sapply(1:niter,function(i) {
 })
 ds <- melt(t(ds))
 qplot(X1,value,data=ds,geom="line",colour=factor(X2)) + theme_bw()
+
+
+# Prediction experiment: precision
+library(releventhier)
+test <- simulate.brem(M,N,z,beta)
+lrms <- list(unif = array(1,c(M,N,N)),
+             true = brem.lrm(test$A,N,z,beta,rep(1,7)),
+             base = sbm.lrm(test$A,N,fit0$z,fit0$beta),
+             diag = brem.lrm(test$A,N,fit1$z,fit1$beta,rep(1,7)),
+             full = brem.lrm(test$A,N,fit2$z,fit2$beta,rep(1,7)))
+ps <- lapply(lrms,function(lrm) {
+  precision(ranks(test$A,-lrm,ties.method="random"))
+})
+res <- melt(ps,id.vars=c("k"),measure.vars="precision")
+qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw()
+
+lposts <- list(true = brem.lpost(test$A,N,z,beta,rep(1,7)),
+               base = sbm.lpost(test$A,N,K,fit0$z,fit0$beta),
+               diag = brem.lpost(test$A,N,fit1$z,fit1$beta,rep(1,7)),
+               full = brem.lpost(test$A,N,fit2$z,fit2$beta,rep(1,7)))
+lposts
