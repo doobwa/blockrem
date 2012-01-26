@@ -14,11 +14,11 @@ Week 2:
 [done] Fit REM separately to each block.
 Understand collinearity/identifiability issue.
 [done] Implement BREM for submodels by modifying MH call in MCMC.
-Setup experiment comparing submodels: k=1 and just intercept, k=1, beta for diag and gamma for off diag, and full model.
 Setup prediction llk experiment and ranking code. Handle case where we have draws from posterior.
-
+Setup experiment comparing submodels on synthetic data: k=1 and just intercept, k=1, beta for diag and gamma for off diag, and full model.
 Explore performance of approximate likelihood.
 Consider MIT dataset or classroom dataset.
 Write up other possibilities for layering additional types of data, DP, or other extensions.
 Try random groups and see if REM still picks out (significantly) different parameters
 Port simulator over to Rcpp.
+Add other statistics other than pshifts
