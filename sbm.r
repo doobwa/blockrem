@@ -14,7 +14,13 @@ sbm.lpost <- function(A,N,K,z,beta,alpha=1) {
   beta <- exp(beta)
   sum(sbm.llk(A,N,K,z,beta)) + sum(dgamma(beta,1,1,log=TRUE))
 }
-
+sbm.lrm <- function(A,N,z,beta) {
+  a <- array(0,c(nrow(A),N,N))
+  for (i in 1:nrow(A)) {
+    a[i,,] <- beta[z,z]
+  }
+  return(a)
+}
 sbm.mcmc <- function(A,N,K,niter=100,z=NULL,mcmc.sd=.1) {
   if (is.null(z)) z <- sample(1:K,N,replace=TRUE)
   beta <- matrix(rnorm(K^2),K,K)
