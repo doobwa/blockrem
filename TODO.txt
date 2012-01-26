@@ -22,3 +22,5 @@ Write up other possibilities for layering additional types of data, DP, or other
 Try random groups and see if REM still picks out (significantly) different parameters
 Port simulator over to Rcpp.
 Add other statistics other than pshifts
+Initialize with guess at z's, rather than guess at beta.
+Research maximization of beta rather than sampling.
