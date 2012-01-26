@@ -9,14 +9,16 @@
 [done] Fit blockmodel to synthetic data.
 
 Week 2: 
-Write SBM code.
-Fit SBM to Eckmann (dyadic only)
-Fit REM separately to each block.
+[done] Write SBM code.
+[done] Fit SBM to subset of Eckmann (dyadic only)
+[done] Fit REM separately to each block.
 Understand collinearity/identifiability issue.
-Implement BREM for submodels by modifying MH call in MCMC.
+[done] Implement BREM for submodels by modifying MH call in MCMC.
 Setup experiment comparing submodels: k=1 and just intercept, k=1, beta for diag and gamma for off diag, and full model.
 Setup prediction llk experiment and ranking code. Handle case where we have draws from posterior.
-Port simulator over to Rcpp.
+
+Explore performance of approximate likelihood.
 Consider MIT dataset or classroom dataset.
 Write up other possibilities for layering additional types of data, DP, or other extensions.
-
+Try random groups and see if REM still picks out (significantly) different parameters
+Port simulator over to Rcpp.
