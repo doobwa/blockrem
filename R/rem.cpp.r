@@ -169,6 +169,9 @@ Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
         b = rec[mp(i,j)];
         // compute rate for lambda_ij(t_m)
         lrm[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,a,b,beta,px);
+        if (i==j) {
+          lrm[threeDIndex(m,i,j,M,N,N)] = -15;
+        }
       }
     }
     // save which lambdas changed because of (i,j) occurring at time m
