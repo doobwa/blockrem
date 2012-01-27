@@ -4,64 +4,65 @@ require(multicore)
 require(rjson)
 require(twitteR)
 require(ROAuth)
+require(RCurl)
 source("pull.fns.r")
-options(cores=8)
+options(cores=1)
 load("heroic.oauth.rdata")
 
-load(paste("data/rawdata/",keyword,"_orig.Rdata",sep=""))
+# xml files obtained from google reader by hand by motifying the continuation code repeatedly
+# http://www.google.com/reader/atom/feed%2Fhttp%3A%2F%2Fsearch.twitter.com%2Fsearch.atom%3Fq%3D%2523rstats?n=1000&c=CPHpgbSjipwC
+# reference: http://code.google.com/p/pyrfeed/wiki/GoogleReaderAPI
 
-# Samples 20000
-set.seed(1)
-dim(kwd.orig)
-M <- min(20000,nrow(kwd.orig))
-ix <- sample(1:nrow(kwd.orig),M)
-kwd.samp <- kwd.orig[ix,]
-save(kwd.samp,file=paste("data/sampled/",keyword,".rdata",sep=""))
+# Xpath code found here: http://heuristically.wordpress.com/2011/04/08/text-data-mining-twitter-r/
 
-load(file=paste("data/sampled/",keyword,".rdata",sep=""))
-urls <- kwd.samp$tweetURL
+grab.tweets.from.xml <- function(f) {
+  require(XML)
+  doc <- xmlParseDoc(f)
+  urls <- xpathSApply(doc, '//s:link[@href]', xmlGetAttr,"href",
+                      namespaces =c('s'='http://www.w3.org/2005/Atom'))
+  urls <- urls[-1]  # remove google reader url
+  titles <- xpathSApply(doc, '//s:title', xmlValue,
+                        namespaces =c('s'='http://www.w3.org/2005/Atom'))
+  ix <- grep("search.twitter.com",urls)
+  urls <- urls[-ix]
+  titles <- titles[-ix]
+  dates <- xpathSApply(doc, '//s:published', xmlValue,
+                       namespaces =c('s'='http://www.w3.org/2005/Atom'))
+  tweets <- gsub("http://twitter.com/","",urls)
+  users <- sapply(tweets,function(tweet) {
+    strsplit(tweet,"/")[[1]][1]
+  })
+  names(users) <- c()
+  df <- data.frame(date=dates,user=users,text=titles)
+  return(df)
+}
 
+fs <- paste("data/rstats.",0:33,".xml",sep="")
+df <- lapply(fs,function(f) grab.tweets.from.xml(f))
+df <- do.call(rbind,df)
+save(df,file="data/rstats.tweets.rdata")
+
+# Select users and download their timelines
+load("data/rstats.tweets.rdata")
+K <- 1000
+tb <- sort(table(df$user),decreasing=TRUE)[1:K]
+plot(log(tb),type="l")
+chosen <- names(tb)
+
+timelines <- download.timeline(chosen[1:2])
+save(timelines,file="data/rstats.timelines.rdata")
+
+# Grab messages from a list of tweets in json
+get_messages <- function(tweets) {
+  tmp <- sapply(tweets,function(tweet) {
+    if (!is.null(tweet$to_user_id)) {
+      tweet[c("id_str","created_at","to_user","to_user_id","from_user","from_user_id","text")]
+    }
+  })
+  do.call(rbind,tmp)  
+}
+
+
+pages <- which(sapply(rstats,function(r) length(r$results)) == 0)
 # check query limit
 remaining()
-
-for (i in 0:3) {
-  start <- 1 + 5000*i
-  end <- 5000 * (i+1)
-  # check rate limit
-  rl<-remaining()
-  if (rl>=5000){
-    d <- download(urls[start:end])
-    save(d,file=paste("data/retweets/",keyword,"-",i+1,".rdata",sep=""))
-    inds<-unlist(lapply(d,is.character)) # inds where connection error occured
-    while(sum(inds)>0){
-      if (length(inds)>0) {
-		rl<-remaining()
-		if (rl > sum(inds)){
-        	d2 <- download(urls[start:end][inds])
-        	d[inds]<-d2
-        	inds<-unlist(lapply(d,is.character))
-		} else {
- 			cat("sleeping \n")
-   			Sys.sleep(15*60)
-		}
-      } 
-      cat(".")
-    }
-    save(d,file=paste("data/retweets/",keyword,"-",i+1,".rdata",sep=""))
-  } else {
-    cat("sleeping \n")
-    Sys.sleep(60*60)
-  }
-  }
-}
-
-
-# # Combine chunks
-# chunk(urls,keyword,size=5000)
-a <- list()
-for (i in 1:length(grep(keyword,list.files("data/retweets")))) {
-  load(paste("data/retweets/",keyword,"-",i,".rdata",sep=""))
-  a <- c(a,d)
-}
-
-save(a,file=paste("data/retweets/",keyword,".rdata",sep=""))

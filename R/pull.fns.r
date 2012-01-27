@@ -11,19 +11,31 @@ download <- function(urls) {
     }
   })
 }
-
+download.search <- function(hashtag,pages=1:10) {
+  urls <- paste("http://search.twitter.com/search.json?q=%23",hashtag,"&include_entities=true&include_rts=true&rpp=100&page=",pages,sep="")
+  res <- list()
+  for (j in pages){
+    toGet<-urls[j]
+    req <- try(cred$OAuthRequest(toGet,"GET"))
+    if (class(req) != "try-error") {
+      res[[j]] <- fromJSON(req)
+    } else {
+      res[[j]] <- list("Error occurred")
+    }
+    if (j %% 10 == 0) cat("done with page ",j,"\n") 
+  }
+  return(res)
+}
 download.timeline <- function(usernames) {
   mclapply(1:length(usernames),function(i) {
     if (i %% 100 == 0) cat("done with user ",i,"\n") 
-    urls <- paste("https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&screen_name=",usernames[i],"&page=",1:60,sep="")
-    res <- vector("list", 160)
-    for (j in 1:160){
+    urls <- paste("https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&count=200&screen_name=",usernames[i],"&page=",1:16,sep="")
+    res <- vector("list", 16)
+    for (j in 1:16){
       toGet<-urls[j]
       req <- try(cred$OAuthRequest(toGet,"GET"))
       if (class(req) != "try-error") {
         res[[j]] <- fromJSON(req)
-        if (is.null(res[[j]][[1]]$text))
-            break
       } else {
         res[[j]] <- list("Error occurred")
       }
