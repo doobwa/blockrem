@@ -44,12 +44,15 @@ node.ps <- function(A,N) {
   return(p)
 }
 
-computeLambda <- function(i,j,a,b,beta) {
-  lam <- beta[1] + sum(beta[-1] * pshift(i,j,a,b))
+computeLambda <- function(i,j,a,b,beta,px) {
+  lam <- 0
+  if (px[1]) {
+    lam <- lam + beta[1]
+  }
+  lam <- lam + sum(px[-1] * beta[-1] * pshift(i,j,a,b))
   return(lam)
 }
 pshift <- function(i,j,a,b) {
-  # TODO: This may have bugs.  See Rcpp version.
   x <- rep(0,6)
   if (i!=a & i==b & j==a & j!=b) { # ab-ba
     x[1] <- 1
@@ -86,7 +89,7 @@ block.ps <- function(A,z) {
   rownames(ds) <- c()
   return(ds)
 }
-simulate.brem <- function(M,N,z,beta) {
+simulate.brem <- function(M,N,z,beta,px) {
   implementedEffects <- c("Intercept","PSAB-BA","PSAB-BY","PSAB-XA","PSAB-XB","PSAB-AY","PSAB-AB")
   if (dim(beta)[3] != length(implementedEffects)) stop("wrong dimensions for parameter array")
   P <- length(implementedEffects)
@@ -111,16 +114,16 @@ simulate.brem <- function(M,N,z,beta) {
     
     # Compute changes to lambda
     for (r in 1:N) {
-      lambda[r,j] <- computeLambda(r,j,i,j,beta[z[r],z[j],])
+      lambda[r,j] <- computeLambda(r,j,i,j,beta[z[r],z[j],],px)
     }
     for (r in 1:N) {
-      lambda[j,r] <- computeLambda(j,r,i,j,beta[z[j],z[r],])
+      lambda[j,r] <- computeLambda(j,r,i,j,beta[z[j],z[r],],px)
     }
     for (r in 1:N) {
-      lambda[i,r] <- computeLambda(i,r,i,j,beta[z[i],z[r],])
+      lambda[i,r] <- computeLambda(i,r,i,j,beta[z[i],z[r],],px)
     }
     for (r in 1:N) {
-      lambda[r,i] <- computeLambda(r,i,i,j,beta[z[r],z[i],])
+      lambda[r,i] <- computeLambda(r,i,i,j,beta[z[r],z[i],],px)
     }
     
     diag(lambda) <- -Inf
@@ -157,7 +160,7 @@ drem.mle <- function(A,N,beta,ix,jx,px) {
   }
   optim(as.vector(beta),fn)$par
 }
-brem.lrm <- function(A,N,z,beta,px) {
+brem.lrm <- function(A,N,K,z,beta,px) {
   M <- nrow(A)
   lrm <- array(0,c(M,N,N))
   z1 <- z[A[,2]]
@@ -174,7 +177,7 @@ brem.lrm <- function(A,N,z,beta,px) {
   }
   lrm
 }
-brem.llk <- function(A,N,z,beta,px) {
+brem.llk <- function(A,N,K,z,beta,px) {
   llks <- matrix(0,K,K)
   z1 <- z[A[,2]]
   z2 <- z[A[,3]]
@@ -190,34 +193,24 @@ brem.llk <- function(A,N,z,beta,px) {
   }
   llks
 }
-brem.lpost <- function(A,N,z,beta,px) {
-  llks <- brem.llk(A,N,z,beta,px)
+brem.lpost <- function(A,N,K,z,beta,px) {
+  llks <- brem.llk(A,N,K,z,beta,px)
   lprior <- sum(dnorm(beta,0,1,log=TRUE)) + N * log(1/K)
   sum(llks)+lprior
 }
 
-brem.mcmc <- function(A,N,K,P,px,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs=TRUE,mh=TRUE) {
+brem.mcmc <- function(A,N,K,px,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs=TRUE,mh=TRUE) {
   llks <- rep(0,niter)
+  M <- nrow(A)
+  P <- length(px)
   param <- array(0,c(niter,K,K,P))
-  current <- array(rnorm(K^2*P),c(K,K,P))
+  mu <- log(M/A[M,1]/N/N)  # MLE for beta for uniform rate across all events
+  sigma <- .5
+  current <- array(rnorm(K^2*P,mu,sigma),c(K,K,P))
   if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
   if (!is.null(beta)) current <- beta
   
-  
   for (iter in 1:niter) {
-    if (gibbs) {
-      # Gibbs sample assignments
-      for (i in 1:N) {
-        ps <- rep(0,K)
-        for (k in 1:K) {
-          z[i] <- k
-          ps[k] <- brem.lpost(A,N,z,current,px)
-        }
-        ps <- exp(ps - max(ps))
-        z[i] <- sample(1:K,size=1,prob=ps)
-      }
-    }
-  
     
     # For each effect sample via MH
     first.iter <- (iter==1)
@@ -231,8 +224,21 @@ brem.mcmc <- function(A,N,K,P,px,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,
       }
     }
     
+    if (gibbs) {
+      # Gibbs sample assignments
+      for (i in 1:N) {
+        ps <- rep(0,K)
+        for (k in 1:K) {
+          z[i] <- k
+          ps[k] <- brem.lpost(A,N,K,z,current,px)
+        }
+        ps <- exp(ps - max(ps))
+        z[i] <- sample(1:K,size=1,prob=ps)
+      }
+    }
+    
     param[iter,,,] <- current
-    llks[iter] <- brem.lpost(A,N,z,current,px)
+    llks[iter] <- brem.lpost(A,N,K,z,current,px)
     
     cat("iter",iter,":",llks[iter],"z:",table(z),"\n")
     
@@ -241,13 +247,13 @@ brem.mcmc <- function(A,N,K,P,px,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,
 }
 brem.mh <- function(A,N,K,P,z,current,px,model.type="baserates",mcmc.sd=.1,first.iter=FALSE) {
   if (first.iter) olp <- -Inf
-  else olp <- brem.lpost(A,N,z,current,px)
+  else olp <- brem.lpost(A,N,K,z,current,px)
   cand <- current
   if (model.type=="baserates") {
     cand[,,1] <- cand[,,1] + rnorm(K^2,0,mcmc.sd)
     cand[,,-1] <- 0
     px <- c(1,rep(0,7))
-    clp <- brem.lpost(A,N,z,cand,px)
+    clp <- brem.lpost(A,N,K,z,cand,px)
     if (clp - olp > log(runif(1))) {
       current <- cand
       olp <- clp
@@ -265,7 +271,7 @@ brem.mh <- function(A,N,K,P,z,current,px,model.type="baserates",mcmc.sd=.1,first
         }
       }
     }
-    clp <- brem.lpost(A,N,z,cand,px)
+    clp <- brem.lpost(A,N,K,z,cand,px)
     if (clp - olp > log(runif(1))) {
       current <- cand
       olp <- clp
@@ -275,7 +281,7 @@ brem.mh <- function(A,N,K,P,z,current,px,model.type="baserates",mcmc.sd=.1,first
     for (p in which(px==1)) {
       cand <- current
       cand[,,p]  <- cand[,,p] + rnorm(K^2,0,mcmc.sd)
-      clp <- brem.lpost(A,N,z,cand,px)
+      clp <- brem.lpost(A,N,K,z,cand,px)
       if (clp - olp > log(runif(1))) {
         current <- cand
         olp <- clp
