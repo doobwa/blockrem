@@ -15,10 +15,12 @@ Week 2:
 [done] Implement BREM for submodels by modifying MH call in MCMC.
 [done] Setup prediction llk experiment and ranking code. Handle case where we have draws from posterior.
 [done] Setup experiment comparing submodels on synthetic data: k=1 and just intercept, k=1, beta for diag and gamma for off diag, and full model.
-Debug issues with whether to include intercept term or not. (Understand collinearity/identifiability issue.)
 [done. not successful.] Noncollapsing clusters: try initializing beta centered on the mean overall rate.
 [done] Explore performance of approximate likelihood. [Needs roughly N/2 to be good in simple examples.]
-Implement EM for baseline model.
+Debug issues with whether to include intercept term or not. (Understand collinearity/identifiability issue.)
+Understand why we do better than truth on llk/ranking.
+Fix diagonal in lrm to be -Inf (or include option)
+Derive/implement EM for baseline model.
 Compare submodels for eckmann subset.
 Write up other possibilities for layering additional types of data, DP, or other extensions.
 
