@@ -54,12 +54,34 @@ test_that("approximate likelihood correct",{
   ix <- 1:N - 1
   sen <- sample(ix,M,replace=TRUE)
   rec <- sample(ix,M,replace=TRUE)
-  llk <- drem$llk(beta,times,sen,rec,ix,ix,px,N,M,P)
-  allk <- drem$allk(beta,times,sen,rec,ix,ix,px,N,M,P,N)
+  llk <- drem$llk(beta,times,sen,rec,ix,ix,px,N,M)
+  allk <- drem$allk(beta,times,sen,rec,ix,ix,px,N,M,N)
   expect_that(llk,equals(allk))
   
-  allks <- sapply((N/2):N,function(i) {
-    drem$allk(beta,times,sen,rec,ix,ix,px,N,M,P,i)
+  allks <- sapply(2:N,function(i) {
+    drem$allk(beta,times,sen,rec,ix,ix,px,N,M,i)
+  })
+  plot(allks[50:100],type="l")
+  abline(h=llk)
+})
+test_that("Check scaling properities of app. llk",{
+  M <- 5000
+  N <- 1000
+  ix <- 1:N - 1
+  times <- sort(runif(M,0,100))
+  sen <- sample(ix,M,replace=TRUE)
+  rec <- sample(ix,M,replace=TRUE)
+  
+  system.time(drem$llk(beta,times,sen,rec,ix,ix,px,N,M))
+  system.time(drem$allk(beta,times,sen,rec,ix,ix,px,N,M,250))
+  system.time(drem$allk(beta,times,sen,rec,ix,ix,px,N,M,50))
+  
+  llk <- drem$llk(beta,times,sen,rec,ix,ix,px,N,M)
+  allks <- sapply(seq(50,N,by=100),function(i) {
+    print(i)
+    drem$allk(beta,times,sen,rec,ix,ix,px,N,M,i)
   })
   plot(allks,type="l")
+  abline(h=llk,col="red")
 })
+  

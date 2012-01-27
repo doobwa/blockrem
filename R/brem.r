@@ -49,6 +49,7 @@ computeLambda <- function(i,j,a,b,beta) {
   return(lam)
 }
 pshift <- function(i,j,a,b) {
+  # TODO: This may have bugs.  See Rcpp version.
   x <- rep(0,6)
   if (i!=a & i==b & j==a & j!=b) { # ab-ba
     x[1] <- 1
@@ -92,7 +93,6 @@ simulate.brem <- function(M,N,z,beta) {
   
   # Use baserate to initialize lambda
 
-    
   # start with a event from 1 to 2
   time <- 0
   A <- matrix(c(time,1,2),1,3)
@@ -136,7 +136,7 @@ drem.lrm <- function(A,N,beta,ix,jx,px) {
   rec <- A[,3]-1
   ix <- ix-1
   jx <- jx-1
-  drem$lrm(beta,times,sen,rec,ix,jx,px,N,M,length(P))
+  drem$lrm(beta,times,sen,rec,ix,jx,px,N,M)
 }
 # ix: unique senders
 # jx: unique receivers
@@ -147,7 +147,7 @@ drem.llk <- function(A,N,beta,ix,jx,px) {
   rec <- A[,3]-1
   ix <- ix-1
   jx <- jx-1
-  drem$llk(beta,times,sen,rec,ix,jx,px,N,M,length(P))
+  drem$llk(beta,times,sen,rec,ix,jx,px,N,M)
 }
 drem.mle <- function(A,N,beta,ix,jx,px) {
   fn <- function(par) {

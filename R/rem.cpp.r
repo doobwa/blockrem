@@ -61,7 +61,7 @@ double computeLambda(int i, int j, int a, int b, Rcpp::NumericVector beta,Rcpp::
 }
 // All senders, receivers (ix,jx) must be 0-indexed.
 // Current "weirdness": Assumes all events "occur" at time 0.
-double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M, int P){
+double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M){
   // last event id that lam_ij changed
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N); 
 
@@ -105,7 +105,7 @@ double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVec
 // Approximate likelihood
 // S: sample size (where S<N)
 // TODO: Consider the case when ix and jx are different sizes and the ramifications of choosing S.
-double allk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M, int P, int S){
+double allk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M, int S){
   // last event id that lam_ij changed
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N); 
 
@@ -153,7 +153,7 @@ double allk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVe
 
 
 // Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
-Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M, int P){
+Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M){
 
   Rcpp::NumericMatrix mp = Rcpp::NumericMatrix(N,N); 
   Rcpp::NumericVector lrm = Rcpp::NumericVector(Dimension(M,N,N));
