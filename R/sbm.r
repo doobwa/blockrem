@@ -52,7 +52,7 @@ sbm.mcmc <- function(A,N,K,niter=100,z=NULL,mcmc.sd=.1) {
     llks[iter] <- olp
     cat("iter",iter,":",llks[iter],"z:",table(z),"\n")
   }
-  return(list(beta=current,z=z))
+  return(list(beta=current,z=z,llks=llks))
 }
 mult.dir <- function(dataset,dims,prior=1/prod(dims)) {
   if (ncol(dataset)==2)
