@@ -28,8 +28,14 @@ test_that("llk works on small example",{
 
 test_that("log rate matrix computation correct",{
   lrm <- drem$lrm(beta,times,sen,rec,ix,ix,px,N,M,P)
+  expect_that(dim(lrm),equals(c(100,10,10)))
   expect_that(lrm[2,1,1],equals(beta[1]))
   expect_that(lrm[2,rec[1]+1,sen[1]+1],equals(beta[1] + beta[2]))  # AB-BA
+  
+  # only the (ix,ix) portion should be populated
+  ix <- 1:5
+  lrm <- drem$lrm(beta,times,sen,rec,ix-1,ix-1,px,N,M,P)
+  expect_that(sum(lrm[,-ix,-ix]),equals(0))  
 })
 
 test_that("calculating lambda runs",{

@@ -158,10 +158,12 @@ Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
   Rcpp::NumericMatrix mp = Rcpp::NumericMatrix(N,N); 
   Rcpp::NumericVector lrm = Rcpp::NumericVector(Dimension(M,N,N));
 
-  int a,b;
-  for (int m = 1; m<M; m++) {
-    for (int i=0;i<N;i++) {
-      for (int j=0;j<N;j++) {
+  int a,b,u,v,i,j;
+  for (int m = 1; m < M; m++) {
+    for (int u = 0; u < ix.size(); u++) {
+      i = ix[u];
+      for (int v = 0; v < jx.size(); v++) {
+        j = jx[v];
         // get dyad that occurred last time either i or j was involved
         a = sen[mp(i,j)];
         b = rec[mp(i,j)];
