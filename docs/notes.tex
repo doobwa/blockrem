@@ -214,6 +214,19 @@ Simulation from the model follows the typical racing exponentials idea with a fe
   \end{enumerate}
 \end{enumerate}
 
+\section{EM for baseline}
+
+In our baseline model, each block $(a,b) \in [1,K] \times [1,K]$ simply has a rate $\gamma_{a,b}$.
+The likelihood is
+\begin{align*}
+\mathcal{L}(A|\lambda) &= \prod_{m=1}^M \lambda_{i_m,j_m} \prod_{(i,j) \in \mathcal{R}} \exp\{-t_M\lambda_{ij}\} \\
+& =\prod_{a=1}^K \prod_{b=1}^K \prod_{m=1}^M \gamma_{ab}^{I(z_{i_m}=a,z_{j_m}=b)} \prod_{(i,j): z_i=a,z_j=b} \exp\{-t_M\gamma_{ab}\} \\
+& =\prod_{a=1}^K\prod_{b=1}^K \gamma_{ab}^{n_{ab}} \exp\{-t_Mn_an_b\gamma_{ab}\}
+\end{align*}
+where $n_{ab} = \sum_m I(z_{i_m}=a,z_{j_m}=b)$, $n_a = \sum_{i=1}^N I(z_i=a)$.
+
+The loglikelihood is $$\ell(A|\lambda) = \sum_{a=1}^K \sum_{b=1}^K n_{ab} \log \gamma_{ab} - t_M n_a n_b \gamma_{ab}$$
+and so $\hat{\gamma}_{ab} = \frac{n_{ab}}{t_Mn_an_b}$.
 
 \bibliographystyle{plain}
 \bibliography{refs}
