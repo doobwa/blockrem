@@ -1,42 +1,46 @@
 library(releventhier)
 library(ggplot2)
 source("R/rem.cpp.r")
-source("R/fns.r")
+source("R/brem.r")
 source("R/sbm.r")
 N <- 10
 K <- 2
 P <- 7
 beta <- array(0,c(K,K,P))
 beta[1,1,] <- c(2,3,0,0,0,0,0)
-beta[2,1,] <- c(1,0,0,0,0,0,1)
-beta[1,2,] <- c(1,0,0,0,0,0,1) 
+beta[2,1,] <- c(1,0,0,0,0,0,-1)
+beta[1,2,] <- c(1,0,0,0,0,0,-1) 
 beta[2,2,] <- c(2,0,0,0,0,2,0)  # AB-AY
 
 
 M <- 2000
 set.seed(1)
 z <- c(rep(1,5),rep(2,5))
-sim <- simulate.brem(M,N,z,beta)
+px <- c(1,1,1,1,1,1,1)
+sim <- simulate.brem(M,N,z,beta,px)
 mat <- table(sim$A[,2],sim$A[,3])
 mat <- melt(as.matrix(mat))
 colnames(mat) <- c("X1","X2","value")
 plotmat(mat)
 ggsave("figs/syn/mat.pdf",width=3,height=3)
 
-
-px <- rep(1,7)
-brem.llk(sim$A,N,z,beta,px)
-brem.lpost(sim$A,N,z,beta,px)
+brem.llk(sim$A,N,K,z,beta,px)
+brem.lpost(sim$A,N,K,z,beta,px)
+llk.true <- brem.lpost(sim$A,N,K,z,beta,px)
 
 set.seed(4)
-niter <- 200
+niter <- 100
 px0 <- px1 <- rep(1,7)
-px2 <- c(0,1,1,1,1,1,1)
+#fit0 <- sbm.mcmc(sim$A,N,1,niter=niter)
 fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z)
-fit1 <- brem.mcmc(sim$A,N,K,P,px,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
-fit2 <- brem.mcmc(sim$A,N,K,P,px,model.type="full",niter=niter,z=z,gibbs=FALSE)
-fit3 <- brem.mcmc(sim$A,N,1,P,px,model.type="full",niter=niter,gibbs=FALSE)
+fit1 <- brem.mcmc(sim$A,N,K,px,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
+fit2 <- brem.mcmc(sim$A,N,K,px,model.type="full",niter=niter,z=z,gibbs=FALSE)
+fit3 <- brem.mcmc(sim$A,N,1,px,model.type="full",niter=niter,gibbs=FALSE)
 save(fit0,fit1,fit2,fit3,file="data/syn-fits.rdata")
+
+llks <- melt(list(base=fit0$llks,diag=fit1$llks,full=fit2$llks,sing=fit3$llks))
+llks$iter <- 1:niter
+qplot(iter,value,data=llks,geom="line",colour=factor(L1)) + geom_abline(intercept=llk.true)
 
 # Compare llk and lpost of true and fit
 fit <- fit2
@@ -70,25 +74,25 @@ qplot(X1,value,data=ds,geom="line",colour=factor(X2)) + theme_bw() + labs(x="ite
 ggsave("figs/syn/bias.pdf",width=5,height=4)
 
 # Prediction experiment on test data: precision
-library(releventhier)
-test <- simulate.brem(M,N,z,beta)
+source("R/utils.r")
+test <- simulate.brem(M,N,z,beta,px)
 lrms <- list(unif = array(1,c(M,N,N)),
-             true = brem.lrm(test$A,N,z,beta,px2),
+             true = brem.lrm(test$A,N,K,z,beta,px),
              base = sbm.lrm(test$A,N,fit0$z,fit0$beta),
-             diag = brem.lrm(test$A,N,fit1$z,fit1$beta,px1),
-             full = brem.lrm(test$A,N,fit2$z,fit2$beta,px2),
-             sing = brem.lrm(test$A,N,fit3$z,fit3$beta,px2))
+             diag = brem.lrm(test$A,N,K,fit1$z,fit1$beta,px),
+             full = brem.lrm(test$A,N,K,fit2$z,fit2$beta,px),
+             sing = brem.lrm(test$A,N,K,fit3$z,fit3$beta,px))
 ps <- lapply(lrms,function(lrm) {
-  precision(ranks(test$A,-lrm,ties.method="random"),top=1:100)
+  recall(ranks(test$A,-lrm,ties.method="random"),top=1:100)
 })
-res <- melt(ps,id.vars=c("k"),measure.vars="precision")
+res <- melt(ps,id.vars=c("k"),measure.vars="recall")
 qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 ggsave("figs/syn/test-recall.pdf",width=5,height=4)
 
 # Compute out of sample log posterior
-lposts <- list(true = brem.lpost(test$A,N,z,beta,px0),
+lposts <- list(true = brem.lpost(test$A,N,K,z,beta,px),
                base = sbm.lpost(test$A,N,K,fit0$z,fit0$beta),
-               diag = brem.lpost(test$A,N,fit1$z,fit1$beta,px2),
-               full = brem.lpost(test$A,N,fit2$z,fit2$beta,px2),
-               sing = brem.lpost(test$A,N,fit3$z,fit3$beta,px2))
+               diag = brem.lpost(test$A,N,K,fit1$z,fit1$beta,px),
+               full = brem.lpost(test$A,N,K,fit2$z,fit2$beta,px),
+               sing = brem.lpost(test$A,N,K,fit3$z,fit3$beta,px))
 lposts
