@@ -6,7 +6,7 @@ require(twitteR)
 require(ROAuth)
 require(RCurl)
 source("pull.fns.r")
-options(cores=1)
+options(cores=4)
 load("heroic.oauth.rdata")
 
 # xml files obtained from google reader by hand by motifying the continuation code repeatedly
@@ -49,20 +49,46 @@ tb <- sort(table(df$user),decreasing=TRUE)[1:K]
 plot(log(tb),type="l")
 chosen <- names(tb)
 
-timelines <- download.timeline(chosen[1:2])
-save(timelines,file="data/rstats.timelines.rdata")
+setup <- expand.grid(page=1:16,user=chosen)
+urls <- sapply(1:nrow(setup), function(i) {
+    paste("https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&count=200&screen_name=",setup$user[i],"&page=",setup$page[i],sep="")
+})
+save(urls,file="data/rstats.urls.rdata")
 
-# Grab messages from a list of tweets in json
-get_messages <- function(tweets) {
-  tmp <- sapply(tweets,function(tweet) {
-    if (!is.null(tweet$to_user_id)) {
-      tweet[c("id_str","created_at","to_user","to_user_id","from_user","from_user_id","text")]
-    }
-  })
-  do.call(rbind,tmp)  
+
+# Try grabbing directed messages among #rstats tweets
+load("data/rstats.tweets.rdata")
+get.mentions <- function(tweet) {
+  w <- strsplit(as.character(tweet)," ")[[1]]
+  fl <- sapply(w,substr,0,1)
+  ix <- which(fl=="@")
+  mentions <- w[ix]
+  mentions <- gsub("@","",mentions)
+  mentions <- gsub(":","",mentions)
+  return(mentions) 
+}
+get.recipient <- function(tweet) {
+  w <- strsplit(as.character(tweet)," ")[[1]][1]
+  if (substr(w,0,1)=="@") {
+    w <- gsub("@","",w)
+    w <- gsub(":","",w)
+  } else {
+    w <- ""
+  }
+  return(w) 
 }
 
+mentions <- lapply(df$text,get.mentions)
+save(mentions,file="data/rstats.mentions.rdata")
 
-pages <- which(sapply(rstats,function(r) length(r$results)) == 0)
-# check query limit
-remaining()
+rec <- lapply(df$text,get.recipient)
+length(rec)
+nrow(df)
+sum(rec!="")  # number messages
+ix <- which(rec!="")
+s <- as.character(df$user[ix])
+r <- unlist(rec[ix])
+datetime <- strptime(df$date[ix],format="%Y-%m-%dT%H:%M:%S")
+A <- data.frame(datetime=datetime,s=s,r=r)
+save(A,file="data/rstats.interaction.rdata")
+

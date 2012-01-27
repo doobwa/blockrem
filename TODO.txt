@@ -20,8 +20,7 @@ Compare submodels for eckmann subset
 Explore performance of approximate likelihood.
 Write up other possibilities for layering additional types of data, DP, or other extensions.
 Try random groups and see if REM still picks out (significantly) different parameters
-
-Download some twitter data
+[done] Download some twitter data
 Consider MIT dataset or classroom dataset.
 Add other statistics other than pshifts
 Initialize with guess at z's, rather than guess at beta.
