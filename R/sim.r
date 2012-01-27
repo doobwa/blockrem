@@ -28,9 +28,13 @@ brem.llk(sim$A,N,K,z,beta,px)
 brem.lpost(sim$A,N,K,z,beta,px)
 llk.true <- brem.lpost(sim$A,N,K,z,beta,px)
 
+# Make sure simulated lrm agrees with brem.lrm
+tmp <- brem.lrm(sim$A,N,K,z,beta,px)
+tmp[which(tmp == -15)] <- -Inf
+all.equal(tmp,sim$lrm)
+
 set.seed(4)
-niter <- 100
-px0 <- px1 <- rep(1,7)
+niter <- 500
 #fit0 <- sbm.mcmc(sim$A,N,1,niter=niter)
 fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z)
 fit1 <- brem.mcmc(sim$A,N,K,px,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
@@ -76,17 +80,19 @@ ggsave("figs/syn/bias.pdf",width=5,height=4)
 # Prediction experiment on test data: precision
 source("R/utils.r")
 test <- simulate.brem(M,N,z,beta,px)
+#test <- sim2(true)
 lrms <- list(unif = array(1,c(M,N,N)),
              true = brem.lrm(test$A,N,K,z,beta,px),
              base = sbm.lrm(test$A,N,fit0$z,fit0$beta),
              diag = brem.lrm(test$A,N,K,fit1$z,fit1$beta,px),
              full = brem.lrm(test$A,N,K,fit2$z,fit2$beta,px),
-             sing = brem.lrm(test$A,N,K,fit3$z,fit3$beta,px))
+             sing = brem.lrm(test$A,N,1,fit3$z,fit3$beta,px))
 ps <- lapply(lrms,function(lrm) {
   recall(ranks(test$A,-lrm,ties.method="random"),top=1:100)
 })
 res <- melt(ps,id.vars=c("k"),measure.vars="recall")
 qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+qplot(k,value,data=subset(res,k<20),geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 ggsave("figs/syn/test-recall.pdf",width=5,height=4)
 
 # Compute out of sample log posterior
@@ -96,3 +102,23 @@ lposts <- list(true = brem.lpost(test$A,N,K,z,beta,px),
                full = brem.lpost(test$A,N,K,fit2$z,fit2$beta,px),
                sing = brem.lpost(test$A,N,K,fit3$z,fit3$beta,px))
 lposts
+
+true = brem.lrm(sim$A,N,K,z,beta,px)
+full = brem.lrm(sim$A,N,K,fit2$z,fit2$beta,px)
+
+sim2 <- function(lrm) {
+  M <- dim(lrm)[1]
+  time <- 0
+  A <- matrix(c(time,1,2),1,3)
+  for (i in 1:(M-1)) {
+    lambda <- lrm[i,,]
+    diag(lambda) <- -Inf
+    cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
+    drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
+    i <- cells[drawcell,1]
+    j <- cells[drawcell,2]
+    time <- time + rexp(1,sum(cells[,3]))
+    A <- rbind(A,c(time,i,j))
+  }
+  return(list(A=A))
+}

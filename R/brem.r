@@ -99,19 +99,12 @@ simulate.brem <- function(M,N,z,beta,px) {
   # start with a event from 1 to 2
   time <- 0
   A <- matrix(c(time,1,2),1,3)
-  lambda <- matrix(beta[1],N,N)
+  lambda <- beta[z,z,1]#matrix(beta[1],N,N)
   lrm <- array(0,c(M,N,N))
-  # s is sufficient statistics immediately following last event
-  for (m in 1:(M-1)) {
+  for (m in 2:M) {
     
-    # Draw the next event
-    cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
-    drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
-    i <- cells[drawcell,1]
-    j <- cells[drawcell,2]
-    time <- time + rexp(1,sum(cells[,3]))
-    A <- rbind(A,c(time,i,j))
-    
+    i <- A[m-1,2]
+    j <- A[m-1,3]
     # Compute changes to lambda
     for (r in 1:N) {
       lambda[r,j] <- computeLambda(r,j,i,j,beta[z[r],z[j],],px)
@@ -125,6 +118,14 @@ simulate.brem <- function(M,N,z,beta,px) {
     for (r in 1:N) {
       lambda[r,i] <- computeLambda(r,i,i,j,beta[z[r],z[i],],px)
     }
+    
+    # Draw the next event
+    cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
+    drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
+    i <- cells[drawcell,1]
+    j <- cells[drawcell,2]
+    time <- time + rexp(1,sum(cells[,3]))
+    A <- rbind(A,c(time,i,j))
     
     diag(lambda) <- -Inf
     lrm[m,,] <- lambda
@@ -168,11 +169,12 @@ brem.lrm <- function(A,N,K,z,beta,px) {
   zs <- lapply(1:K,function(k) which(z==k))
   for (k1 in 1:K) {
     for (k2 in 1:K) {
-      ix <- which(z1 == k1 & z2 == k2)
-      if (length(ix) > 0 & length(zs[[k1]]) > 0 & length(zs[[k2]]) > 0) {
-        B <- A[ix,]
-        lrm[ix,,] <- lrm[ix,,] + drem.lrm(B,N,beta[k1,k2,],zs[[k1]],zs[[k2]],px)
-      }
+      #ix <- which(z1 == k1 & z2 == k2)
+      #if (length(ix) > 0 & length(zs[[k1]]) > 0 & length(zs[[k2]]) > 0) {
+        #B <- A[ix,]
+        #lrm[ix,,] <- lrm[ix,,] + drem.lrm(B,N,beta[k1,k2,],zs[[k1]],zs[[k2]],px)
+      #}
+      lrm <- lrm + drem.lrm(A,N,beta[k1,k2,],zs[[k1]],zs[[k2]],px)
     }
   }
   lrm
