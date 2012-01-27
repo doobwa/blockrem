@@ -6,44 +6,30 @@ fx <- cxxfunction(,"",includes=
 int threeDIndex(int j, int k, int l, int J, int K, int L) { 
   return l*J*K + k*J + j;
 }
-int threeDIndexOld(int j, int k, int l, int J, int K, int L) { 
-    return j*K*L + k*L + l;
-}
-Rcpp::IntegerVector testThreeDIndex() {
-  Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(Dimension(3,4,5));
-  mp[threeDIndex(1,1,1,3,4,5)] = 1;
-  return mp;
-}
-
-int testIntConv(Rcpp::IntegerVector ps) {
-  int r;
-  if (ps[0] == 1) {
-    r = 1;
-  } else {
-    r = 2;
+// http://stackoverflow.com/questions/311703/algorithm-for-sampling-without-replacement
+Rcpp::IntegerVector sampleWithoutReplacement
+(
+  Rcpp::IntegerVector y,    // size of set sampling from
+  int sampleSize
+  )
+{
+  RNGScope scope;
+  // Use Knuths variable names
+  int& n = sampleSize;
+  int N = y.size();
+  Rcpp::IntegerVector samples(n);
+  int t = 0; // total input records dealt with
+  int m = 0; // number of items selected so far
+  while (m < n) {
+    Rcpp::NumericVector u = runif(1);
+    if ( (N - t)*u[0] >= n - m ) {
+      t++;
+    } else {
+      samples[m] = y[t];
+      t++; m++;
+    }
   }
-  int k = ps[ps[0]];
-  return k;
-}
-double computeLambdaOld(int i, int j, int a, int b, Rcpp::NumericVector beta) {
-  double lam = 0;
-    lam += beta[0];
-    if (i!=a & i==b & j==a & j!=b) { // ab-ba
-      lam += beta[1];
-    }
-    if (i!=a & i==b & j!=a & j!=b) { // ab-by
-      lam += beta[2];
-    }
-    if (i!=a & i!=b & j==a & j!=b) { // ab-xa
-      lam += beta[3];
-    }
-    if (i!=a & i!=b & j!=a & j==b) { // ab-xb
-      lam += beta[4];
-    }
-    if (i==a & i!=b & j!=a & j!=b) { // ab-ay
-      lam += beta[5];
-    }
-  return lam;
+  return samples;
 }
 double computeLambda(int i, int j, int a, int b, Rcpp::NumericVector beta,Rcpp::IntegerVector ps) {
   double lam = 0;
@@ -73,9 +59,9 @@ double computeLambda(int i, int j, int a, int b, Rcpp::NumericVector beta,Rcpp::
   //}
   return lam;
 }
-// All senders, receivers must be 0-indexed.
+// All senders, receivers (ix,jx) must be 0-indexed.
 // Current "weirdness": Assumes all events "occur" at time 0.
-Rcpp::List llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M, int P){
+double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M, int P){
   // last event id that lam_ij changed
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N); 
 
@@ -113,8 +99,58 @@ Rcpp::List llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::Intege
       mp(r,j) = m; 
     }
   }
-  return Rcpp::List::create(Rcpp::Named( "llk" ) = llk);
+  return llk;
 }
+
+// Approximate likelihood
+// S: sample size (where S<N)
+// TODO: Consider the case when ix and jx are different sizes and the ramifications of choosing S.
+double allk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M, int P, int S){
+  // last event id that lam_ij changed
+  Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N); 
+
+  double llk,lam,den = 0;
+  int a,b,i,j,r;
+  Rcpp::IntegerVector ixt, jxt; // Subsampled indices
+
+  for (int m = 1; m<M; m++) {
+
+    i = sen[m];
+    j = rec[m];
+    llk += computeLambda(i,j,sen[mp(i,j)],rec[mp(i,j)],beta,px);
+
+    // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
+    den = 0;
+    jxt = sampleWithoutReplacement(jx,S);
+    for (int v = 0; v < jxt.size(); v++) {
+      r = jxt[v];
+      // Sender/receiver of last event involving i or r
+      a = sen[mp(i,r)];
+      b = rec[mp(i,r)];
+      lam = computeLambda(i,r,a,b,beta,px);
+      den += (times[m] - times[mp(i,r)]) * exp(lam);
+      lam = computeLambda(r,i,a,b,beta,px);
+      den += (times[m] - times[mp(r,i)]) * exp(lam);
+      mp(i,r) = m;  // update mp
+      mp(r,i) = m;
+    }
+    ixt = sampleWithoutReplacement(ix,S);
+    for (int v = 0; v < ixt.size(); v++) {
+      r = ixt[v];
+      a = sen[mp(j,r)];
+      b = rec[mp(j,r)];
+      lam = computeLambda(j,r,a,b,beta,px);
+      den += (times[m] - times[mp(j,r)]) * exp(lam);
+      lam = computeLambda(r,j,a,b,beta,px);
+      den += (times[m] - times[mp(r,j)]) * exp(lam);
+      mp(j,r) = m;  // update mp
+      mp(r,j) = m; 
+    }
+    llk -= (N/S) * den;
+  }
+  return llk;
+}
+
 
 // Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
 Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M, int P){
@@ -145,11 +181,10 @@ Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
 }
 RCPP_MODULE(drem){
   function( "llk", &llk ) ;
+  function( "allk", &allk ) ;
   function( "lrm", &lrm ) ;
-  function( "testIntConv", &testIntConv );
   function( "computeLambda", &computeLambda);
-  function( "computeLambdaOld", &computeLambdaOld ) ;
-  function( "testThreeDIndex", &testThreeDIndex ) ;
+  function( "sampleWithoutReplacement", &sampleWithoutReplacement);
 }
 ', plugin="Rcpp")
 

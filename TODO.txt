@@ -16,12 +16,16 @@ Week 2:
 [done] Setup prediction llk experiment and ranking code. Handle case where we have draws from posterior.
 [done] Setup experiment comparing submodels on synthetic data: k=1 and just intercept, k=1, beta for diag and gamma for off diag, and full model.
 Debug issues with whether to include intercept term or not. (Understand collinearity/identifiability issue.)
-Compare submodels for eckmann subset
+Noncollapsing clusters: try initializing beta centered on the mean overall rate.
 Explore performance of approximate likelihood.
+Implement EM for baseline model.
+Compare submodels for eckmann subset.
 Write up other possibilities for layering additional types of data, DP, or other extensions.
+
 Try random groups and see if REM still picks out (significantly) different parameters
 [done] Download some twitter data
 Consider MIT dataset or classroom dataset.
+Clean up interfaces to Rcpp code.
 Add other statistics other than pshifts
 Initialize with guess at z's, rather than guess at beta.
 Research maximization of beta rather than sampling.

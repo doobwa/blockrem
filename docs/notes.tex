@@ -121,7 +121,7 @@ $z_i | A, z_{-i} \propto p(A|z,\beta) p(z_i)$
 \end{enumerate}
 
 To perform Gibbs sampling for a given cluster assignment $z_i$, we need to compute the likelihood for each possible assignment of $z_i$. 
-This operation can be done in parallel, and only the portion of the likelihood involving the newly assigned cluster  need to be recomputed.  Computing the likelihood is then $O(T \cdot P \cdot 4N)$ (though this computation is split into $K^2$ pieces) and must computed $N \cdot K$ times per Gibbs iteration.
+This operation can be done in parallel, and only the portion of the likelihood involving the newly assigned cluster  need to be recomputed.  Computing the likelihood is then $O(T \cdot P \cdot 4N)$ (though this computation is split into $K^2$ pieces) and must computed $N \cdot K$ times per Gibbs iteration.  The most straightforward implementation has space complexity $O(N^2)$ since we must keep track of $\tau_{i,j,m}$ for each $(i,j)$ at a given $m$.
 
 \subsection{Approximate likelihood methods}
 

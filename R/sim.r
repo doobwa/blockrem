@@ -1,8 +1,8 @@
 library(releventhier)
 library(ggplot2)
-source("rem.cpp.r")
-source("fns.r")
-source("sbm.r")
+source("R/rem.cpp.r")
+source("R/fns.r")
+source("R/sbm.r")
 N <- 10
 K <- 2
 P <- 7
@@ -20,7 +20,6 @@ sim <- simulate.brem(M,N,z,beta)
 mat <- table(sim$A[,2],sim$A[,3])
 mat <- melt(as.matrix(mat))
 colnames(mat) <- c("X1","X2","value")
-require(releventhier)
 plotmat(mat)
 ggsave("figs/syn/mat.pdf",width=3,height=3)
 
@@ -30,13 +29,14 @@ brem.llk(sim$A,N,z,beta,px)
 brem.lpost(sim$A,N,z,beta,px)
 
 set.seed(4)
-niter <- 1000
+niter <- 200
 px0 <- px1 <- rep(1,7)
 px2 <- c(0,1,1,1,1,1,1)
 fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z)
 fit1 <- brem.mcmc(sim$A,N,K,P,px,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
 fit2 <- brem.mcmc(sim$A,N,K,P,px,model.type="full",niter=niter,z=z,gibbs=FALSE)
 fit3 <- brem.mcmc(sim$A,N,1,P,px,model.type="full",niter=niter,gibbs=FALSE)
+save(fit0,fit1,fit2,fit3,file="data/syn-fits.rdata")
 
 # Compare llk and lpost of true and fit
 fit <- fit2
@@ -73,7 +73,7 @@ ggsave("figs/syn/bias.pdf",width=5,height=4)
 library(releventhier)
 test <- simulate.brem(M,N,z,beta)
 lrms <- list(unif = array(1,c(M,N,N)),
-             true = brem.lrm(test$A,N,z,beta,px0),
+             true = brem.lrm(test$A,N,z,beta,px2),
              base = sbm.lrm(test$A,N,fit0$z,fit0$beta),
              diag = brem.lrm(test$A,N,fit1$z,fit1$beta,px1),
              full = brem.lrm(test$A,N,fit2$z,fit2$beta,px2),

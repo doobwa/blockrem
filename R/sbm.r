@@ -23,7 +23,7 @@ sbm.lrm <- function(A,N,z,beta) {
 }
 sbm.mcmc <- function(A,N,K,niter=100,z=NULL,mcmc.sd=.1) {
   if (is.null(z)) z <- sample(1:K,N,replace=TRUE)
-  beta <- matrix(rnorm(K^2),K,K)
+  beta <- matrix(rnorm(K^2,-5,1),K,K)
   llks <- rep(0,niter)
   current <- beta
   for (iter in 1:niter) {
@@ -39,15 +39,15 @@ sbm.mcmc <- function(A,N,K,niter=100,z=NULL,mcmc.sd=.1) {
       }
     }
     
-#     for (i in 1:N) {
-#       ps <- rep(0,K)
-#       for (k in 1:K) {
-#         z[i] <- k
-#         ps[k] <- sbm.lpost(A,N,K,z,current)
-#       }
-#       ps <- exp(ps - max(ps))
-#       z[i] <- sample(1:K,size=1,prob=ps)
-#     }
+    for (i in 1:N) {
+      ps <- rep(0,K)
+      for (k in 1:K) {
+        z[i] <- k
+        ps[k] <- sbm.lpost(A,N,K,z,current)
+      }
+      ps <- exp(ps - max(ps))
+      z[i] <- sample(1:K,size=1,prob=ps)
+    }
 
     llks[iter] <- olp
     cat("iter",iter,":",llks[iter],"z:",table(z),"\n")

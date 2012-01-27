@@ -147,7 +147,7 @@ drem.llk <- function(A,N,beta,ix,jx,px) {
   rec <- A[,3]-1
   ix <- ix-1
   jx <- jx-1
-  drem$llk(beta,times,sen,rec,ix,jx,px,N,M,length(P))$llk
+  drem$llk(beta,times,sen,rec,ix,jx,px,N,M,length(P))
 }
 drem.mle <- function(A,N,beta,ix,jx,px) {
   fn <- function(par) {
