@@ -65,9 +65,12 @@ double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVec
   // last event id that lam_ij changed
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N); 
 
-  double llk = 0;
   int a,b,i,j,r;
   double lam;
+
+  double llk = 0.0;  // initial event assumed uniform across risk set
+  Rcpp::NumericVector llks(M);
+  llks[0] = llk;
   for (int m = 1; m<M; m++) {
 
     i = sen[m];
@@ -77,34 +80,41 @@ double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVec
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
     for (int v = 0; v < jx.size(); v++) {
       r = jx[v];
-      // Sender/receiver of last event involving i or r
-      a = sen[mp(i,r)];
-      b = rec[mp(i,r)];
-      lam = computeLambda(i,r,a,b,beta,px);
-      llk -= (times[m] - times[mp(i,r)]) * exp(lam);
-      lam = computeLambda(r,i,a,b,beta,px);
-      llk -= (times[m] - times[mp(r,i)]) * exp(lam);
-      mp(i,r) = m;  // update mp
-      mp(r,i) = m;
+      if (r != i) {
+        // Sender/receiver of last event involving i or r
+        a = sen[mp(i,r)];
+        b = rec[mp(i,r)];
+        lam = computeLambda(i,r,a,b,beta,px);
+        llk -= (times[m] - times[mp(i,r)]) * exp(lam);
+        lam = computeLambda(r,i,a,b,beta,px);
+        llk -= (times[m] - times[mp(r,i)]) * exp(lam);
+        mp(i,r) = m;  // update mp
+        mp(r,i) = m;
+      }
     }
     for (int v = 0; v < ix.size(); v++) {
       r = ix[v];
-      a = sen[mp(j,r)];
-      b = rec[mp(j,r)];
-      lam = computeLambda(j,r,a,b,beta,px);
-      llk -= (times[m] - times[mp(j,r)]) * exp(lam);
-      lam = computeLambda(r,j,a,b,beta,px);
-      llk -= (times[m] - times[mp(r,j)]) * exp(lam);
-      mp(j,r) = m;  // update mp
-      mp(r,j) = m; 
+      if (r != j) {
+        a = sen[mp(j,r)];
+        b = rec[mp(j,r)];
+        lam = computeLambda(j,r,a,b,beta,px);
+        llk -= (times[m] - times[mp(j,r)]) * exp(lam);
+        lam = computeLambda(r,j,a,b,beta,px);
+        llk -= (times[m] - times[mp(r,j)]) * exp(lam);
+        mp(j,r) = m;  // update mp
+        mp(r,j) = m;
+      }
     }
+    llks[m] = llk;
   }
   return llk;
 }
 
 // Approximate likelihood
 // S: sample size (where S<N)
+// TODO: Fix over counting when v is equal to i and j
 // TODO: Consider the case when ix and jx are different sizes and the ramifications of choosing S.
+
 double allk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M, int S){
   // last event id that lam_ij changed
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N); 
@@ -120,31 +130,35 @@ double allk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVe
     llk += computeLambda(i,j,sen[mp(i,j)],rec[mp(i,j)],beta,px);
 
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
-    den = 0;
+    den = 0.0;
     jxt = sampleWithoutReplacement(jx,S);
     for (int v = 0; v < jxt.size(); v++) {
       r = jxt[v];
-      // Sender/receiver of last event involving i or r
-      a = sen[mp(i,r)];
-      b = rec[mp(i,r)];
-      lam = computeLambda(i,r,a,b,beta,px);
-      den += (times[m] - times[mp(i,r)]) * exp(lam);
-      lam = computeLambda(r,i,a,b,beta,px);
-      den += (times[m] - times[mp(r,i)]) * exp(lam);
-      mp(i,r) = m;  // update mp
-      mp(r,i) = m;
+      if (r != i) {
+        // Sender/receiver of last event involving i or r
+        a = sen[mp(i,r)];
+        b = rec[mp(i,r)];
+        lam = computeLambda(i,r,a,b,beta,px);
+        den += (times[m] - times[mp(i,r)]) * exp(lam);
+        lam = computeLambda(r,i,a,b,beta,px);
+        den += (times[m] - times[mp(r,i)]) * exp(lam);
+        mp(i,r) = m;  // update mp
+        mp(r,i) = m;
+      }
     }
     ixt = sampleWithoutReplacement(ix,S);
     for (int v = 0; v < ixt.size(); v++) {
       r = ixt[v];
-      a = sen[mp(j,r)];
-      b = rec[mp(j,r)];
-      lam = computeLambda(j,r,a,b,beta,px);
-      den += (times[m] - times[mp(j,r)]) * exp(lam);
-      lam = computeLambda(r,j,a,b,beta,px);
-      den += (times[m] - times[mp(r,j)]) * exp(lam);
-      mp(j,r) = m;  // update mp
-      mp(r,j) = m; 
+      if (r != j) {   
+        a = sen[mp(j,r)];
+        b = rec[mp(j,r)];
+        lam = computeLambda(j,r,a,b,beta,px);
+        den += (times[m] - times[mp(j,r)]) * exp(lam);
+        lam = computeLambda(r,j,a,b,beta,px);
+        den += (times[m] - times[mp(r,j)]) * exp(lam);
+        mp(j,r) = m;  // update mp
+        mp(r,j) = m;
+      }
     }
     llk -= (N/S) * den;
   }
@@ -169,9 +183,9 @@ Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
         b = rec[mp(i,j)];
         // compute rate for lambda_ij(t_m)
         lrm[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,a,b,beta,px);
-        if (i==j) {
-          lrm[threeDIndex(m,i,j,M,N,N)] = -15;
-        }
+        //if (i==j) {
+        //  lrm[threeDIndex(m,i,j,M,N,N)] = -15;
+        //}
       }
     }
     // save which lambdas changed because of (i,j) occurring at time m
@@ -184,10 +198,33 @@ Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
   }
   return lrm;
 }
+// Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
+double llk2(Rcpp::NumericVector lrm,Rcpp::NumericVector times,Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, int N, int M){
+  double llk = 0;
+  double den;
+  double delta = 0;
+  int i,j;
+  llk = lrm[threeDIndex(0,sen[0],rec[0],M,N,N)];
+  for (int m = 1; m < M; m++) {
+    den = 0.0;
+    for (int i = 0; i < N; i++) {
+      for (int j = 0; j < N; j++) {
+        if (i != j) {
+          den += exp(lrm[threeDIndex(m,i,j,M,N,N)]);
+        }
+      }
+    }
+    llk += lrm[threeDIndex(m,sen[m],rec[m],M,N,N)];
+    delta = times[m] - times[m-1];
+    llk -= delta * den;
+  }
+  return llk;
+}
 RCPP_MODULE(drem){
   function( "llk", &llk ) ;
   function( "allk", &allk ) ;
   function( "lrm", &lrm ) ;
+  function( "llk2", &llk2 ) ;
   function( "computeLambda", &computeLambda);
   function( "sampleWithoutReplacement", &sampleWithoutReplacement);
 }

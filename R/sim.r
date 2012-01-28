@@ -79,8 +79,8 @@ ggsave("figs/syn/bias.pdf",width=5,height=4)
 
 # Prediction experiment on test data: precision
 source("R/utils.r")
+M <- 10000
 test <- simulate.brem(M,N,z,beta,px)
-#test <- sim2(true)
 lrms <- list(unif = array(1,c(M,N,N)),
              true = brem.lrm(test$A,N,K,z,beta,px),
              base = sbm.lrm(test$A,N,fit0$z,fit0$beta),
@@ -102,6 +102,8 @@ lposts <- list(true = brem.lpost(test$A,N,K,z,beta,px),
                full = brem.lpost(test$A,N,K,fit2$z,fit2$beta,px),
                sing = brem.lpost(test$A,N,K,fit3$z,fit3$beta,px))
 lposts
+
+
 
 true = brem.lrm(sim$A,N,K,z,beta,px)
 full = brem.lrm(sim$A,N,K,fit2$z,fit2$beta,px)
