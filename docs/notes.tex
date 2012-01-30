@@ -46,7 +46,8 @@ Consider a nonhomogeneous Poisson process with  intensity $\lambda(t)$ that is p
 % &= \prod_{m=1}^M \lambda_{i_m}(t_m|\cdot) \prod_{i \in \mathcal{R}} \prod_{v \in D_{i}} \exp\left\{ - (b_v - a_v) \lambda_{i}(b_v | \cdot ) \right\}
 % \end{align}
 
-It is straightforward extend this to marked point processes where each event contains additional information.  In the context of relational events occurring among $N$ nodes, for example, we let the \emph{risk set} $\mathcal{R}$ of possible events include all allowed dyads.  Let each dyad $(i,j) \in \mathcal{R}$ have an intensity function $\lambda_{ij}(t|\cdot)$ that is piecewise constant.  As shown in Figure \ref{fig:example}, we assume each intensity function $\lambda_{ij}(t)$ may only change following an event involving either $i$ or $j$.  Let $\tau_{i,j,m}$ be the time that $\lambda_{i,j}$ changed before the $m$th event and let $\mathcal{R}_{i,j}$ be the set of dyads involving either $i$ or $j$.  % Letting $ \mathcal{R}_{k_1,k_2}$ be the set of events that can occur from $k_1$ to $k_2$ and  $\boldsymbol{\tau}_{i,j}$ is the set of knots where the respective intensities may change, we may write the likelihood as follows:
+It is straightforward extend this to marked point processes where each event contains additional information.  In the context of relational events occurring among $N$ nodes, for example, we let the \emph{risk set} $\mathcal{R}$ of possible events include all allowed dyads.  Let each dyad $(i,j) \in \mathcal{R}$ have an intensity function $\lambda_{ij}(t|\cdot)$ that is piecewise constant.  As shown in Figure \ref{fig:example}, we assume each intensity function $\lambda_{ij}(t)$ may only change following an event involving either $i$ or $j$.  Let $\tau_{i,j,m}$ be the time that $\lambda_{i,j}$ changed before the $m$th event and let $\mathcal{R}_{i,j}$ be the set of dyads involving either $i$ or $j$.  [TODO: We further assume that all intensity functions change at times $t=0$ and $t=t_M$.  Also, assume the first event is drawn uniformly from the risk set.]
+% Letting $ \mathcal{R}_{k_1,k_2}$ be the set of events that can occur from $k_1$ to $k_2$ and  $\boldsymbol{\tau}_{i,j}$ is the set of knots where the respective intensities may change, we may write the likelihood as follows:
 % \begin{align}
 % \mathcal{L}(\mathcal{A}|\theta) %&= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}} \prod_{k=1}^{|\boldsymbol{\tau}_{ij}|} \exp\{ - (\tau_{i,j,k} - \tau_{i,j,k-1}) \lambda_{ij}(\tau_{i,j,k} | \cdot) \} \\
 % &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{k_1=1}^K \prod_{k_2=1}^K \prod_{(i,j) \in \mathcal{R}_{k_1,k_2}} \prod_{r=1}^{|\boldsymbol{\tau}_{i,j}|} \exp\{ - (\tau_{k_1,k_2,r} - \tau_{k_1,k_2,r-1}) \lambda_{ij}(\tau_{i,j,r} | \cdot) \} 
@@ -102,7 +103,9 @@ where $ \lambda_{ij} = \exp\{\boldsymbol{\beta}_{z_i,z_j}\}$.  Each block in thi
 Another important model is one where within group interactions are governed via a set of parameters while all between group interactions are governed by a different set.  In this case $\boldsymbol{\beta}_{k1,k2} = \boldsymbol{\gamma}$ for all $k1 \ne k2$. 
 
 \subsection{Extensions}
-TODO: Explain difficulties in doing a mixed membership model.  As in the mixed-membership stochastic blockmodel \cite{Airoldi2008,Shafiei2010}, one could assume that each node has vector of probabilities, $\boldsymbol{\pi}_i$, for being assigned to each of the latent clusters.  In that case $z_i \sim \mbox{Categorical}(\boldsymbol{\pi}_i)$ for each node $i$ and $j$, and the ties are modeled via a stochastic blockmodel $\mbox{logit} p(y_{ij}) = \eta_{z_i,z_j}$.  One could extend our current framework by assuming that after the $m$th event, $i_m$ and $j_m$ redraw their latent class.
+TODO: Explain difficulties in doing a mixed membership model.  As in the mixed-membership stochastic blockmodel \cite{Airoldi2008,Shafiei2010}, one could assume that each node has vector of probabilities, $\boldsymbol{\pi}_i$, for being assigned to each of the latent clusters.  In that case $z_i \sim \mbox{Categorical}(\boldsymbol{\pi}_i)$ for each node $i$ and $j$, and the ties are modeled via a stochastic blockmodel $\mbox{logit} p(y_{ij}) = \eta_{z_i,z_j}$.  One could extend our current framework by assuming that after the $m$th event, $i_m$ and $j_m$ redraw their latent class.  
+
+Another idea: $\log \lambda_{ij} = (\pi_i \cdot \pi_j) \eta s(t,i,j)$
 
 TODO: Discuss other variants, e.g. HMM that guides which latent class over time?  Or a DP instead of fixed K?
 
@@ -228,6 +231,8 @@ where $n_{ab} = \sum_m I(z_{i_m}=a,z_{j_m}=b)$, $n_a = \sum_{i=1}^N I(z_i=a)$.
 The loglikelihood is $$\ell(A|\lambda) = \sum_{a=1}^K \sum_{b=1}^K n_{ab} \log \gamma_{ab} - t_M n_a n_b \gamma_{ab}$$
 and so $\hat{\gamma}_{ab} = \frac{n_{ab}}{t_Mn_an_b}$.
 
+
+I do not believe it is possible to perform EM for a model where we have the more general linear predictor for the intensity function.  Since the assignment of one node depends on the assignments of the other nodes, we suffer combinatorial explosion.
 \bibliographystyle{plain}
 \bibliography{refs}
 
