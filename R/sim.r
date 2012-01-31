@@ -63,23 +63,16 @@ set.seed(4)
 niter <- 300
 px <- rep(1,11)
 px[7:11] <- 0
-#fit0 <- sbm.mcmc(sim$A,N,1,niter=niter)
-fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z)
+fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z,gibbs=FALSE)
 fit1 <- brem.mcmc(sim$A,N,K,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
 fit2 <- brem.mcmc(sim$A,N,K,model.type="full",niter=niter,z=z,gibbs=FALSE)
-fit3 <- brem.mcmc(sim$A,N,1,px,model.type="full",niter=niter,gibbs=FALSE)
-save(fit0,fit1,fit2,fit3,file="data/syn-fits.rdata")
+fit3 <- brem.mcmc(sim$A,N,1,model.type="full",niter=niter,gibbs=FALSE,mcmc.sd=.05)
+save(sim,true.lpost,fit0,fit1,fit2,fit3,file="data/syn-fits.rdata")
 
 llks <- melt(list(base=fit0$llks,diag=fit1$llks,full=fit2$llks,sing=fit3$llks))
 llks$iter <- 1:niter
-qplot(iter,value,data=subset(llks,iter>50),geom="line",colour=factor(L1)) + geom_abline(intercept=true.lpost,slope=0) + theme_bw()
-
-# Compare llk and lpost of true and fit
-fit <- fit3
-brem.llk(sim$A,N,K,z,beta,px)
-brem.llk(sim$A,N,K,fit$z,fit$beta,px)
-brem.lpost(sim$A,N,K,z,beta,px)
-brem.lpost(sim$A,N,K,fit$z,fit$beta,px)
+qplot(iter,value,data=subset(llks,iter>50),geom="line",colour=factor(L1)) + geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
+ggsave("figs/syn/logposterior.pdf",height=4,width=5)
 
 pdf("figs/syn/llk.pdf",width=4,height=4)
 plot(fit$llk[1:300],type="l",ylab="loglikelihood",xlab="iteration")
@@ -96,10 +89,10 @@ ggsave("figs/syn/counts.pdf",width=6,height=4)
 # Look at distance between true and estimated parameter vectors
 dist <- function(x,y) sqrt(sum((x-y)^2))
 ds <- sapply(1:niter,function(i) {
-  c(dist(beta[1,1,2:6],fit$param[i,1,1,2:6] - beta[1,1,1]),
-    dist(beta[2,2,2:6],fit$param[i,2,2,2:6] - beta[2,2,1]),
-    dist(beta[2,1,2:6],fit$param[i,2,1,2:6] - beta[2,1,1]),
-    dist(beta[1,2,2:6],fit$param[i,1,2,2:6] - beta[1,2,1]))
+  c(dist(beta[2:6,1,1],fit$param[i,1,1,2:6]),# - beta[1,1,1]),
+    dist(beta[2:6,2,2],fit$param[i,2,2,2:6]),#, - beta[1,2,2]),
+    dist(beta[2:6,2,1],fit$param[i,2,1,2:6]),#, - beta[1,2,1]),
+    dist(beta[2:6,1,2],fit$param[i,1,2,2:6]))# - beta[1,1,2]))
 })
 ds <- melt(t(ds))
 qplot(X1,value,data=ds,geom="line",colour=factor(X2)) + theme_bw() + labs(x="iteration",colour="block",y="Euclidean distance to truth")
@@ -107,43 +100,36 @@ ggsave("figs/syn/bias.pdf",width=5,height=4)
 
 # Prediction experiment on test data: precision
 source("R/utils.r")
-M <- 3000
-test <- simulate.brem(M,N,z,beta,px)
+M <- 5000
+test <- simulate.brem(M,N,z,beta)
 table(test$A[,2],test$A[,3])
 lrms <- list(unif = array(1,c(M,N,N)),
-             true = brem.lrm(test$A,N,K,z,beta,px),
+             true = brem.lrm(test$A,N,z,beta),
              base = sbm.lrm(test$A,N,fit0$z,fit0$beta),
-             diag = brem.lrm(test$A,N,K,fit1$z,fit1$beta,px),
-             full = brem.lrm(test$A,N,K,fit2$z,fit2$beta,px),
-             sing = brem.lrm(test$A,N,1,fit3$z,fit3$beta,px))
+             diag = brem.lrm(test$A,N,fit1$z,fit1$beta),
+             full = brem.lrm(test$A,N,fit2$z,fit2$beta),
+             sing = brem.lrm(test$A,N,fit3$z,fit3$beta))
 ps <- lapply(lrms,function(lrm) {
   recall(ranks(test$A,-lrm,ties.method="random"),top=1:100)
 })
 res <- melt(ps,id.vars=c("k"),measure.vars="recall")
 qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
-qplot(k,value,data=subset(res,k<20),geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+qplot(k,value,data=subset(res,k<50),geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 ggsave("figs/syn/test-recall.pdf",width=5,height=4)
 
 # Compute out of sample log posterior
-lposts <- list(true = brem.lpost(test$A,N,K,z,beta,px),
+lposts <- list(true = brem.lpost(test$A,N,K,z,beta),
                base = sbm.lpost(test$A,N,K,fit0$z,fit0$beta),
-               diag = brem.lpost(test$A,N,K,fit1$z,fit1$beta,px),
-               full = brem.lpost(test$A,N,K,fit2$z,fit2$beta,px),
-               sing = brem.lpost(test$A,N,K,fit3$z,fit3$beta,px))
+               diag = brem.lpost(test$A,N,K,fit1$z,fit1$beta),
+               full = brem.lpost(test$A,N,K,fit2$z,fit2$beta),
+               sing = brem.lpost(test$A,N,K,fit3$z,fit3$beta))
 unlist(lposts)
 
 
-llks <- list(true = brem.llk(test$A,N,K,z,beta,px),
-               base = sbm.llk(test$A,N,K,fit0$z,fit0$beta),
-               diag = brem.llk(test$A,N,K,fit1$z,fit1$beta,px),
-               full = brem.llk(test$A,N,K,fit2$z,fit2$beta,px),
-               sing = brem.llk(test$A,N,K,fit3$z,fit3$beta,px))
-true = brem.lrm(sim$A,N,K,z,beta,px)
-full = brem.lrm(sim$A,N,K,fit2$z,fit2$beta,px)
-
 # Look at bias of estimates
-plot(full[,3,8],type="l",ylim=c(-2,2))
-lines(true[,3,8])
-
-b <- melt(list(beta,fit$beta))
-qplot(X3,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X1~X2)
+true <- brem.lrm(sim$A,N,z,beta)
+full <- brem.lrm(sim$A,N,fit2$z,fit2$beta)
+dimnames(beta) <- NULL
+b <- melt(list(beta,fit2$beta))
+qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) + theme_bw()
+ggsave("figs/syn/bias.pdf",width=5,height=5)

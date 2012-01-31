@@ -90,7 +90,7 @@ brem.mcmc <- function(A,N,K,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NUL
     
     # For each effect sample via MH
     first.iter <- (iter==1)
-    current <- brem.mh(A,N,K,P,z,current,model.type,mcmc.sd,first.iter)
+    current <- brem.mh(A,N,K,P,z,current,model.type,mcmc.sd,first.iter,px)
     
     # Sample empty cluster parameters from prior
 #     for (k in 1:K) {
@@ -121,42 +121,50 @@ brem.mcmc <- function(A,N,K,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NUL
   }
   return(list(z=z,llks=llks,param=param,beta=current))
 }
-brem.mh <- function(A,N,K,P,z,current,model.type="baserates",mcmc.sd=.1,first.iter=FALSE) {
+brem.mh <- function(A,N,K,P,z,current,model.type="baserates",mcmc.sd=.1,first.iter=FALSE,px=c(1,1,1,1,1,1,1,0,0,0,0)) {
   if (first.iter) {
     olp <- -Inf
   }  else {
     olp <- brem.lpost(A,N,K,z,current)
   }
   
-  px <- c(1,1,1,1,1,1,1,0,0,0,0)  # skip degree effects
   cand <- current
-#   if (model.type=="baserates") {
-#     cand[["intercept"]] <- cand[["intercept"]] + rnorm(K^2,0,mcmc.sd)
-#     #cand[,,-1] <- 0
-#     clp <- brem.lpost(A,N,K,z,cand)
-#     if (clp - olp > log(runif(1))) {
-#       current <- cand
-#       olp <- clp
-#     }
-#   }
-#   if (model.type=="diag.rem") {
-#     a <- cand[1,1,] + rnorm(P,0,mcmc.sd)
-#     b <- cand[1,2,] + rnorm(P,0,mcmc.sd)
-#     for (k1 in 1:K) {
-#       for (k2 in 1:K) {
-#         if (k1==k2) {
-#           cand[k1,k2,] <- a
-#         } else {
-#           cand[k1,k2,] <- b
-#         }
-#       }
-#     }
-#     clp <- brem.lpost(A,N,K,z,cand)
-#     if (clp - olp > log(runif(1))) {
-#       current <- cand
-#       olp <- clp
-#     }
-#   }
+  if (model.type=="baserates") {
+    cand[1,,] <- cand[1,,] + rnorm(K^2,0,mcmc.sd)
+    cand[-1,,] <- 0
+    clp <- brem.lpost(A,N,K,z,cand)
+    if (clp - olp > log(runif(1))) {
+      current <- cand
+      olp <- clp
+    }
+  }
+  if (model.type=="diag.rem") {
+    for (p in which(px==1)) {
+      
+      # Sample new values for diagonal element (a) and all off diagonal (b)
+      cand <- current
+      a <- cand[p,1,1] + rnorm(1,0,mcmc.sd)  
+      b <- cand[p,1,2] + rnorm(1,0,mcmc.sd) 
+      
+      # Place these values in the parameter array
+      for (k1 in 1:K) {
+        for (k2 in 1:K) {
+          if (k1==k2) {
+            cand[p,k1,k2] <- a
+          } else {
+            cand[p,k1,k2] <- b
+          }
+        }
+      }
+      
+      # MH sampler
+      clp <- brem.lpost(A,N,K,z,cand)
+      if (clp - olp > log(runif(1))) {
+        current <- cand
+        olp <- clp
+      }
+    }
+  }
   if (model.type=="full") {
     cand <- current
     for (p in which(px==1)) {
