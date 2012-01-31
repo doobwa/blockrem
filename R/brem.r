@@ -47,19 +47,23 @@ simulate.brem <- function(M,N,z,beta) {
 
 brem.lrm <- function(A,N,z,beta) {
   M <- nrow(A)
+  P <- dim(beta)[1]
+  K <- dim(beta)[2]
   times <- A[,1]
   sen <- A[,2]-1
   rec <- A[,3]-1
   z <- z - 1
-  brem$lrm(beta,times,sen,rec,z,N,M)
+  brem$lrm(beta,times,sen,rec,z,N,M,K,P)
 }
 brem.llk <- function(A,N,z,beta) {
   M <- nrow(A)
+  P <- dim(beta)[1]
+  K <- dim(beta)[2]
   times <- A[,1]
   sen <- A[,2]-1
   rec <- A[,3]-1
   z <- z-1
-  lrm <- brem$lrm(beta,times,sen,rec,z,N,M)
+  lrm <- brem$lrm(beta,times,sen,rec,z,N,M,K,P)
   brem$llk2(lrm,times,sen,rec,N,M)
 }
 brem.mle <- function(A,N,z,beta) {

@@ -1,5 +1,5 @@
-#source("R/brem.r")
-source("R/brem.cpp.r")
+source("brem.r")
+source("brem.cpp.r")
 library(testthat)
 
 require(abind)
@@ -72,7 +72,6 @@ test_that("computeLambda correct for small example",{
 })
 test_that("lrm and llk functions work on small example for K=1",{
   # Set up example
-  source("R/brem.cpp.r")
   set.seed(1)
   M <- 4
   N <- 4
@@ -156,6 +155,8 @@ test_that("lrm and llk functions work on small example for K=2",{
                "sid"=matrix(0,K,K),
                "rid"=matrix(0,K,K))
   z <- c(1,1,1,2,2,2)
+  P <- length(beta)
+  beta <- abind(beta,rev.along=3)
   
   # Constract log rate matrix by hand and compare to drem$lrm
   a <- array(1,c(M,N,N))
@@ -164,7 +165,7 @@ test_that("lrm and llk functions work on small example for K=2",{
   a[4,5,1] <- 1 + 2
   a[3,1,5] <- 1 + 3
   a[5,6,5] <- 1 + 4
-  lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M)
+  lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
   expect_that(lrm,equals(a))
   
   # Compute log likelihood by hand.  
@@ -181,7 +182,6 @@ test_that("lrm and llk functions work on small example for K=2",{
   expect_that(sum(llks),equals(llk2))
   
   # Test R interface
-  source("R/brem.r")
   A <- cbind(times,sen,rec)
   expect_that(sum(llks),equals(brem.llk(A,N,z,beta)))
   
