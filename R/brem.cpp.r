@@ -52,42 +52,11 @@ Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N,
 }
 
 //
-double computeLambda(int i, int j, int zi, int zj, Rcpp::List s, Rcpp::List beta) {
-    Rcpp::NumericMatrix s_abba = s["abba"];
-    Rcpp::NumericMatrix s_abby = s["abby"];
-    Rcpp::NumericMatrix s_abxa = s["abxa"];
-    Rcpp::NumericMatrix s_abxb = s["abxb"];
-    Rcpp::NumericMatrix s_abay = s["abay"];
-    Rcpp::NumericMatrix s_abab = s["abab"];
-    Rcpp::NumericMatrix s_sod = s["sod"];
-    Rcpp::NumericMatrix s_rod = s["rod"];
-    Rcpp::NumericMatrix s_sid = s["sid"];
-    Rcpp::NumericMatrix s_rid = s["rid"];
-
-  Rcpp::NumericMatrix beta_intercept = beta["intercept"];
-  Rcpp::NumericMatrix beta_abba = beta["abba"];
-  Rcpp::NumericMatrix beta_abby = beta["abby"];
-  Rcpp::NumericMatrix beta_abxa = beta["abxa"];
-  Rcpp::NumericMatrix beta_abxb = beta["abxb"];
-  Rcpp::NumericMatrix beta_abay = beta["abay"];
-  Rcpp::NumericMatrix beta_abab = beta["abab"];
-  Rcpp::NumericMatrix beta_sod  = beta["sod"];
-  Rcpp::NumericMatrix beta_rod  = beta["rod"];
-  Rcpp::NumericMatrix beta_sid  = beta["sid"];
-  Rcpp::NumericMatrix beta_rid  = beta["rid"];
-
-  double lam = beta_intercept(zi,zj) + 
-              s_abba(i,j) * beta_abba(zi,zj) + 
-              s_abby(i,j) * beta_abby(zi,zj) +
-              s_abxa(i,j) * beta_abxa(zi,zj) +
-              s_abxb(i,j) * beta_abxb(zi,zj) +
-              s_abay(i,j) * beta_abay(zi,zj) +
-              s_abab(i,j) * beta_abab(zi,zj) + 
-              s_sod(i,j)  * beta_sod(zi,zj)  + 
-              s_rod(i,j)  * beta_rod(zi,zj)  + 
-              s_sid(i,j)  * beta_sid(zi,zj)  + 
-              s_rid(i,j)  * beta_rid(zi,zj);
-
+double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::NumericVector beta, int N, int K, int P) {
+  double lam = 0;
+  for (int p = 0; p < P; p++) {
+    lam += s[threeDIndex(p,i,j,P,N,N)] * beta[threeDIndex(p,zi,zj,P,K,K)];
+  }
   return lam;
 }
 // All senders, receivers (ix,jx) must be 0-indexed.
@@ -166,10 +135,7 @@ Rcpp::NumericVector lrm(Rcpp::List beta, Rcpp::NumericVector times, Rcpp::Intege
       for (int j = 0; j < N; j++) {
         int zi = z[i];
         int zj = z[j];
-   //     if (i==0 && j==5) {
-    //      Rprintf("%i %i\\n",zi,zj);
-    //    }
-        lrm[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,zi,zj,s,beta);
+        //lrm[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,zi,zj,s,beta);
       }
     }
   }

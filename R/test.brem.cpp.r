@@ -2,8 +2,11 @@
 source("R/brem.cpp.r")
 library(testthat)
 
+require(abind)
+
+# Example 1
 N <- 4
-s <- list("intercept" = matrix(0,N,N),
+s <- list("intercept" = matrix(1,N,N),
           "abba" = matrix(0,N,N),
           "abby" = matrix(0,N,N),
           "abxa" = matrix(0,N,N),
@@ -15,7 +18,6 @@ s <- list("intercept" = matrix(0,N,N),
           "sid" = matrix(0,N,N),
           "rid" = matrix(0,N,N))
 P <- length(s)
-require(abind)
 s <- abind(s,rev.along=3)
 i <- 1
 j <- 2
@@ -23,8 +25,7 @@ a <- 2
 b <- 1
 s <- brem$updateStatistics(s,a-1,b-1,N,P)
 
-
-test_that("statistics creation",{
+test_that("statistics creation works",{
   i <- 1
   j <- 2
   dimnames(s) <- list(NULL,NULL,NULL)
@@ -36,26 +37,14 @@ test_that("statistics creation",{
 })
 
 
-times <- c(1,2,3,4)
-sen <- c(1,3,3,1)
-rec <- c(3,1,1,3)
-M <- 4
-z <- rep(1,N)
-beta <- list("intercept"=matrix(-1,1,1),
-             "abba" = matrix(3,1,1),
-             "abby"=matrix(0,1,1),
-             "abxa"=matrix(0,1,1),
-             "abxb"=matrix(0,1,1),
-             "abay"=matrix(0,1,1),
-             "abab"=matrix(0,1,1),
-             "sod"=matrix(0,1,1),
-             "rod"=matrix(0,1,1),
-             "sid"=matrix(0,1,1),
-             "rid"=matrix(1,1,1))
-lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M)
-
 test_that("computeLambda correct for small example",{
-  
+  times <- c(1,2,3,4)
+  sen <- c(1,3,3,1)
+  rec <- c(3,1,1,3)
+  M <- 4
+  N <- 4
+  K <- 1
+  z <- rep(1,N)
   beta <- list("intercept"=matrix(-1,1,1),
                "abba" = matrix(3,1,1),
                "abby"=matrix(0,1,1),
@@ -67,15 +56,19 @@ test_that("computeLambda correct for small example",{
                "rod"=matrix(0,1,1),
                "sid"=matrix(0,1,1),
                "rid"=matrix(1,1,1))
+  P <- length(beta)
+  beta <- abind(beta,rev.along=3)
+  
+  source("R/brem.cpp.r")
   tmp <- matrix(0,N,N)
   for (i in 0:(N-1)) {
     for (j in 0:(N-1)) {
-      tmp[i+1,j+1] <- brem$computeLambda(i,j,0,0,s,beta)
+      tmp[i+1,j+1] <- brem$computeLambda(i,j,0,0,s,beta,N,K,P)
     }
   }
-  ans <- matrix(beta$intercept,N,N)
-  ans[-b,b] <- ans[-b,b] + beta$rid[1,1]  # rec. indegree effect
-  ans[b,a] <- ans[b,a] + beta$abba[1,1]
+  ans <- matrix(beta[1,1,1],N,N)
+  ans[-b,b] <- ans[-b,b] + beta[11,1,1]  # rec. indegree effect
+  ans[b,a] <- ans[b,a] + beta[2,1,1]
   expect_that(ans,equals(tmp))
 })
 test_that("lrm and llk functions work on small example for K=1",{
