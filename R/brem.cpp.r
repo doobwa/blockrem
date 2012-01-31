@@ -75,53 +75,63 @@ double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::
 }
 
 
-double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M){
-  // last event id that lam_ij changed
-  Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N); 
+Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P) {
 
-  int a,b,i,j,r;
-  double lam;
+  Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N);
+  Rcpp::NumericVector lr = Rcpp::NumericVector(Dimension(M,N,N));
 
-  double llk = 0.0;  // initial event assumed uniform across risk set
+  double llk = 0.0; 
+  double lam = 0;
   Rcpp::NumericVector llks(M);
   llks[0] = llk;
-  for (int m = 1; m<M; m++) {
 
+  int i,j,r;
+
+  Rcpp::NumericVector s  = initializeStatistics(N,P);
+  s = updateStatistics(s,sen[0],rec[0],N,P);
+  for (int m = 1; m < (M-1); m++) {
     i = sen[m];
     j = rec[m];
-    //llk += computeLambda(i,j,sen[mp(i,j)],rec[mp(i,j)],beta,px);
+    int zi = z[i];
+    int zj = z[j];
+    llk += computeLambda(i,j,zi,zj,s,beta,N,K,P);
 
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
-    for (int v = 0; v < jx.size(); v++) {
-      r = jx[v];
+    for (int r = 0; r < N; r++) {
+      int zr = z[r];
       if (r != i) {
-        // Sender/receiver of last event involving i or r
-        a = sen[mp(i,r)];
-        b = rec[mp(i,r)];
-        //lam = computeLambda(i,r,a,b,beta,px);
+        lam  = computeLambda(i,r,zi,zr,s,beta,N,K,P);
         llk -= (times[m] - times[mp(i,r)]) * exp(lam);
-        //lam = computeLambda(r,i,a,b,beta,px);
+        lam  = computeLambda(r,i,zr,zi,s,beta,N,K,P);
         llk -= (times[m] - times[mp(r,i)]) * exp(lam);
-        mp(i,r) = m;  // update mp
+        mp(i,r) = m;
         mp(r,i) = m;
       }
-    }
-    for (int v = 0; v < ix.size(); v++) {
-      r = ix[v];
       if (r != j) {
-        a = sen[mp(j,r)];
-        b = rec[mp(j,r)];
-        //lam = computeLambda(j,r,a,b,beta,px);
+        lam  = computeLambda(j,r,zj,zr,s,beta,N,K,P);
         llk -= (times[m] - times[mp(j,r)]) * exp(lam);
-        //lam = computeLambda(r,j,a,b,beta,px);
+        lam  = computeLambda(r,j,zr,zj,s,beta,N,K,P);
         llk -= (times[m] - times[mp(r,j)]) * exp(lam);
         mp(j,r) = m;  // update mp
         mp(r,j) = m;
       }
     }
+
+    s = updateStatistics(s,sen[m],rec[m],N,P);
     llks[m] = llk;
   }
-  return llk;
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      int zi = z[i];
+      int zj = z[j];
+      if (i != j) {
+        lam  = computeLambda(i,j,zi,zj,s,beta,N,K,P);
+        llk -= (times[M-1] - times[mp(i,j)]) * exp(lam);
+      }
+    }
+  }
+  llks[M-1] = llk;
+  return llks;
 }
 
 

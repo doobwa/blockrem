@@ -178,3 +178,46 @@ brem.mh <- function(A,N,K,P,z,current,model.type="baserates",mcmc.sd=.1,first.it
   }
   return(current)
 }
+brem.llk.slow <- function(lrm,times,sen,rec,z,N,M) {
+  mp <- matrix(1,N,N)
+  llk <- 0
+  llks <- rep(0,4)
+  for (m in 2:(M-1)) {
+    i = sen[m];
+    j = rec[m];
+    zi = z[i];
+    zj = z[j];
+    llk = llk + lrm[m,i,j]
+    
+    for (r in 1:N) {
+      zr = z[r];
+      if (r != i) {
+        lam  = lrm[m,i,r]
+        llk  = llk - (times[m] - times[mp[i,r]]) * exp(lam);
+        lam  = lrm[m,r,i]
+        llk  = llk - (times[m] - times[mp[r,i]]) * exp(lam);
+        mp[i,r] = m;
+        mp[r,i] = m;
+      }
+      if (r != j) {
+        lam  = lrm[m,j,r]
+        llk  = llk - (times[m] - times[mp[j,r]]) * exp(lam);
+        lam  = lrm[m,r,j]
+        llk  = llk - (times[m] - times[mp[r,j]]) * exp(lam);
+        mp[j,r] = m;
+        mp[r,j] = m;
+      }
+    }
+    llks[m] <- llk
+  }
+  for (i in 1:N) {
+    for (j in 1:N) {
+      if (i != j) {
+        lam  = lrm[M,i,j]
+        llk  = llk - (times[M] - times[mp[i,j]]) * exp(lam);
+      }
+    }
+  }
+  llks[M] <- llk
+  return(llks)
+}

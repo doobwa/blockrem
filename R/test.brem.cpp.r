@@ -74,7 +74,7 @@ test_that("lrm and llk functions work on small example for K=1",{
   # Set up example
   set.seed(1)
   M <- 4
-  N <- 4
+  N <- 5
   times <- c(1,2,3,4)
   sen <- c(1,3,3,1)
   rec <- c(3,1,1,3)
@@ -122,10 +122,13 @@ test_that("lrm and llk functions work on small example for K=1",{
   llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
   expect_that(sum(llks),equals(llk2))
   
-#   # Compare to drem$llk
-#   px <- c(1,1,0,0,0,0,0)
-#   llk3 <- drem$llk(beta,times,sen-1,rec-1,ix-1,ix-1,px,N,M)
-#   expect_that(sum(llks),equals(llk3))
+  llk3 <- brem.llk.slow(lrm,times,sen,rec,z,N,M)
+  expect_that(sum(llks),equals(llk3))
+  
+  # Compare to drem$llk
+  llk4 <- brem$llk(beta,times,sen-1,rec-1,z-1,N,M,K,P)
+  browser()
+  expect_that(sum(llks),equals(llk3))
   
   # Compare to drem$allk
 #   px <- c(1,1,0,0,0,0,0)  
