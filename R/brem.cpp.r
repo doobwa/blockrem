@@ -9,20 +9,9 @@ int threeDIndex(int j, int k, int l, int J, int K, int L) {
 
 // Update each s(t,i,j) vector with event (a,b).
 // s: List of NxN matrices with named elements.  Each matrix represents the current value for that statistic.
-Rcpp::List updateStatistics(Rcpp::List s, int a, int b, int N) {
+Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N, int P) {
   // Create vector of indicators for each pshift.
   // i.e. If I[(i,j) is ab-ba from last event (a,b)]
-    Rcpp::NumericMatrix s_abba = s["abba"];
-    Rcpp::NumericMatrix s_abby = s["abby"];
-    Rcpp::NumericMatrix s_abxa = s["abxa"];
-    Rcpp::NumericMatrix s_abxb = s["abxb"];
-    Rcpp::NumericMatrix s_abay = s["abay"];
-    Rcpp::NumericMatrix s_abab = s["abab"];
-    Rcpp::NumericMatrix s_sod = s["sod"];
-    Rcpp::NumericMatrix s_rod = s["rod"];
-    Rcpp::NumericMatrix s_sid = s["sid"];
-    Rcpp::NumericMatrix s_rid = s["rid"];
-
     // Iterate through dyads having either a or b as a sender or receiver
     for (int r = 0; r < N; r++) {
       Rcpp::IntegerVector sen = Rcpp::IntegerVector::create(a,r,b,r);
@@ -32,45 +21,33 @@ Rcpp::List updateStatistics(Rcpp::List s, int a, int b, int N) {
         int j = rec[k];
         if (i != j) {
           // P-shifts
-          s_abba(i,j) = (i!=a & i==b & j==a & j!=b);
-          s_abby(i,j) = (i!=a & i==b & j!=a & j!=b);
-          s_abxa(i,j) = (i!=a & i!=b & j==a & j!=b);
-          s_abxb(i,j) = (i!=a & i!=b & j!=a & j==b);
-          s_abay(i,j) = (i==a & i!=b & j!=a & j!=b);
-          s_abab(i,j) = (i==a & i!=b & j!=a & j==b);
+          s[threeDIndex(1,i,j,P,N,N)] = (i!=a & i==b & j==a & j!=b);
+          s[threeDIndex(2,i,j,P,N,N)] = (i!=a & i==b & j!=a & j!=b);
+          s[threeDIndex(3,i,j,P,N,N)] = (i!=a & i!=b & j==a & j!=b);
+          s[threeDIndex(4,i,j,P,N,N)] = (i!=a & i!=b & j!=a & j==b);
+          s[threeDIndex(5,i,j,P,N,N)] = (i==a & i!=b & j!=a & j!=b);
+          s[threeDIndex(6,i,j,P,N,N)] = (i==a & i!=b & j!=a & j==b);
 
           // Degree effects
           if (a==i & b!=j) {
-            s_sod(i,j) += 1;
+            s[threeDIndex(7,i,j,P,N,N)] += 1;  // sender out degree
           }
           if (b==i & a!=j) {
-            s_sid(i,j) += 1;
+            s[threeDIndex(8,i,j,P,N,N)] += 1;  // sender in degree
           }
           if (a==j & b!=i) { 
-            s_rod(i,j) += 1;
+            s[threeDIndex(9,i,j,P,N,N)] += 1;  // receiver out degree
           }
           if (b==j & a!=i) {
-            s_rid(i,j) += 1;
+            s[threeDIndex(10,i,j,P,N,N)] += 1; // receiver in degree
           }
         }
       }
     }
-   s_sid(b,a) += 1;
-   s_rid(a,b) += 1;
-   s_sod(a,b) += 1;
-   s_rod(b,a) += 1;
-    s["abba"] = s_abba;
-    s["abby"] = s_abby;
-    s["abxa"] = s_abxa;
-    s["abxb"] = s_abxb;
-    s["abay"] = s_abay;
-    s["abab"] = s_abab;
-    s["sod"] = s_sod;
-    s["sid"] = s_sid;
-    s["rod"] = s_rod;
-    s["rid"] = s_rid;
-
-  // Increment in/out degrees for i and j
+   s[threeDIndex(7,a,b,P,N,N)] += 1; // sender out degree
+   s[threeDIndex(8,b,a,P,N,N)] += 1; // 
+   s[threeDIndex(9,b,a,P,N,N)] += 1;
+   s[threeDIndex(10,a,b,P,N,N)] += 1;
   return s;
 }
 
@@ -184,7 +161,7 @@ Rcpp::NumericVector lrm(Rcpp::List beta, Rcpp::NumericVector times, Rcpp::Intege
 
   //int a,b,u,v,i,j;
   for (int m = 1; m < M; m++) {
-    s = updateStatistics(s,sen[m-1],rec[m-1],N);
+    //s = updateStatistics(s,sen[m-1],rec[m-1],N);
     for (int i = 0; i < N; i++) {
       for (int j = 0; j < N; j++) {
         int zi = z[i];

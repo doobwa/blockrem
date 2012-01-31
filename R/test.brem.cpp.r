@@ -3,7 +3,8 @@ source("R/brem.cpp.r")
 library(testthat)
 
 N <- 4
-s <- list("abba" = matrix(0,N,N),
+s <- list("intercept" = matrix(0,N,N),
+          "abba" = matrix(0,N,N),
           "abby" = matrix(0,N,N),
           "abxa" = matrix(0,N,N),
           "abxb" = matrix(0,N,N),
@@ -13,12 +14,28 @@ s <- list("abba" = matrix(0,N,N),
           "rod" = matrix(0,N,N),
           "sid" = matrix(0,N,N),
           "rid" = matrix(0,N,N))
-
+P <- length(s)
+require(abind)
+s <- abind(s,rev.along=3)
 i <- 1
 j <- 2
 a <- 2
 b <- 1
-s <- brem$updateStatistics(s,a-1,b-1,N)
+s <- brem$updateStatistics(s,a-1,b-1,N,P)
+
+
+test_that("statistics creation",{
+  i <- 1
+  j <- 2
+  dimnames(s) <- list(NULL,NULL,NULL)
+  expect_that(s[2,i,j],equals(1))  # abba
+  expect_that(s[3,i,j],equals(0)) # abby
+  expect_that(s[10,i,j],equals(1)) # sid
+  expect_that(s[8,i,j],equals(0)) # sod
+  expect_that(s[9,i,j],equals(1)) # rod
+})
+
+
 times <- c(1,2,3,4)
 sen <- c(1,3,3,1)
 rec <- c(3,1,1,3)
@@ -61,16 +78,6 @@ test_that("computeLambda correct for small example",{
   ans[b,a] <- ans[b,a] + beta$abba[1,1]
   expect_that(ans,equals(tmp))
 })
-test_that("statistics creation",{
-  i <- 1
-  j <- 2
-  expect_that(s$abba[i,j],equals(1))
-  expect_that(s$abby[i,j],equals(0))
-  expect_that(s$sid[i,j],equals(1))
-  expect_that(s$sod[i,j],equals(0))
-  expect_that(s$rod[i,j],equals(1))
-})
-
 test_that("lrm and llk functions work on small example for K=1",{
   # Set up example
   set.seed(1)
