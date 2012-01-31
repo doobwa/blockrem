@@ -59,7 +59,6 @@ test_that("computeLambda correct for small example",{
   P <- length(beta)
   beta <- abind(beta,rev.along=3)
   
-  source("R/brem.cpp.r")
   tmp <- matrix(0,N,N)
   for (i in 0:(N-1)) {
     for (j in 0:(N-1)) {
@@ -73,14 +72,14 @@ test_that("computeLambda correct for small example",{
 })
 test_that("lrm and llk functions work on small example for K=1",{
   # Set up example
+  source("R/brem.cpp.r")
   set.seed(1)
   M <- 4
   N <- 4
-  P <- 7
   times <- c(1,2,3,4)
   sen <- c(1,3,3,1)
   rec <- c(3,1,1,3)
-  
+  K <- 1
   beta <- list("intercept"=matrix(1,1,1),
                "abba" = matrix(1,1,1),
                "abby"=matrix(0,1,1),
@@ -92,8 +91,14 @@ test_that("lrm and llk functions work on small example for K=1",{
                "rod"=matrix(0,1,1),
                "sid"=matrix(0,1,1),
                "rid"=matrix(0,1,1))
-  ix <- 1:N
-  px <- rep(1,7)
+  P <- length(beta)
+  beta <- abind(beta,rev.along=3)
+  
+  a <- 1
+  b <- 3
+  s <- array(0,c(P,N,N))
+  s <- brem$updateStatistics(s,a-1,b-1,N,P)
+  brem$computeLambda(1,0,0,0,s,beta,N,K,P)  # 
   
   # Constract log rate matrix by hand and compare to drem$lrm
   a <- array(1,c(M,N,N))
@@ -101,7 +106,9 @@ test_that("lrm and llk functions work on small example for K=1",{
   a[2,3,1] <- 2
   a[3,1,3] <- 2
   a[4,1,3] <- 2
-  lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M)
+  z <- rep(1,N)
+  K <- 1
+  lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
   expect_that(lrm,equals(a))
   
   # Compute log likelihood by hand.  

@@ -9,6 +9,20 @@ int threeDIndex(int j, int k, int l, int J, int K, int L) {
 
 // Update each s(t,i,j) vector with event (a,b).
 // s: List of NxN matrices with named elements.  Each matrix represents the current value for that statistic.
+
+Rcpp::NumericVector initializeStatistics(int N, int P) {
+  Rcpp::NumericVector s     = Rcpp::NumericVector(Dimension(P,N,N));
+
+  // Intercept statistic: all (0,i,j) are equal to 1
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      s[threeDIndex(0,i,j,P,N,N)] = 1;
+    }
+  }
+
+  return s;
+}
+
 Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N, int P) {
   // Create vector of indicators for each pshift.
   // i.e. If I[(i,j) is ab-ba from last event (a,b)]
@@ -59,8 +73,8 @@ double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::
   }
   return lam;
 }
-// All senders, receivers (ix,jx) must be 0-indexed.
-// Current "weirdness": Assumes all events "occur" at time 0.
+
+
 double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector ix, Rcpp::IntegerVector jx,Rcpp::IntegerVector px, int N, int M){
   // last event id that lam_ij changed
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N); 
@@ -113,33 +127,27 @@ double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVec
 
 // Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
 
-Rcpp::NumericVector lrm(Rcpp::List beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec,Rcpp::IntegerVector z, int N, int M){
+Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec,Rcpp::IntegerVector z, int N, int M,int K, int P){
 
-  Rcpp::NumericVector lrm = Rcpp::NumericVector(Dimension(M,N,N));
-  Rcpp::List s;
-  s["abba"] = Rcpp::NumericMatrix(N,N);
-  s["abby"] = Rcpp::NumericMatrix(N,N);
-  s["abxa"] = Rcpp::NumericMatrix(N,N);
-  s["abxb"] = Rcpp::NumericMatrix(N,N);
-  s["abay"] = Rcpp::NumericMatrix(N,N);
-  s["abab"] = Rcpp::NumericMatrix(N,N);
-  s["sod"] = Rcpp::NumericMatrix(N,N);
-  s["rod"] = Rcpp::NumericMatrix(N,N);
-  s["sid"] = Rcpp::NumericMatrix(N,N);
-  s["rid"] = Rcpp::NumericMatrix(N,N);
+  Rcpp::NumericVector lrmat = Rcpp::NumericVector(Dimension(M,N,N));
+  Rcpp::NumericVector s = initializeStatistics(N,P);
 
   //int a,b,u,v,i,j;
   for (int m = 1; m < M; m++) {
-    //s = updateStatistics(s,sen[m-1],rec[m-1],N);
+    s = updateStatistics(s,sen[m-1],rec[m-1],N,P);
+    int i = 1;
+    int j = 0;
+    int zi = z[i];
+    int zj = z[j];
     for (int i = 0; i < N; i++) {
       for (int j = 0; j < N; j++) {
         int zi = z[i];
         int zj = z[j];
-        //lrm[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,zi,zj,s,beta);
+        lrmat[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,zi,zj,s,beta,N,K,P);
       }
     }
   }
-  return lrm;
+  return lrmat;
 }
 // Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
 double llk2(Rcpp::NumericVector lrm,
