@@ -75,7 +75,7 @@ Rcpp::List updateStatistics(Rcpp::List s, int a, int b, int N) {
 }
 
 //
-double computeLambda(int i, int j, Rcpp::List s, Rcpp::List beta) {
+double computeLambda(int i, int j, int zi, int zj, Rcpp::List s, Rcpp::List beta) {
     Rcpp::NumericMatrix s_abba = s["abba"];
     Rcpp::NumericMatrix s_abby = s["abby"];
     Rcpp::NumericMatrix s_abxa = s["abxa"];
@@ -87,29 +87,29 @@ double computeLambda(int i, int j, Rcpp::List s, Rcpp::List beta) {
     Rcpp::NumericMatrix s_sid = s["sid"];
     Rcpp::NumericMatrix s_rid = s["rid"];
 
-  Rcpp::NumericVector beta_intercept = beta["intercept"];
-  Rcpp::NumericVector beta_abba = beta["abba"];
-  Rcpp::NumericVector beta_abby = beta["abby"];
-  Rcpp::NumericVector beta_abxa = beta["abxa"];
-  Rcpp::NumericVector beta_abxb = beta["abxb"];
-  Rcpp::NumericVector beta_abay = beta["abay"];
-  Rcpp::NumericVector beta_abab = beta["abab"];
-  Rcpp::NumericVector beta_sod  = beta["sod"];
-  Rcpp::NumericVector beta_rod  = beta["rod"];
-  Rcpp::NumericVector beta_sid  = beta["sid"];
-  Rcpp::NumericVector beta_rid  = beta["rid"];
+  Rcpp::NumericMatrix beta_intercept = beta["intercept"];
+  Rcpp::NumericMatrix beta_abba = beta["abba"];
+  Rcpp::NumericMatrix beta_abby = beta["abby"];
+  Rcpp::NumericMatrix beta_abxa = beta["abxa"];
+  Rcpp::NumericMatrix beta_abxb = beta["abxb"];
+  Rcpp::NumericMatrix beta_abay = beta["abay"];
+  Rcpp::NumericMatrix beta_abab = beta["abab"];
+  Rcpp::NumericMatrix beta_sod  = beta["sod"];
+  Rcpp::NumericMatrix beta_rod  = beta["rod"];
+  Rcpp::NumericMatrix beta_sid  = beta["sid"];
+  Rcpp::NumericMatrix beta_rid  = beta["rid"];
 
-  double lam = beta_intercept[0] + 
-              s_abba(i,j) * beta_abba[0] + 
-              s_abby(i,j) * beta_abby[0] +
-              s_abxa(i,j) * beta_abxa[0] +
-              s_abxb(i,j) * beta_abxb[0] +
-              s_abay(i,j) * beta_abay[0] +
-              s_abab(i,j) * beta_abab[0] + 
-              s_sod(i,j)  * beta_sod[0]  + 
-              s_rod(i,j)  * beta_rod[0]  + 
-              s_sid(i,j)  * beta_sid[0]  + 
-              s_rid(i,j)  * beta_rid[0];
+  double lam = beta_intercept(zi,zj) + 
+              s_abba(i,j) * beta_abba(zi,zj) + 
+              s_abby(i,j) * beta_abby(zi,zj) +
+              s_abxa(i,j) * beta_abxa(zi,zj) +
+              s_abxb(i,j) * beta_abxb(zi,zj) +
+              s_abay(i,j) * beta_abay(zi,zj) +
+              s_abab(i,j) * beta_abab(zi,zj) + 
+              s_sod(i,j)  * beta_sod(zi,zj)  + 
+              s_rod(i,j)  * beta_rod(zi,zj)  + 
+              s_sid(i,j)  * beta_sid(zi,zj)  + 
+              s_rid(i,j)  * beta_rid(zi,zj);
 
   return lam;
 }
@@ -167,7 +167,7 @@ double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVec
 
 // Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
 
-Rcpp::NumericVector lrm(Rcpp::List beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec,int N, int M){
+Rcpp::NumericVector lrm(Rcpp::List beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec,Rcpp::IntegerVector z, int N, int M){
 
   Rcpp::NumericVector lrm = Rcpp::NumericVector(Dimension(M,N,N));
   Rcpp::List s;
@@ -187,7 +187,12 @@ Rcpp::NumericVector lrm(Rcpp::List beta, Rcpp::NumericVector times, Rcpp::Intege
     s = updateStatistics(s,sen[m-1],rec[m-1],N);
     for (int i = 0; i < N; i++) {
       for (int j = 0; j < N; j++) {
-        lrm[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,s,beta);
+        int zi = z[i];
+        int zj = z[j];
+   //     if (i==0 && j==5) {
+    //      Rprintf("%i %i\\n",zi,zj);
+    //    }
+        lrm[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,zi,zj,s,beta);
       }
     }
   }

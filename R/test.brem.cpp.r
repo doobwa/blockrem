@@ -19,46 +19,46 @@ j <- 2
 a <- 2
 b <- 1
 s <- brem$updateStatistics(s,a-1,b-1,N)
-times <- c(1.1,2,3,4)
+times <- c(1,2,3,4)
 sen <- c(1,3,3,1)
 rec <- c(3,1,1,3)
 M <- 4
-beta <- list("intercept"=-1,
-             "abba" = 3,
-             "abby"=0,
-             "abxa"=0,
-             "abxb"=0,
-             "abay"=0,
-             "abab"=0,
-             "sod"=0,
-             "rod"=0,
-             "sid"=0,
-             "rid"=1)
-lrm <- brem$lrm(beta,times,sen-1,rec-1,N,M)
-llk2 <- brem$llk2(lrm,times,sen-1,rec-1,N,M)
+z <- rep(1,N)
+beta <- list("intercept"=matrix(-1,1,1),
+             "abba" = matrix(3,1,1),
+             "abby"=matrix(0,1,1),
+             "abxa"=matrix(0,1,1),
+             "abxb"=matrix(0,1,1),
+             "abay"=matrix(0,1,1),
+             "abab"=matrix(0,1,1),
+             "sod"=matrix(0,1,1),
+             "rod"=matrix(0,1,1),
+             "sid"=matrix(0,1,1),
+             "rid"=matrix(1,1,1))
+lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M)
 
 test_that("computeLambda correct for small example",{
   
-  beta <- list("intercept"=-1,
-               "abba" = 3,
-               "abby"=0,
-               "abxa"=0,
-               "abxb"=0,
-               "abay"=0,
-               "abab"=0,
-               "sod"=0,
-               "rod"=0,
-               "sid"=0,
-               "rid"=1)
+  beta <- list("intercept"=matrix(-1,1,1),
+               "abba" = matrix(3,1,1),
+               "abby"=matrix(0,1,1),
+               "abxa"=matrix(0,1,1),
+               "abxb"=matrix(0,1,1),
+               "abay"=matrix(0,1,1),
+               "abab"=matrix(0,1,1),
+               "sod"=matrix(0,1,1),
+               "rod"=matrix(0,1,1),
+               "sid"=matrix(0,1,1),
+               "rid"=matrix(1,1,1))
   tmp <- matrix(0,N,N)
   for (i in 0:(N-1)) {
     for (j in 0:(N-1)) {
-      tmp[i+1,j+1] <- brem$computeLambda(i,j,s,beta)
+      tmp[i+1,j+1] <- brem$computeLambda(i,j,0,0,s,beta)
     }
   }
   ans <- matrix(beta$intercept,N,N)
-  ans[-b,b] <- ans[-b,b] + beta$rid  # rec. indegree effect
-  ans[b,a] <- ans[b,a] + beta$abba
+  ans[-b,b] <- ans[-b,b] + beta$rid[1,1]  # rec. indegree effect
+  ans[b,a] <- ans[b,a] + beta$abba[1,1]
   expect_that(ans,equals(tmp))
 })
 test_that("statistics creation",{
@@ -71,7 +71,7 @@ test_that("statistics creation",{
   expect_that(s$rod[i,j],equals(1))
 })
 
-test_that("lrm and llk functions work on small example",{
+test_that("lrm and llk functions work on small example for K=1",{
   # Set up example
   set.seed(1)
   M <- 4
@@ -80,17 +80,18 @@ test_that("lrm and llk functions work on small example",{
   times <- c(1,2,3,4)
   sen <- c(1,3,3,1)
   rec <- c(3,1,1,3)
-  beta <- list("intercept"=1,
-               "abba" = 1,
-               "abby"=0,
-               "abxa"=0,
-               "abxb"=0,
-               "abay"=0,
-               "abab"=0,
-               "sod"=0,
-               "rod"=0,
-               "sid"=0,
-               "rid"=0)
+  
+  beta <- list("intercept"=matrix(1,1,1),
+               "abba" = matrix(1,1,1),
+               "abby"=matrix(0,1,1),
+               "abxa"=matrix(0,1,1),
+               "abxb"=matrix(0,1,1),
+               "abay"=matrix(0,1,1),
+               "abab"=matrix(0,1,1),
+               "sod"=matrix(0,1,1),
+               "rod"=matrix(0,1,1),
+               "sid"=matrix(0,1,1),
+               "rid"=matrix(0,1,1))
   ix <- 1:N
   px <- rep(1,7)
   
@@ -100,7 +101,7 @@ test_that("lrm and llk functions work on small example",{
   a[2,3,1] <- 2
   a[3,1,3] <- 2
   a[4,1,3] <- 2
-  lrm <- brem$lrm(beta,times,sen-1,rec-1,N,M)
+  lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M)
   expect_that(lrm,equals(a))
   
   # Compute log likelihood by hand.  
@@ -112,7 +113,7 @@ test_that("lrm and llk functions work on small example",{
   sum(llks)
   
   # Compare to drem$llk2
-  llk2 <- brem$llk2(lrm,times,sen-1,rec-1,N,M)
+  llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
   expect_that(sum(llks),equals(llk2))
   
 #   # Compare to drem$llk
@@ -125,22 +126,58 @@ test_that("lrm and llk functions work on small example",{
 #   allk <- drem$allk(beta,times,sen-1,rec-1,ix-1,ix-1,px,N,M,N)
 #   expect_that(sum(llks),equals(allk))
 })
-# 
-# test_that("log rate matrix computation correct",{
-#   # Make sure example is in the first group
-#   sen[1] <- 1
-#   rec[1] <- 3
-#   lrm <- drem$lrm(beta,times,sen,rec,ix,ix,px,N,M)
-#   expect_that(dim(lrm),equals(c(100,10,10)))
-#   expect_that(lrm[2,5,1],equals(beta[1]))
-#   expect_that(lrm[2,rec[1]+1,sen[1]+1],equals(beta[1] + beta[2]))  # AB-BA
-#   
-#   # diagnoals should be -15
-#   #expect_that(all(diag(lrm[5,,]) == -15),is_true())
-#   
-#   # only the (ix,ix) portion should be populated
-#   ix <- 1:5
-#   lrm <- drem$lrm(beta,times,sen,rec,ix-1,ix-1,px,N,M)
-#   expect_that(sum(lrm[,-ix,-ix]),equals(0))  
-# })
 
+test_that("lrm and llk functions work on small example for K=2",{
+  # Set up example
+  set.seed(1)
+  M <- 5
+  N <- 6
+  K <- 2
+  times <- c(1,2,3,4,5)
+  sen <- c(1,5,1,5,1)
+  rec <- c(3,1,5,6,3)
+  
+  beta <- list("intercept"=matrix(1,K,K),
+               "abba" = matrix(c(1,2,3,4),K,K),
+               "abby"=matrix(0,K,K),
+               "abxa"=matrix(0,K,K),
+               "abxb"=matrix(0,K,K),
+               "abay"=matrix(0,K,K),
+               "abab"=matrix(0,K,K),
+               "sod"=matrix(0,K,K),
+               "rod"=matrix(0,K,K),
+               "sid"=matrix(0,K,K),
+               "rid"=matrix(0,K,K))
+  z <- c(1,1,1,2,2,2)
+  
+  # Constract log rate matrix by hand and compare to drem$lrm
+  a <- array(1,c(M,N,N))
+  a[1,,] <- matrix(0,N,N)
+  a[2,3,1] <- 1 + 1
+  a[4,5,1] <- 1 + 2
+  a[3,1,5] <- 1 + 3
+  a[5,6,5] <- 1 + 4
+  lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M)
+  expect_that(lrm,equals(a))
+  
+  # Compute log likelihood by hand.  
+  diag(a[1,,]) <- diag(a[2,,]) <- diag(a[3,,]) <- diag(a[4,,]) <- diag(a[5,,]) <-  -Inf
+  llks <- c(a[1,sen[1],rec[1]],
+            a[2,sen[2],rec[2]] - (times[2]-times[2-1]) * sum(exp(a[2,,])),
+            a[3,sen[3],rec[3]] - (times[3]-times[3-1]) * sum(exp(a[3,,])),
+            a[4,sen[4],rec[4]] - (times[4]-times[4-1]) * sum(exp(a[4,,])),
+            a[5,sen[5],rec[5]] - (times[5]-times[5-1]) * sum(exp(a[5,,])))
+  sum(llks)
+  
+  # Compare to drem$llk2
+  llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
+  expect_that(sum(llks),equals(llk2))
+  
+  # Test R interface
+  source("R/brem.r")
+  A <- cbind(times,sen,rec)
+  expect_that(sum(llks),equals(brem.llk(A,N,z,beta)))
+  
+  # make sure lpost runs
+  brem.lpost(A,N,K,z,beta)
+})
