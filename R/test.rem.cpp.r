@@ -6,7 +6,7 @@ test_that("lrm and llk functions work on small example",{
   # Set up example
   set.seed(1)
   M <- 4
-  N <- 3
+  N <- 4
   P <- 7
   times <- c(1,2,3,4)
   sen <- c(1,3,3,1)
@@ -17,7 +17,7 @@ test_that("lrm and llk functions work on small example",{
   
   # Constract log rate matrix by hand and compare to drem$lrm
   a <- array(1,c(M,N,N))
-  a[1,,] <- matrix(0,3,3)
+  a[1,,] <- matrix(0,N,N)
   a[2,3,1] <- 2
   a[3,1,3] <- 2
   a[4,1,3] <- 2

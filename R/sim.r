@@ -1,5 +1,7 @@
 library(releventhier)
 library(ggplot2)
+require(abind)
+require(testthat)
 source("R/brem.cpp.r")
 source("R/brem.r")
 source("R/sbm.r")
@@ -16,6 +18,8 @@ beta <- list("intercept"=matrix(c(2,1,1,2),K,K),
              "rod"=matrix(0,K,K),
              "sid"=matrix(0,K,K),
              "rid"=matrix(0,K,K))
+P <- length(beta)
+beta <- abind(beta,rev.along=3)
 
 M <- 1000
 set.seed(1)
@@ -28,30 +32,40 @@ colnames(mat) <- c("X1","X2","value")
 plotmat(mat)
 ggsave("figs/syn/mat.pdf",width=3,height=3)
 
-lrm <- brem.lrm(sim$A,N,z,beta)
+# Temporary testing
+lrm <- brem.lrm(sim$A,N,z,beta.init)
 llk <- brem.llk(sim$A,N,z,beta)
+beta.init <- beta + rnorm(P*K^2,0,.1)
+beta.init[7:11,,] <- 0
+brem.llk(sim$A,N,z,beta.init)
 A <- sim$A
+brem.lpost(A,N,K,z,beta)
 times <- A[,1]
 sen <- A[,2]-1
 rec <- A[,3]-1
-lrm <- brem$lrm(beta,times,sen,rec,z-1,N,M)
+lrm <- brem$lrm(beta,times,sen,rec,z-1,N,M,K,P)
 brem$llk2(lrm,times,sen,rec,N,M)
 brem.llk(sim$A,N,z,beta)
+beta.init <- beta + rnorm(P*K^2,0,.01)
+brem.llk(sim$A,N,z,beta.init)
+
 true.lpost <- brem.lpost(sim$A,N,K,z,beta)
 true.lpost
 
 test_that("simulated lrm agrees with brem.lrm",{
-  tmp <- brem.lrm(sim$A,N,beta,z)
+  tmp <- brem.lrm(sim$A,N,z,beta)
   for (i in 1:M) diag(tmp[i,,]) <- -Inf
   diag(sim$lrm[1,,]) <- -Inf
   expect_that(all.equal(tmp,sim$lrm),is_true())
 })
 
 set.seed(4)
-niter <- 100
+niter <- 300
+px <- rep(1,11)
+px[7:11] <- 0
 #fit0 <- sbm.mcmc(sim$A,N,1,niter=niter)
 fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z)
-fit1 <- brem.mcmc(sim$A,N,K,px,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
+fit1 <- brem.mcmc(sim$A,N,K,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
 fit2 <- brem.mcmc(sim$A,N,K,model.type="full",niter=niter,z=z,gibbs=FALSE)
 fit3 <- brem.mcmc(sim$A,N,1,px,model.type="full",niter=niter,gibbs=FALSE)
 save(fit0,fit1,fit2,fit3,file="data/syn-fits.rdata")

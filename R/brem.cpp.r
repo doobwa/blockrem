@@ -180,6 +180,7 @@ RCPP_MODULE(brem){
   function( "llk2", &llk2 ) ;
   function( "lrm", &lrm ) ;
   function( "updateStatistics", &updateStatistics);
+  function( "initializeStatistics", &initializeStatistics);
   function( "computeLambda", &computeLambda);
 }
 ', plugin="Rcpp")
