@@ -18,6 +18,8 @@ Week 2:
 [done. not successful.] Noncollapsing clusters: try initializing beta centered on the mean overall rate.
 [done] Explore performance of approximate likelihood. [Needs roughly N/2 to be good in simple examples.]
 Debug issues with whether to include intercept term or not. (Understand collinearity/identifiability issue.)
+[done] Reimplement brem.llk to take account of affected (i,j) that aren't in block (a,b).
+Reimplement brem code with Armadillo?  (Test whether or not we're wasting time with casting technique first.)
 Understand why we do better than truth on llk/ranking.
 Fix diagonal in lrm to be -Inf (or include option)
 Derive/implement EM for baseline model.
