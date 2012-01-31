@@ -67,7 +67,7 @@ fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z,gibbs=FALSE)
 fit1 <- brem.mcmc(sim$A,N,K,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
 fit2 <- brem.mcmc(sim$A,N,K,model.type="full",niter=niter,z=z,gibbs=FALSE)
 fit3 <- brem.mcmc(sim$A,N,1,model.type="full",niter=niter,gibbs=FALSE,mcmc.sd=.05)
-save(sim,true.lpost,fit0,fit1,fit2,fit3,file="data/syn-fits.rdata")
+save(sim,true.lpost,fit0,fit1,fit2,fit3,file="data/syn/fits.rdata")
 
 llks <- melt(list(base=fit0$llks,diag=fit1$llks,full=fit2$llks,sing=fit3$llks))
 llks$iter <- 1:niter
@@ -124,7 +124,7 @@ lposts <- list(true = brem.lpost(test$A,N,K,z,beta),
                full = brem.lpost(test$A,N,K,fit2$z,fit2$beta),
                sing = brem.lpost(test$A,N,K,fit3$z,fit3$beta))
 unlist(lposts)
-
+save(lposts,file="data/syn/lpost.rdata")
 
 # Look at bias of estimates
 true <- brem.lrm(sim$A,N,z,beta)

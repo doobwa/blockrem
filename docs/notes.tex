@@ -146,10 +146,9 @@ TODO: Look at performance of this with respect to bias and performance measures.
 \section{Simulation}
 \begin{figure}
 \center
-\includegraphics[width=1.5in]{../figs/syn/mat.pdf}
-\includegraphics[width=2.5in]{../figs/syn/counts.pdf}
-\includegraphics[width=2in]{../figs/syn/bias.pdf}
-\caption{Illustration of 1000 simulated events, as described in text. Left: Counts of each dyad. Center: Boxplot of distribution of participation counts across dyads.  The top left shows an increased propensity for reciprocity within cluster 1; bottom right shows more AB-AY events within cluster 2. Right: Loglikelihood vs. iteration during MCMC.}
+\includegraphics[width=2in]{../figs/syn/mat.pdf}
+\includegraphics[width=3in]{../figs/syn/counts.pdf}
+\caption{Illustration of 1000 simulated events, as described in text. Left: Counts of each dyad. Right: Boxplot of distribution of participation counts across dyads.  The top left shows an increased propensity for reciprocity within cluster 1; bottom right shows more AB-AY events within cluster 2.}
 \label{fig:syncounts}
 \end{figure}
 
@@ -171,11 +170,13 @@ Each of the following data sets are sequences of dyadic events, where each event
 \end{itemize}
 
 \subsection*{Prediction experiment}
+
 \begin{figure}
 \center
-\includegraphics[width=3.5in]{../figs/syn/test-recall.pdf}
-\caption{Predictive performance on test data.  Left: Recall on synthetic example shown in Figure \ref{fig:syncounts}.}
-\label{fig:recall}
+\includegraphics[width=3in]{../figs/syn/logposterior.pdf}
+\includegraphics[width=3in]{../figs/syn/test-recall.pdf}
+\caption{Results from fitting models to synthetic data. Left: Log posterior of 1000 simulated events vs. iteration during MCMC.  Right: Recall on 3000 test events.}
+\label{fig:synresults}
 \end{figure}
 We evaluate the predictive ability of the learned models by comparing models based on the loglikelihood of held-out data and recall on held out data.  Each data set is first split into a training set and a test set, and the loglikelihood of the test set is computed using Equation \ref{eqn:llk} where $\beta$ is set to be the posterior mean given the training data.  Recall at a given cutoff $k$ is found by first sorting the predicted intensity functions at each time, then computing the mean rank of the observed events in that list.
 

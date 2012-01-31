@@ -11,7 +11,7 @@ require(ROAuth)
 require(RCurl)
 source("pull.fns.r")
 options(cores=4)
-load("heroic.oauth.rdata")
+load("rstats/heroic.oauth.rdata")
 
 # xml files obtained from google reader by hand by motifying the continuation code repeatedly
 # http://www.google.com/reader/atom/feed%2Fhttp%3A%2F%2Fsearch.twitter.com%2Fsearch.atom%3Fq%3D%2523rstats?n=1000&c=CPHpgbSjipwC
@@ -41,13 +41,13 @@ grab.tweets.from.xml <- function(f) {
   return(df)
 }
 
-fs <- paste("data/rstats.",0:33,".xml",sep="")
+fs <- paste("data/rstats/rstats.",0:33,".xml",sep="")
 df <- lapply(fs,function(f) grab.tweets.from.xml(f))
 df <- do.call(rbind,df)
-save(df,file="data/rstats.tweets.rdata")
+save(df,file="data/rstats/rstats.tweets.rdata")
 
 # Select users and download their timelines
-load("data/rstats.tweets.rdata")
+load("data/rstats/rstats.tweets.rdata")
 K <- 1000
 tb <- sort(table(df$user),decreasing=TRUE)[1:K]
 plot(log(tb),type="l")
@@ -57,7 +57,7 @@ setup <- expand.grid(page=1:16,user=chosen)
 urls <- sapply(1:nrow(setup), function(i) {
     paste("https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&count=200&screen_name=",setup$user[i],"&page=",setup$page[i],sep="")
 })
-save(urls,file="data/rstats.urls.rdata")
+save(urls,file="data/rstats/rstats.urls.rdata")
 
 
 # Try grabbing directed messages among #rstats tweets
@@ -83,7 +83,7 @@ get.recipient <- function(tweet) {
 }
 
 mentions <- lapply(df$text,get.mentions)
-save(mentions,file="data/rstats.mentions.rdata")
+save(mentions,file="data/rstats/rstats.mentions.rdata")
 
 rec <- lapply(df$text,get.recipient)
 length(rec)
@@ -94,51 +94,4 @@ s <- as.character(df$user[ix])
 r <- unlist(rec[ix])
 datetime <- strptime(df$date[ix],format="%Y-%m-%dT%H:%M:%S")
 A <- data.frame(datetime=datetime,s=s,r=r)
-save(A,file="data/rstats.interaction.rdata")
-
-# Create unique ids
-users <- sort(unique(c(as.character(A$s),as.character(A$r))))
-A$sid <- match(as.character(A$s),users)
-A$rid <- match(as.character(A$r),users)
-
-# Visualize adjacency matrix
-pdf("figs/twitter/adjmat.pdf",width=4,height=4)
-plot(A[,4:5],pch=".",xlab="sender",ylab="recipient")
-dev.off()
-
-# Fit baseline model
-N <- length(users)
-K <- 2
-P <- 7
-M <- nrow(A)
-
-# Rescale time to be in (0,1)
-B <- A[,c(1,4,5)]
-B[,1] <- as.numeric(B[,1])
-B[,1] <- B[,1] - B[1,1]
-B[,1] <- B[,1]/B[nrow(B),1]
-
-z <- sample(1:K,N,replace=TRUE)
-beta <- matrix(rnorm(K^2),K,K)
-
-set.seed(4)
-niter <- 100
-px <- c(1,rep(0,6))
-sbm.lpost(B,N,K,z,beta)
-
-fit0 <- sbm.mcmc(B,N,2,niter=100)
-fit1 <- sbm.mcmc(B,N,3,niter=100)
-fit1 <- sbm.mcmc(B,N,10,niter=100)
-
-fit <- fit0
-nmap <- order(fit$z)
-s <- match(B[,2],nmap)
-r <- match(B[,3],nmap)
-pdf("figs/twitter/sorted.pdf",width=4,height=4)
-plot(s,r,pch=".",xlab="sender",ylab="recipient")
-cpoints <- sapply(1:K,function(k) min(which(sort(fit$z)==k)))
-abline(v=cpoints[-1])
-abline(h=cpoints[-1])
-dev.off()
-fit$beta
-)
+save(A,file="data/rstats/rstats.interaction.rdata")
