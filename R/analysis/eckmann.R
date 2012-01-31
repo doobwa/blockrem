@@ -1,4 +1,23 @@
+library(ggplot2)
+source("R/brem.cpp.r")
+source("R/brem.r")
+source("R/sbm.r")
 
+load("data/eckmann/dyadic-small-sorted.rdata")
+
+K <- 2
+P <- 11
+A <- as.matrix(A)
+N <- max(unique(c(A[,2],A[,3])))
+M <- nrow(A)
+z <- c(rep(1,42),rep(2,N-42))  #sample(1:K,N,replace=TRUE)
+beta <- array(rnorm(K^2*P),c(P,K,K))
+beta[7:11,,] <- 0
+system.time(brem.llk(A,N,z,beta))
+
+niter <- 100
+fit1 <- brem.mcmc(A,N,K,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
+fit2 <- brem.mcmc(A,N,K,model.type="full",niter=niter,z=z,gibbs=FALSE)
 
 # Visualize
 plotspmat <- function(A) {
@@ -10,14 +29,6 @@ plotspmat <- function(A) {
 plotspmat(A)
 
 
-N <- length(unique(c(A[,2],A[,3])))
-K <- 2
-M <- nrow(A)
-
-z <- sample(1:K,N,replace=TRUE)
-beta <- array(rnorm(K^2*P),c(P,K,K))
-system.time(brem.llk(A,N,z,beta))
-
 set.seed(4)
 niter <- 100
 px <- c(1,rep(0,6))
@@ -28,6 +39,7 @@ sbm.lpost(A,N,K,z,beta)
 fit0 <- sbm.mcmc(A,N,2,niter=100)
 fit1 <- sbm.mcmc(A,N,3,niter=100)
 fit1 <- sbm.mcmc(A,N,10,niter=100)
+fit1 <- brem.mcmc(A,N,K,model.type="diag.rem",niter=niter,gibbs=FALSE)
 
 fit=fit1
 K <- 3

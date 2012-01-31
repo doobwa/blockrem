@@ -75,7 +75,7 @@ double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::
 }
 
 
-Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P) {
+double llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P) {
 
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N);
   Rcpp::NumericVector lr = Rcpp::NumericVector(Dimension(M,N,N));
@@ -131,7 +131,7 @@ Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
     }
   }
   llks[M-1] = llk;
-  return llks;
+  return llk;
 }
 
 

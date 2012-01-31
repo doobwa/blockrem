@@ -46,7 +46,7 @@ brem.lrm <- function(A,N,z,beta) {
   z <- z - 1
   brem$lrm(beta,times,sen,rec,z,N,M,K,P)
 }
-brem.llk <- function(A,N,z,beta) {
+brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
   M <- nrow(A)
   P <- dim(beta)[1]
   K <- dim(beta)[2]
@@ -54,8 +54,12 @@ brem.llk <- function(A,N,z,beta) {
   sen <- A[,2]-1
   rec <- A[,3]-1
   z <- z-1
-  lrm <- brem$lrm(beta,times,sen,rec,z,N,M,K,P)
-  brem$llk2(lrm,times,sen,rec,N,M)
+  if (use.lrm) {
+    lrm <- brem$lrm(beta,times,sen,rec,z,N,M,K,P)
+    return(brem$llk2(lrm,times,sen,rec,N,M))
+  } else {
+    return(brem$llk(beta,times,sen,rec,z,N,M,K,P))
+  }
 }
 brem.mle <- function(A,N,K,P,z,beta=NULL) {
   fn <- function(par) {

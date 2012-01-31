@@ -29,6 +29,8 @@ A <- A[ix,]
 A[,2] <- as.numeric(factor(A[,2],40:130))
 A[,3] <- as.numeric(factor(A[,3],40:130))
 
+save(A,file="data/eckmann/dyadic-small-sorted.rdata")
+
 # Reorder names
 B <- A
 all <- sort(unique(c(A[,2],A[,3])))
