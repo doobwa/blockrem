@@ -21,7 +21,7 @@ beta <- list("intercept"=matrix(c(2,1,1,2),K,K),
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
 
-M <- 1000
+M <- 2000
 set.seed(1)
 z <- c(rep(1,5),rep(2,5))
 
@@ -32,22 +32,22 @@ colnames(mat) <- c("X1","X2","value")
 plotmat(mat)
 ggsave("figs/syn/mat.pdf",width=3,height=3)
 
-# Temporary testing
-lrm <- brem.lrm(sim$A,N,z,beta.init)
-llk <- brem.llk(sim$A,N,z,beta)
-beta.init <- beta + rnorm(P*K^2,0,.1)
-beta.init[7:11,,] <- 0
-brem.llk(sim$A,N,z,beta.init)
-A <- sim$A
-brem.lpost(A,N,K,z,beta)
-times <- A[,1]
-sen <- A[,2]-1
-rec <- A[,3]-1
-lrm <- brem$lrm(beta,times,sen,rec,z-1,N,M,K,P)
-brem$llk2(lrm,times,sen,rec,N,M)
-brem.llk(sim$A,N,z,beta)
-beta.init <- beta + rnorm(P*K^2,0,.01)
-brem.llk(sim$A,N,z,beta.init)
+# # Temporary testing
+# lrm <- brem.lrm(sim$A,N,z,beta.init)
+# llk <- brem.llk(sim$A,N,z,beta)
+# beta.init <- beta + rnorm(P*K^2,0,.1)
+# beta.init[7:11,,] <- 0
+# brem.llk(sim$A,N,z,beta.init)
+# A <- sim$A
+# brem.lpost(A,N,K,z,beta)
+# times <- A[,1]
+# sen <- A[,2]-1
+# rec <- A[,3]-1
+# lrm <- brem$lrm(beta,times,sen,rec,z-1,N,M,K,P)
+# brem$llk2(lrm,times,sen,rec,N,M)
+# brem.llk(sim$A,N,z,beta)
+# beta.init <- beta + rnorm(P*K^2,0,.01)
+# brem.llk(sim$A,N,z,beta.init)
 
 true.lpost <- brem.lpost(sim$A,N,K,z,beta)
 true.lpost
@@ -74,11 +74,8 @@ llks$iter <- 1:niter
 qplot(iter,value,data=subset(llks,iter>50),geom="line",colour=factor(L1)) + geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 ggsave("figs/syn/logposterior.pdf",height=4,width=5)
 
-pdf("figs/syn/llk.pdf",width=4,height=4)
-plot(fit$llk[1:300],type="l",ylab="loglikelihood",xlab="iteration")
-dev.off()
-
 # Compute dyad counts for each pshift
+source("R/utils.r")
 df <- dyad.ps(sim$A,N)
 df <- melt(df)
 df$i <- z[df$X1]
@@ -87,6 +84,7 @@ qplot(X3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + th
 ggsave("figs/syn/counts.pdf",width=6,height=4)
 
 # Look at distance between true and estimated parameter vectors
+fit <- fit2
 dist <- function(x,y) sqrt(sum((x-y)^2))
 ds <- sapply(1:niter,function(i) {
   c(dist(beta[2:6,1,1],fit$param[i,1,1,2:6]),# - beta[1,1,1]),
@@ -99,7 +97,6 @@ qplot(X1,value,data=ds,geom="line",colour=factor(X2)) + theme_bw() + labs(x="ite
 ggsave("figs/syn/bias.pdf",width=5,height=4)
 
 # Prediction experiment on test data: precision
-source("R/utils.r")
 M <- 5000
 test <- simulate.brem(M,N,z,beta)
 table(test$A[,2],test$A[,3])
