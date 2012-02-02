@@ -126,7 +126,7 @@ test_that("lrm and llk functions work on small example for K=1",{
   expect_that(sum(llks),equals(llk3))
   
   # Compare to drem$llk
-  llk4 <- brem$llk(beta,times,sen-1,rec-1,z-1,N,M,K,P)
+  system.time(llk4 <- brem$llk(beta,times,sen-1,rec-1,z-1,N,M,K,P))
   browser()
   expect_that(sum(llks),equals(llk3))
   
@@ -134,6 +134,36 @@ test_that("lrm and llk functions work on small example for K=1",{
 #   px <- c(1,1,0,0,0,0,0)  
 #   allk <- drem$allk(beta,times,sen-1,rec-1,ix-1,ix-1,px,N,M,N)
 #   expect_that(sum(llks),equals(allk))
+})
+
+test_that("llk runs for larger example",{
+  
+  source("R/brem.cpp.r")
+  require(abind)
+  set.seed(1)
+  M <- 1000
+  N <- 100
+  times <- sort(runif(M,0,1))
+  sen <- sample(1:N,M,replace=TRUE)
+  rec <- sample(1:N,M,replace=TRUE)
+  K <- 1
+  beta <- list("intercept"=matrix(1,1,1),
+               "abba" = matrix(1,1,1),
+               "abby"=matrix(0,1,1),
+               "abxa"=matrix(0,1,1),
+               "abxb"=matrix(0,1,1),
+               "abay"=matrix(0,1,1),
+               "abab"=matrix(0,1,1),
+               "sod"=matrix(0,1,1),
+               "rod"=matrix(0,1,1),
+               "sid"=matrix(0,1,1),
+               "rid"=matrix(0,1,1))
+  P <- length(beta)
+  beta <- abind(beta,rev.along=3)
+  z <- rep(1,N)
+  system.time(llk1 <- brem$llk(beta,times,sen-1,rec-1,z-1,N,M,K,P))
+  system.time(llk2 <- brem$llkp(beta,times,sen-1,rec-1,z-1,N,M,K,P))
+  
 })
 
 test_that("lrm and llk functions work on small example for K=2",{
