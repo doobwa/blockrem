@@ -6,10 +6,10 @@ precomputeTau <- function(A,N) {
   for (m in 1:(M-1)) {
     i <- sen[m]
     j <- rec[m]
-    tau[(m+1):M,,i] <- m
-    tau[(m+1):M,,j] <- m
-    tau[(m+1):M,i,] <- m
-    tau[(m+1):M,j,] <- m
+    tau[(m+1):M,,i] <- m-1
+    tau[(m+1):M,,j] <- m-1
+    tau[(m+1):M,i,] <- m-1
+    tau[(m+1):M,j,] <- m-1
   }
   return(tau)
 }

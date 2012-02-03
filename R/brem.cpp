@@ -1,6 +1,8 @@
 #include <iostream>
-using namespace std;
+#include <algorithm>
+#include <vector>
 #include <omp.h>
+using namespace std;
 
 int threeDIndex(int j, int k, int l, int J, int K, int L) { 
   return l*J*K + k*J + j;
@@ -126,7 +128,7 @@ Rcpp::NumericVector llkp(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rc
   updateStatistics2(s,sen[0],rec[0],0,0,N,P);
   Rcpp::NumericVector llk(M);
   Rcpp::NumericVector llks(N);
-
+  
   for (int m = 1; m < (M-1); m++) {
     i = sen[m];
     j = rec[m];
@@ -176,6 +178,39 @@ Rcpp::NumericVector llkp(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rc
 //   }
 //   return tau;
 // }
+  
+// Compute a data structure for finding tau_{ijm}.
+// Returns tau, where tau[i][j] is a vector of event indices m where (i,j) occurred.
+
+vector< vector< vector<int> > > precomputeTauDyad(Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, int N, int M) {
+  vector< vector< vector<int> > > tau;
+  for (int i = 0; i < N; i++) {
+    vector< vector<int> > tau_i;
+    for (int j = 0; j < N; j++) {
+      int arr[] = {0};
+      vector<int> tau_ij (arr, arr + sizeof(arr) / sizeof(arr[0]) );
+      tau_i.push_back(tau_ij);
+    }
+    tau.push_back(tau_i);
+  }
+  for (int m = 0; m < M; m++) {
+    int i = sen[m];
+    int j = rec[m];
+    tau[i][j].push_back(m);
+  }
+  return tau;
+}
+
+// Get last event for a given vector of times
+int getTau(vector<int> indx, int m) {
+  if (m==0) {
+    return 0;
+  } else {
+    vector<int>::iterator x = std::lower_bound(indx.begin(), indx.end(), m);
+    int ix = int(x- indx.begin()) - 1;
+    return indx[ix];
+  }
+}
 
 Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P, Rcpp::IntegerVector ma, Rcpp::IntegerVector tau) {
 
@@ -186,7 +221,6 @@ Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::NumericVector ti
   Rcpp::NumericVector s  = Rcpp::NumericVector(Dimension(P,N,N));  
   for (int v = 0; v < ma.size(); v++) {
     m = ma[v];
-  //for (int m = 0; m < M; m++) {
     i = sen[m];
     j = rec[m];
     llk = 0;
@@ -195,7 +229,6 @@ Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::NumericVector ti
     llk += computeLambda2(i,j,zi,zj,s,beta,N,K,P);
     for (int r = 0; r < N; r++) {
       int zr = z[r];
-      llk += 1;
       if (r != i) {
         lam  = computeLambda2(i,r,zi,zr,s,beta,N,K,P);
         t    = tau[threeDIndex(m,i,r,M,N,N)];
@@ -214,16 +247,18 @@ Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::NumericVector ti
       }
     }
     s = updateStatistics(s,i,j,N,P);
-    llks[m] = llk;
+    llks(v) = llk;
   }
   return llks;
 }
 
+
+
 Rcpp::List gibbs(int a, Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P, Rcpp::IntegerVector ma, Rcpp::IntegerVector tau) {
   Rcpp::NumericVector x;
   Rcpp::List llks;
-  for (int k=0; k < K; k++) {
-    z[a] = k;
+  for (int k=0; k < N; k++) {
+    //    z[a] = k;
     x = llki(a,beta,times,sen,rec,z,N,M,K,P,ma,tau);
     llks.push_back(x);
   }
@@ -290,6 +325,7 @@ Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
 }
 
 
+
 // Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
 
 Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec,Rcpp::IntegerVector z, int N, int M,int K, int P){
@@ -343,11 +379,13 @@ double llk2(Rcpp::NumericVector lrm,
 RCPP_MODULE(brem){
   function( "llk", &llk ) ;
   function( "llkp", &llkp ) ;
-  function( "llki", &llki ) ;
+  //  function( "llki", &llki ) ;
   function( "gibbs", &gibbs ) ;
   function( "llk2", &llk2 ) ;
   function( "lrm", &lrm ) ;
   function( "updateStatistics", &updateStatistics);
   function( "initializeStatistics", &initializeStatistics);
   function( "computeLambda", &computeLambda);
+  function( "precomputeTauDyad", &precomputeTauDyad);
+  function( "getTau", &getTau);
 }
