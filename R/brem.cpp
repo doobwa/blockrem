@@ -169,47 +169,66 @@ Rcpp::NumericVector llkp(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rc
   return llk;
 }
 
-Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P, Rcpp::List indx) {
+// Rcpp::IntegerVector precomputeTau(Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec) {
+//   Rcpp::IntegerMatrix tau = Rcpp::IntegerMatrix(Dimension(M,N,N));
+//   for (int m = 0; m < times.size(); m++) {
+//     tau[threeDIndex(m,sen[m],rec[m],M,N,N)] = m;
+//   }
+//   return tau;
+// }
 
-  int i,j,zi,zj,m;
+Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P, Rcpp::IntegerVector ma, Rcpp::IntegerVector tau) {
+
+  int i,j,zi,zj,m,t;
   double llk,lam;
   llk=0;
-  Rcpp::IntegerVector ma = indx[a];
   Rcpp::NumericVector llks(ma.size());
-  Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N);
   Rcpp::NumericVector s  = Rcpp::NumericVector(Dimension(P,N,N));  
-  Rprintf("%i%",ma.size());
   for (int v = 0; v < ma.size(); v++) {
     m = ma[v];
+  //for (int m = 0; m < M; m++) {
     i = sen[m];
     j = rec[m];
     llk = 0;
-    if (i==a || j==a) {
-      zi = z[i];
-      zj = z[j];
-      llk += computeLambda2(i,j,zi,zj,s,beta,N,K,P);
-      for (int r = 0; r < N; r++) {
-        int zr = z[r];
-        if (r != i) {
-          lam  = computeLambda2(i,r,zi,zr,s,beta,N,K,P);
-          llk -= (times[m] - times[mp(i,r)]) * exp(lam);
-          lam  = computeLambda2(r,i,zr,zi,s,beta,N,K,P);
-          llk -= (times[m] - times[mp(r,i)]) * exp(lam);
-        }
-        if (r != j) {
-          lam  = computeLambda2(j,r,zj,zr,s,beta,N,K,P);
-          llk -= (times[m] - times[mp(j,r)]) * exp(lam);
-          lam  = computeLambda2(r,j,zr,zj,s,beta,N,K,P);
-          llk -= (times[m] - times[mp(r,j)]) * exp(lam);
-        }
+    zi = z[i];
+    zj = z[j];
+    llk += computeLambda2(i,j,zi,zj,s,beta,N,K,P);
+    for (int r = 0; r < N; r++) {
+      int zr = z[r];
+      llk += 1;
+      if (r != i) {
+        lam  = computeLambda2(i,r,zi,zr,s,beta,N,K,P);
+        t    = tau[threeDIndex(m,i,r,M,N,N)];
+        llk -= (times[m] - times[t]) * exp(lam);
+        lam  = computeLambda2(r,i,zr,zi,s,beta,N,K,P);
+        t    = tau[threeDIndex(m,r,i,M,N,N)];
+        llk -= (times[m] - times[t]) * exp(lam);
       }
-      //      s = updateStatistics(s,i,j,N,P);
+      if (r != j) {
+        lam  = computeLambda2(j,r,zj,zr,s,beta,N,K,P);
+        t    = tau[threeDIndex(m,r,i,M,N,N)];
+        llk -= (times[m] - times[t]) * exp(lam);
+        lam  = computeLambda2(r,j,zr,zj,s,beta,N,K,P);
+        t    = tau[threeDIndex(m,r,i,M,N,N)];
+        llk -= (times[m] - times[t]) * exp(lam);
+      }
     }
-    llks[v] = llk;
+    s = updateStatistics(s,i,j,N,P);
+    llks[m] = llk;
   }
   return llks;
 }
 
+Rcpp::List gibbs(int a, Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P, Rcpp::IntegerVector ma, Rcpp::IntegerVector tau) {
+  Rcpp::NumericVector x;
+  Rcpp::List llks;
+  for (int k=0; k < K; k++) {
+    z[a] = k;
+    x = llki(a,beta,times,sen,rec,z,N,M,K,P,ma,tau);
+    llks.push_back(x);
+  }
+  return llks;
+}
 
 Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P) {
 
@@ -325,6 +344,7 @@ RCPP_MODULE(brem){
   function( "llk", &llk ) ;
   function( "llkp", &llkp ) ;
   function( "llki", &llki ) ;
+  function( "gibbs", &gibbs ) ;
   function( "llk2", &llk2 ) ;
   function( "lrm", &lrm ) ;
   function( "updateStatistics", &updateStatistics);

@@ -2,8 +2,8 @@ source("R/brem.cpp.r")
 source("R/utils.r")
 require(abind)
 set.seed(1)
-M <- 3000
-N <- 1000
+M <- 200
+N <- 200
 times <- sort(runif(M,0,1))
 sen <- sample(1:N,M,replace=TRUE)
 rec <- sample(1:N,M,replace=TRUE)
@@ -24,9 +24,13 @@ beta <- abind(beta,rev.along=3)
 z <- rep(1,N)
 
 i <- 1
-indx <- get.indices(cbind(times,sen,rec),N)
-system.time(brem$llki(i-1,beta,times,sen-1,rec-1,z-1,N,M,K,P,indx))
-llks <- sapply(1:N,function(i) brem$llki(i-1,beta,times,sen-1,rec-1,z-1,N,M,K,P,indx))
+A <- cbind(times,sen,rec)
+indx <- get.indices(A,N)
+tau <- precomputeTau(A,N)
+brem$llki(i-1,beta,times,sen-1,rec-1,z-1,N,M,K,P,indx[[i]],tau)
+
+brem$gibbs(i-1,beta,times,sen-1,rec-1,z-1,N,M,K,P,indx[[i]],tau)
+#system.time(brem$gibbs(i-1,beta,times,sen-1,rec-1,z-1,N,M,K,P,indx[[i]],tau))
 # 
 # lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
 # llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)

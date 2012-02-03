@@ -50,6 +50,10 @@ llks <- c(a[1,sen[1],rec[1]],
           a[4,sen[4],rec[4]] - (times[4]-times[4-1]) * sum(exp(a[4,,])) )
 sum(llks)
 
+
 i <- 1
 indx <- get.indices(A,N)
-sapply(1:N,function(i) brem$llki(i-1,beta,times,sen-1,rec-1,z-1,N,M,K,P,indx))
+tau <- precomputeTau(A,N)
+system.time(brem$llki(i-1,beta,times,sen-1,rec-1,z-1,N,M,K,P,indx[[i]],tau))
+brem$llki(i-1,beta,times,sen-1,rec-1,z-1,N,M,K,P,indx[[i]],tau)
+#sapply(1:N,function(i) brem$llki(i-1,beta,times,sen-1,rec-1,z-1,N,M,K,P,indx))
