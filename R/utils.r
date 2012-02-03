@@ -1,3 +1,35 @@
+precomputeTau <- function(A,N) {
+  M <- nrow(A)
+  sen <- A[,2]
+  rec <- A[,3]
+  tau <- array(0,c(M,N,N))
+  for (m in 1:(M-1)) {
+    i <- sen[m]
+    j <- rec[m]
+    tau[(m+1):M,,i] <- m
+    tau[(m+1):M,,j] <- m
+    tau[(m+1):M,i,] <- m
+    tau[(m+1):M,j,] <- m
+  }
+  return(tau)
+}
+get.indices <- function(A,N) {
+  # Fast enough for our scale of problems
+  # Returns 0-based index
+  # Includes M-1 in all lists
+  M <- nrow(A)
+  xs <- vector("list",N)
+  for (m in 1:M) {
+    i <- A[m,2]
+    j <- A[m,3]
+    xs[[i]] <- c(xs[[i]],m - 1)
+    xs[[j]] <- c(xs[[j]],m - 1)
+  }
+  for (i in 1:N) 
+    xs[[i]] <- c(xs[[i]],M - 1)
+  return(xs)
+}
+
 ranks <- function(edgelist,ratemats,...) {
   M <- nrow(edgelist)
   n <- dim(ratemats)[2]
