@@ -82,49 +82,11 @@ vector< vector< vector<int> > > initializeStatistics2(int N, int P) {
 }
 
 
-void updateStatistics2(  vector< vector< vector<int> > > &s, int a, int b, int i, int j) {
-  // (a,b) the event that occurred.  (i,j) the event that we are computing statistics for
-  if (i != j) {
-    // P-shifts
-    s[i][j][1] = (i!=a & i==b & j==a & j!=b);
-    s[i][j][2] = (i!=a & i==b & j!=a & j!=b);
-    s[i][j][3] = (i!=a & i!=b & j==a & j!=b);
-    s[i][j][4] = (i!=a & i!=b & j!=a & j==b);
-    s[i][j][5] = (i==a & i!=b & j!=a & j!=b);
-    s[i][j][6] = (i==a & i!=b & j!=a & j==b);
-
-    // Degree effects
-    if (a==i && b!=j) {
-      s[i][j][7] += 1;  // sender out degree
-    }
-    if (b==i && a!=j) {
-      s[i][j][8] += 1;  // sender in degree
-    }
-    if (a==j && b!=i) { 
-      s[i][j][9] += 1;  // receiver out degree
-    }
-    if (b==j && a!=i) {
-      s[i][j][10] += 1; // receiver in degree
-    }
-  }
-  // s[i][j][7] += 1; // sender out degree
-  // s[i][j][8] += 1; // 
-  // s[i][j][9] += 1;
-  // s[i][j][10] += 1;
-}
-
 //
 double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::NumericVector beta, int N, int K, int P) {
   double lam = 0;
   for (int p = 0; p < P; p++) {
     lam += s[threeDIndex(p,i,j,P,N,N)] * beta[threeDIndex(p,zi,zj,P,K,K)];
-  }
-  return lam;
-}
-double computeLambda2(int i, int j, int zi, int zj, vector< vector< vector<int> > > stats, Rcpp::NumericVector &beta, int N, int K, int P) {
-  double lam = beta[threeDIndex(0,zi,zj,P,K,K)]; // intercept
-  for (int p = 1; p < P; p++) {
-    lam += stats[i][j][p] * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
   return lam;
 }
@@ -187,142 +149,6 @@ double computeLambda2(int i, int j, int zi, int zj, vector< vector< vector<int> 
 // Compute a data structure for finding tau_{ijm}.
 // Returns tau, where tau[i][j] is a vector of event indices m where lambda_{ij} changed (due to an event involving either i or j.
 
-vector< vector< vector<int> > > precomputeTauDyad(Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, int N, int M) {
-  vector< vector< vector<int> > > tau;
-  for (int i = 0; i < N; i++) {
-    vector< vector<int> > tau_i;
-    for (int j = 0; j < N; j++) {
-      int arr[] = {0};
-      vector<int> tau_ij (arr, arr + sizeof(arr) / sizeof(arr[0]) );
-      tau_i.push_back(tau_ij);
-    }
-    tau.push_back(tau_i);
-  }
-  for (int m = 0; m < M; m++) {
-    int i = sen[m];
-    int j = rec[m];
-    for (int r = 0; r < N; r++) {
-      if (r!=j && r!=i) {
-        tau[i][r].push_back(m);
-        tau[r][i].push_back(m);
-        tau[j][r].push_back(m);
-        tau[r][j].push_back(m);
-      }
-    }
-    tau[i][j].push_back(m);
-    tau[j][i].push_back(m);
-  }
-  return tau;
-}
-
-vector< vector< vector< vector<int> > > > precomputeStats(Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, int N, int M, int P) {
-  vector< vector< vector<int> > > s = initializeStatistics2(N,P);
-  vector< vector< vector< vector<int> > > > x;
-  for (int i = 0; i < N; i++) {
-    vector< vector< vector<int> > > x_i;
-    for (int j = 0; j < N; j++) {
-      vector< vector<int> > x_ij;
-      x_i.push_back(x_ij);
-    }
-    x.push_back(x_i);
-  }
-  for (int m = 0; m < M; m++) {
-    int i = sen[m];
-    int j = rec[m];
-    for (int r = 0; r < N; r++) {
-      if (r!=j && r!=i) {
-      updateStatistics2(s,i,r,i,j);
-      updateStatistics2(s,r,i,i,j);
-      updateStatistics2(s,j,r,i,j);
-      updateStatistics2(s,r,j,i,j);
-      x[i][r].push_back(s[i][r]);
-      x[r][i].push_back(s[r][i]);
-      x[j][r].push_back(s[j][r]);
-      x[r][j].push_back(s[r][j]);
-      }
-    }
-    updateStatistics2(s,i,j,i,j);
-    updateStatistics2(s,j,i,i,j);
-    x[i][j].push_back(s[i][j]);
-    x[j][i].push_back(s[j][i]);
-  }
-  return x;
-}
-
-// Get last event for a given vector of times
-int getTau(vector<int> indx, int m) {
-  if (m==0) {
-    return 0;
-  } else {
-    vector<int>::iterator x = std::lower_bound(indx.begin(), indx.end(), m);
-    int ix = int(x- indx.begin()) - 1;
-    return indx[ix];
-  }
-}
-
-Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P, Rcpp::IntegerVector ma, vector< vector< vector<int> > > tau) {
-
-  int i,j,zi,zj,m,t;
-  double llk,lam;
-  llk=0;
-  Rcpp::NumericVector llks(M);//ma.size());
-  //  vector< vector< vector<int> > > stats = precomputeStats(times,sen,rec,N,M,P);
-  for (int m = 0; m < M; m++) {
-    i = sen[m];
-    j = rec[m];
-    llk = 0;
-    zi = z[i];
-    zj = z[j];
-    if (i==a | j==a | m==(M-1)) {
-      // llk += computeLambda2(i,j,zi,zj,s,beta,N,K,P);
-      // for (int r = 0; r < N; r++) {
-      //   int zr = z[r];
-      //   if (r != i) {
-      //     lam  = computeLambda2(i,r,zi,zr,s,beta,N,K,P);
-      //     t    = getTau(tau[i][r],m);
-      //     //          Rprintf("%i (%i,%i) %f %i\n",m,i,r,lam,t);
-      //     llk -= (times[m] - times[t]) * exp(lam);
-      //     lam  = computeLambda2(r,i,zr,zi,s,beta,N,K,P);
-      //     t    = getTau(tau[r][i],m);
-      //     //          Rprintf("%i (%i,%i) %f %i\n",m,r,i,lam,t);
-      //     llk -= (times[m] - times[t]) * exp(lam);
-      //   }
-      //   if (r != j) {
-      //     lam  = computeLambda2(j,r,zj,zr,s,beta,N,K,P);
-      //     t    = getTau(tau[j][r],m);
-      //     //          Rprintf("%i (%i,%i) %f %i\n",m,j,r,lam,t);
-      //     llk -= (times[m] - times[t]) * exp(lam);
-      //     lam  = computeLambda2(r,j,zr,zj,s,beta,N,K,P);
-      //     t    = getTau(tau[r][j],m);
-      //     //          Rprintf("%i (%i,%i) %f %i\n",m,r,j,lam,t);
-      //     llk -= (times[m] - times[t]) * exp(lam);
-      //   }
-      //}
-    }
-    llks(m) = llk;
-  }
-  return llks;
-}
-
-
-
-Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P, Rcpp::List mas) {
-  Rcpp::NumericVector x;
-  Rcpp::List llks;
-  vector< vector< vector<int> > > tau = precomputeTauDyad(times,sen,rec,N,M);
-  for (int a=0; a < N; a++) {
-    Rcpp::List llk_a;
-    for (int k=0; k < K; k++) {
-      z[a] = k;
-      Rcpp::IntegerVector ma = mas[a];
-      x = llki(a,beta,times,sen,rec,z,N,M,K,P,ma,tau);
-      llk_a.push_back(x);
-    }
-    llks.push_back(llk_a);
-  }
-  return Rcpp::List::create(Rcpp::Named("llks") = llks,
-                            Rcpp::Named("z")    = z);
-}
 
 // Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P) {
 
@@ -439,13 +265,8 @@ RCPP_MODULE(brem){
   //  function( "llk", &llk ) ;
   //  function( "llkp", &llkp ) ;
   //  function( "llki", &llki ) ;
-  function( "gibbs", &gibbs ) ;
   function( "llk2", &llk2 ) ;
   function( "lrm", &lrm ) ;
   function( "updateStatistics", &updateStatistics);
   function( "initializeStatistics", &initializeStatistics);
-  function( "precomputeStats", &precomputeStats);
-  function( "computeLambda", &computeLambda);
-  function( "precomputeTauDyad", &precomputeTauDyad);
-  function( "getTau", &getTau);
 }
