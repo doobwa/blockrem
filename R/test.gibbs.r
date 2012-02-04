@@ -25,6 +25,11 @@ P <- length(beta)
 beta <- abind(beta,rev.along=3)
 z <- c(rep(1,4),2)
 
+# Make sure gibbs runs
+s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
+s$precompute()
+b <- bremf$gibbs(beta,z-1,s$ptr(),K)
+
 A <- cbind(times,sen,rec)
 indx <- get.indices(A,N)
 
