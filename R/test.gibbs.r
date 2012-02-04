@@ -1,6 +1,7 @@
 source("R/brem.cpp.r")
 source("R/utils.r")
 require(abind)
+require(testthat)
 set.seed(1)
 M <- 10
 N <- 5
@@ -61,3 +62,16 @@ llk_indiv <- function(a,lrm,times,sen,rec) {
 a <- llk_indiv(0,lrm,times,sen-1,rec-1)
 b <- brem$gibbs(beta,times,sen-1,rec-1,z-1,N,M,K,P,indx)$llks[[1]][[1]]
 expect_that(a,equals(b))
+
+# Timing test
+set.seed(1)
+M <- 1000
+N <- 100
+times <- sort(runif(M,0,1))
+sen <- sample(1:N,M,replace=TRUE)
+rec <- sample(1:N,M,replace=TRUE)
+z <- sample(1:2,N,replace=TRUE)
+K <- 2
+A <- cbind(times,sen,rec)
+indx <- get.indices(A,N)
+system.time(brem$gibbs(beta,times,sen-1,rec-1,z-1,N,M,K,P,indx))
