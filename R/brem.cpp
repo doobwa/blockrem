@@ -25,7 +25,6 @@ Rcpp::NumericVector initializeStatistics(int N, int P) {
 }
 
 
-
 Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N, int P) {
   // Create vector of indicators for each pshift.
   // i.e. If I[(i,j) is ab-ba from last event (a,b)]
@@ -109,8 +108,8 @@ double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::
   return lam;
 }
 double computeLambda2(int i, int j, int zi, int zj, Rcpp::NumericVector &s, Rcpp::NumericVector &beta, int N, int K, int P) {
-  double lam = 0;
-  for (int p = 0; p < P; p++) {
+  double lam = beta[threeDIndex(0,zi,zj,P,K,K)]; // intercept
+  for (int p = 1; p < P; p++) {
     lam += s[threeDIndex(p,i,j,P,N,N)] * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
   return lam;
@@ -180,7 +179,7 @@ Rcpp::NumericVector llkp(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rc
 // }
   
 // Compute a data structure for finding tau_{ijm}.
-// Returns tau, where tau[i][j] is a vector of event indices m where (i,j) occurred.
+// Returns tau, where tau[i][j] is a vector of event indices m where lambda_{ij} changed (due to an event involving either i or j.
 
 vector< vector< vector<int> > > precomputeTauDyad(Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, int N, int M) {
   vector< vector< vector<int> > > tau;
@@ -196,7 +195,12 @@ vector< vector< vector<int> > > precomputeTauDyad(Rcpp::NumericVector times, Rcp
   for (int m = 0; m < M; m++) {
     int i = sen[m];
     int j = rec[m];
-    tau[i][j].push_back(m);
+    for (int r = 0; r < N; r++) {
+      tau[i][r].push_back(m);
+      tau[r][i].push_back(m);
+      tau[j][r].push_back(m);
+      tau[r][j].push_back(m);
+    }
   }
   // TODO: Add M-1 to everybody?  Assumption: all intensities change on last event....
   return tau;
@@ -218,54 +222,64 @@ Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::NumericVector ti
   int i,j,zi,zj,m,t;
   double llk,lam;
   llk=0;
-  Rcpp::NumericVector llks(ma.size());
+  Rcpp::NumericVector llks(M);//ma.size());
   Rcpp::NumericVector s  = Rcpp::NumericVector(Dimension(P,N,N));  
-  for (int v = 0; v < ma.size(); v++) {
-    m = ma[v];
+  for (int m = 0; m < M; m++) {
     i = sen[m];
     j = rec[m];
     llk = 0;
     zi = z[i];
     zj = z[j];
-    llk += computeLambda2(i,j,zi,zj,s,beta,N,K,P);
-    for (int r = 0; r < N; r++) {
-      int zr = z[r];
-      if (r != i) {
-        lam  = computeLambda2(i,r,zi,zr,s,beta,N,K,P);
-        t    = getTau(tau[i][r],m);
-        llk -= (times[m] - times[t]) * exp(lam);
-        lam  = computeLambda2(r,i,zr,zi,s,beta,N,K,P);
-        t    = getTau(tau[r][i],m);
-        llk -= (times[m] - times[t]) * exp(lam);
-      }
-      if (r != j) {
-        lam  = computeLambda2(j,r,zj,zr,s,beta,N,K,P);
-        t    = getTau(tau[j][r],m);
-        llk -= (times[m] - times[t]) * exp(lam);
-        lam  = computeLambda2(r,j,zr,zj,s,beta,N,K,P);
-        t    = getTau(tau[r][j],m);
-        llk -= (times[m] - times[t]) * exp(lam);
+    if (i==a | j==a | m==(M-1)) {
+      llk += computeLambda2(i,j,zi,zj,s,beta,N,K,P);
+      for (int r = 0; r < N; r++) {
+        int zr = z[r];
+        if (r != i) {
+          lam  = computeLambda2(i,r,zi,zr,s,beta,N,K,P);
+          t    = getTau(tau[i][r],m);
+          //          Rprintf("%i (%i,%i) %f %i\n",m,i,r,lam,t);
+          llk -= (times[m] - times[t]) * exp(lam);
+          lam  = computeLambda2(r,i,zr,zi,s,beta,N,K,P);
+          t    = getTau(tau[r][i],m);
+          //          Rprintf("%i (%i,%i) %f %i\n",m,r,i,lam,t);
+          llk -= (times[m] - times[t]) * exp(lam);
+        }
+        if (r != j) {
+          lam  = computeLambda2(j,r,zj,zr,s,beta,N,K,P);
+          t    = getTau(tau[j][r],m);
+          //          Rprintf("%i (%i,%i) %f %i\n",m,j,r,lam,t);
+          llk -= (times[m] - times[t]) * exp(lam);
+          lam  = computeLambda2(r,j,zr,zj,s,beta,N,K,P);
+          t    = getTau(tau[r][j],m);
+          //          Rprintf("%i (%i,%i) %f %i\n",m,r,j,lam,t);
+          llk -= (times[m] - times[t]) * exp(lam);
+        }
       }
     }
-    s = updateStatistics(s,i,j,N,P);
-    llks(v) = llk;
+    s = updateStatistics(s,i,j,N,P);  // incorrect for dyads not involving a
+    llks(m) = llk;
   }
   return llks;
 }
+
 
 
 Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P, Rcpp::List mas) {
   Rcpp::NumericVector x;
   Rcpp::List llks;
   vector< vector< vector<int> > > tau = precomputeTauDyad(times,sen,rec,N,M);
-  for (int k=0; k < N; k++) {
-    int a = 1;
-    //    z[a] = k;
-    Rcpp::IntegerVector ma = mas[a];
-    x = llki(a,beta,times,sen,rec,z,N,M,K,P,ma,tau);
-    llks.push_back(x);
+  for (int a=0; a < 1; a++) {
+    Rcpp::List llk_a;
+    for (int k=0; k < 1; k++) {
+      z[a] = k;
+      Rcpp::IntegerVector ma = mas[a];
+      x = llki(a,beta,times,sen,rec,z,N,M,K,P,ma,tau);
+      llk_a.push_back(x);
+    }
+    llks.push_back(llk_a);
   }
-  return llks;
+  return Rcpp::List::create(Rcpp::Named("llks") = llks,
+                            Rcpp::Named("z")    = z);
 }
 
 Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P) {
