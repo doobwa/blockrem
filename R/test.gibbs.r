@@ -4,11 +4,11 @@ require(abind)
 require(testthat)
 set.seed(1)
 M <- 3000
-N <- 500
+N <- 1000
 times <- sort(runif(M,0,1))
 sen <- sample(1:N,M,replace=TRUE)
 rec <- sample(1:N,M,replace=TRUE)
-K <- 2
+K <- 4
 
 beta <- list("intercept"=matrix(1,K,K),
              "abba" = matrix(c(1,2,3,4),K,K),

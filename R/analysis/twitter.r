@@ -23,6 +23,7 @@ B[,1] <- B[,1] - B[1,1]
 B[,1] <- B[,1]/B[nrow(B),1]
 
 z <- sample(1:K,N,replace=TRUE)
+save(B,N,M,file="data/twitter.example.rdata")
 beta <- matrix(rnorm(K^2),K,K)
 
 set.seed(4)
