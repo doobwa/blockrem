@@ -122,6 +122,10 @@ public:
       u[i].push_back(m);
       u[j].push_back(m);
     }
+    for (int i = 0; i < N; i++) {
+      u[i].push_back(M-1);
+    }
+    Rprintf("\n");
   }
 
   vector<int> get_s(int m, int i, int j) {
@@ -222,7 +226,6 @@ double computeLambda(int i, int j, int zi, int zj, vector<int> s, Rcpp::NumericV
 // Compute the loglikelihood corresponding to a single actor, a.
 
 Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, Stat *s, int K) {
-  Rprintf("%i%",s->N);
   int N = s->N;
   int M = s->M;
   int P = s->P;
@@ -278,11 +281,10 @@ Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_,
       llk_a.push_back(x);
     }
     llks.push_back(llk_a);
-
+    Rprintf(".");
     // Sample z[a]
-
-
   }
+    Rprintf("\n");
   return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("z") = z);
 }
 RCPP_MODULE(bremf){

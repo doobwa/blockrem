@@ -3,8 +3,8 @@ source("R/utils.r")
 require(abind)
 require(testthat)
 set.seed(1)
-M <- 10
-N <- 5
+M <- 3000
+N <- 500
 times <- sort(runif(M,0,1))
 sen <- sample(1:N,M,replace=TRUE)
 rec <- sample(1:N,M,replace=TRUE)
@@ -23,12 +23,14 @@ beta <- list("intercept"=matrix(1,K,K),
              "rid"=matrix(0,K,K))
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
-z <- c(rep(1,4),2)
+z <- c(rep(1,N-1),2)
 
 # Make sure gibbs runs
 s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
+st <- proc.time()
 b <- bremf$gibbs(beta,z-1,s$ptr(),K)
+proc.time() - st
 
 A <- cbind(times,sen,rec)
 indx <- get.indices(A,N)
@@ -77,6 +79,6 @@ sen <- sample(1:N,M,replace=TRUE)
 rec <- sample(1:N,M,replace=TRUE)
 z <- sample(1:2,N,replace=TRUE)
 K <- 2
-A <- cbind(times,sen,rec)
-indx <- get.indices(A,N)
-#system.time(bremf$gibbs(beta,times,sen-1,rec-1,z-1,N,M,K,P,indx))
+s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
+s$precompute()
+b <- bremf$gibbs(beta,z-1,s$ptr(),K)
