@@ -176,6 +176,9 @@ public:
 
   double get_tau(int m, int i, int j) {
     //    int r = get_prev(v[i][j],m);
+    if (m > M-1) {
+      m = M-1;
+    }
     int r = w[i][j][m] - 1;
     if (r < 0) {
       r = 0;
@@ -367,13 +370,11 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
     for (int r = 0; r < N; r++) {
       int zr = z[r];
-      if (r != i) {
+      if (r != i && r != j) {
         lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
         llk -= (s->times[m] - s->get_tau(m,i,r)) * exp(lam);
         lam  = computeLambdaFast(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
         llk -= (s->times[m] - s->get_tau(m,r,i)) * exp(lam);
-      }
-      if (r != j) {
         lam  = computeLambdaFast(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
         llk -= (s->times[m] - s->get_tau(m,j,r)) * exp(lam);
         lam  = computeLambdaFast(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);

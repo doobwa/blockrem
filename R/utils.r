@@ -37,11 +37,9 @@ llk_fast <- function(lrm,times,sen,rec) {
     j <- rec[m+1]
     llks[m+1] <- lrm[m+1,i+1,j+1]
     for (r in 0:(N-1)) {
-      if (r != i) {
+      if (r != i & r!=j) {
         llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[i+1,r+1]+1]) * exp(lrm[m+1,i+1,r+1])
         llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[r+1,i+1]+1]) * exp(lrm[m+1,r+1,i+1])
-      }
-      if (r != j) {
         llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[j+1,r+1]+1]) * exp(lrm[m+1,j+1,r+1])
         llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[r+1,j+1]+1]) * exp(lrm[m+1,r+1,j+1])
       }

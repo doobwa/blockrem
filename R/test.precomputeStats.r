@@ -52,4 +52,6 @@ test_that("get_v gets vectors as expected",{
 })
 
 times <- seq(0,.6,by=.1)
+taus <- sapply(0:(M-1),function(m) s$get_tau(m,3-1,1-1))
+expect_that(s$get_tau(1,3-1,1-1),equals(.5))
 expect_that(s$get_tau(M-1,3-1,1-1),equals(.5))

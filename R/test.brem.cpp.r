@@ -126,13 +126,17 @@ test_that("computeLambda correct for small example",{
   llk3 <- brem$llkfast(beta,z-1,s$ptr(),K)
   
   true.fast <- c(1,2 - 2*(13*exp(1) + exp(2)), 1 - 13*exp(1) - exp(2), 2 - 13*exp(1) - exp(2) - (times[4] - times[1])*6*exp(1))
-  
+
   llk4 <- llk_fast(lrm,times,sen-1,rec-1)
-  browser()
+
   expect_that(sum(llks),equals(llk2))
-  expect_that(sum(llks),equals(llk3))
+  expect_that(sum(llks),equals(sum(llk3)))
+  expect_that(sum(llks),equals(sum(llk4)))
+  expect_that(sum(true.fast),equals(sum(llk4)))
   
-  
+
+taus <- sapply(0:(M-1),function(m) s$get_tau(m,3-1,1-1))
+expect_that(taus,equals(c(0,0,2,3)))
 #   llk3 <- brem.llk.slow(lrm,times,sen,rec,z,N,M)
 #   expect_that(sum(llks),equals(llk3))
 #   
