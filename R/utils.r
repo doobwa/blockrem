@@ -7,11 +7,9 @@ llk_indiv <- function(a,lrm,times,sen,rec) {
     if (i==a | j==a | m==(M-1)) {
       llks[m+1] <- lrm[m+1,i+1,j+1]
       for (r in 0:(N-1)) {
-        if (r != i) {
+        if (r != i & r!=j) {
           llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[i+1,r+1]+1]) * sum(exp(lrm[m+1,i+1,r+1]))
           llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[r+1,i+1]+1]) * sum(exp(lrm[m+1,r+1,i+1]))
-        }
-        if (r != j) {
           llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[j+1,r+1]+1]) * sum(exp(lrm[m+1,j+1,r+1]))
           llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[r+1,j+1]+1]) * sum(exp(lrm[m+1,r+1,j+1]))
         }
@@ -27,11 +25,107 @@ llk_indiv <- function(a,lrm,times,sen,rec) {
   return(llks)
 }
 
+llk_slow <- function(lrm,times,sen,rec) {
+  sen <- sen+1
+  rec <- rec+1
+  mp <- matrix(0,N,N)
+  llks <- rep(0,M)
+  for (m in 1:M) diag(lrm[m,,]) <- -Inf
+  llks[1] = lrm[1,sen[1],rec[1]]
+  for (m in 2:(M-1)) {
+    llks[m] <- lrm[m,sen[m],rec[m]] - (times[m]-times[m-1]) * sum(exp(lrm[m,,]))
+  }
+  return(llks)
+}
+
+test_taus_from_s <- function(times,sen,rec,N,M,P) {
+  s <- new(brem$Stat,times,sen,rec,N,M,P)
+  s$precompute()
+  taus <- array(0,c(M,N,N))
+  for (m in 0:(M-1)) {
+    for (i in 0:(N-1)) {
+      for (j in 0:(N-1)) {
+        if (i != j) {
+          taus[m+1,i+1,j+1] <- s$get_tau(m,i,j)
+        }
+      }
+    }
+  }
+  return(taus)
+}
+
+test_taus <- function(lrm,times,sen,rec) {
+  mp <- matrix(0,N,N)
+  llks <- matrix(0,N,N)
+  M <- length(times)
+  taus <- array(0,c(M,N,N))
+  for (m in 0:(M-2)) {
+    for (i in 0:(N-1)) {
+      for (j in 0:(N-1)) {
+        if (i!=j) {
+          taus[m+1,i+1,j+1] <- times[mp[i+1,j+1]+1]
+        }
+      }
+    }
+    i <- sen[m+1]
+    j <- rec[m+1]
+    mp[i+1,] <- m
+    mp[,i+1] <- m
+    mp[j+1,] <- m
+    mp[,j+1] <- m
+    
+  }
+  m <- M-1
+  for (i in 0:(N-1)) {
+    for (j in 0:(N-1)) {
+      if (i!=j) {
+        taus[m+1,i+1,j+1] <- times[mp[i+1,j+1]+1]
+      }
+    }
+  }
+  return(taus)
+}
+llk_fast_last <- function(lrm,times,sen,rec) {
+  mp <- matrix(0,N,N)
+  llks <- matrix(0,N,N)
+  taus <- matrix(0,N,N)
+  for (m in 1:(M-2)) {
+    i <- sen[m]
+    j <- rec[m]
+    mp[i+1,] <- m
+    mp[,i+1] <- m
+    mp[j+1,] <- m
+    mp[,j+1] <- m
+  }
+  m <- M-1
+  for (i in 0:(N-1)) {
+    for (j in 0:(N-1)) {
+      if (i!=j) {
+        taus[i+1,j+1] <- times[mp[i+1,j+1]+1]
+        llks[i+1,j+1] <- (times[m+1]-times[mp[i+1,j+1]+1]) * sum(exp(lrm[m+1,i+1,j+1]))
+      }
+    }
+  }
+  return(list(taus=taus,llks=llks,mp=mp))
+}
 
 # 0 based indexing on sen and rec
+llk_slow <- function(lrm,times,sen,rec) {
+  sen <- sen+1
+  rec <- rec+1
+  mp <- matrix(0,N,N)
+  llks <- rep(0,M)
+  for (m in 1:M) diag(lrm[m,,]) <- -Inf
+  llks[1] = lrm[1,sen[1],rec[1]]
+  for (m in 2:(M-1)) {
+    llks[m] <- lrm[m,sen[m],rec[m]] - (times[m]-times[m-1]) * sum(exp(lrm[m,,]))
+  }
+  return(llks)
+}
 llk_fast <- function(lrm,times,sen,rec) {
   mp <- matrix(0,N,N)
   llks <- rep(0,M)
+  llks[1] <- lrm[1,sen[1]+1,rec[1]+1]
   for (m in 1:(M-2)) {
     i <- sen[m+1]
     j <- rec[m+1]
@@ -56,6 +150,7 @@ llk_fast <- function(lrm,times,sen,rec) {
   for (i in 0:(N-1)) {
     for (j in 0:(N-1)) {
       if (i!=j) {
+        #cat(i," ",j," ",times[mp[i+1,j+1]+1])
         llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[i+1,j+1]+1]) * sum(exp(lrm[m+1,i+1,j+1]))
       }
     }

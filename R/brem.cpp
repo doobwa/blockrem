@@ -179,10 +179,14 @@ public:
     if (m > M-1) {
       m = M-1;
     }
-    int r = w[i][j][m] - 1;
-    if (r < 0) {
-      r = 0;
+    if (m == 0) {
+      m = 1;
     }
+    // int r = w[i][j][m] - 1;
+    // if (r < 0) {
+    //   r = 0;
+    // }
+    int r = w[i][j][m - 1];
     int y = v[i][j][r];
     //    Rprintf("%i %i %i\n",r,v[i][j].size(),y);
     return times[y];
@@ -297,29 +301,20 @@ Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z,
     llk = 0;
     zi = z[i];
     zj = z[j];
-    // if (i==a | j==a | m==(M-1)) {
-      Rprintf("%i %i %i %i",a,m,i,j);
-      llk += computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
-      Rprintf(" done\n");
-      for (int r = 0; r < N; r++) {
-        int zr = z[r];
-        if (r != i) {
-          lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
-          llk -= (s->times[m] - s->get_tau(m,i,r)) * exp(lam);
-          //          Rprintf("%i (%i,%i) %f %i\n",m,i,r,lam,t);
-          lam  = computeLambdaFast(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
-          llk -= (s->times[m] - s->get_tau(m,r,i)) * exp(lam);
-          //          Rprintf("%i (%i,%i) %f %i\n",m,r,i,lam,t);
-        }
-        if (r != j) {
-          lam  = computeLambdaFast(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
-          llk -= (s->times[m] - s->get_tau(m,j,r)) * exp(lam);
-          lam  = computeLambdaFast(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
-          llk -= (s->times[m] - s->get_tau(m,r,j)) * exp(lam);
-          // //          Rprintf("%i (%i,%i) %f %i\n",m,r,j,lam,t);
-        }
+    llk += computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+    for (int r = 0; r < N; r++) {
+      int zr = z[r];
+      if (r != i && r !=j) {
+        lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
+        llk -= (s->times[m] - s->get_tau(m,i,r)) * exp(lam);
+        lam  = computeLambdaFast(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
+        llk -= (s->times[m] - s->get_tau(m,r,i)) * exp(lam);
+        lam  = computeLambdaFast(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
+        llk -= (s->times[m] - s->get_tau(m,j,r)) * exp(lam);
+        lam  = computeLambdaFast(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
+        llk -= (s->times[m] - s->get_tau(m,r,j)) * exp(lam);
       }
-      // }
+    }
     llks(ix) = llk;
   }
   return llks;
@@ -354,17 +349,20 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
 
   double llk = 0.0; 
   double lam = 0;
+  int i,j,r,zi,zj;
   Rcpp::NumericVector llks(M);
-  llks[0] = llk;
-
-  int i,j,r;
   Rcpp::IntegerVector sen = s->sen;
   Rcpp::IntegerVector rec = s->rec;
+
+  zi = z[i];
+  zj = z[j];
+  llks[0] = beta[threeDIndex(0,zi,zj,P,K,K)];
+
   for (int m = 1; m < (M-1); m++) {
     i = sen[m];
     j = rec[m];
-    int zi = z[i];
-    int zj = z[j];
+    zi = z[i];
+    zj = z[j];
     llk = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
 
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
@@ -389,22 +387,52 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
   }
   //All intensities assumed to change at the last event
   int m = M-1;
-  i = sen[m];
-  j = rec[m];
-  int zi = z[i];
-  int zj = z[j];
-  llk = computeLambdaFast(i,j,zi,zj,s->get_s(M-1,i,j),beta,N,K,P);
+  llk = 0;
   for (int i = 0; i < N; i++) {
    for (int j = 0; j < N; j++) {
-     //     Rprintf("%f %i %i\n",llk,i,j);
+     zi = z[i];
+     zj = z[j];
      if (i != j) {
-       lam  = computeLambdaFast(i,j,zi,zj,s->get_s(M-1,i,j),beta,N,K,P);
-       llk -= (s->times[M-1] - s->get_tau(M-1,i,j)) * exp(lam);
+       lam  = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+       llk -= (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
      }
    }
   }
   llks[M-1] = llk;
   return llks;
+}
+
+Rcpp::List test_last(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
+  Stat *s = XPtr<Stat>(statptr_);
+  int N = s->N;
+  int P = s->P;
+  int M = s->M;
+
+  double llk = 0.0; 
+  double lam = 0;
+  int i,j,r,zi,zj;
+  Rcpp::NumericMatrix llks(N,N);
+  Rcpp::IntegerVector sen = s->sen;
+  Rcpp::IntegerVector rec = s->rec;
+  Rcpp::NumericMatrix taus(N,N);
+  //All intensities assumed to change at the last event
+  int m = M-1;
+  i = sen[m];
+  j = rec[m];
+  for (int i = 0; i < N; i++) {
+   for (int j = 0; j < N; j++) {
+     zi = z[i];
+     zj = z[j];
+     if (i != j) {
+       //       Rprintf("%i %i %f\n",i,j,s->get_tau(m,i,j));
+       taus(i,j) = s->get_tau(m,i,j);
+       lam  = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+       double llk = (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
+       llks(i,j) = 0;//NumericVector(llk);
+     }
+   }
+  }
+  return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("taus") = taus);
 }
 /////////////////
 // OLDER VERSION
@@ -618,14 +646,8 @@ Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
 
   Rcpp::NumericVector lrmat = Rcpp::NumericVector(Dimension(M,N,N));
   Rcpp::NumericVector s = initializeStatistics(N,P);
-
   //int a,b,u,v,i,j;
-  for (int m = 1; m < M; m++) {
-    s = updateStatistics(s,sen[m-1],rec[m-1],N,P);
-    int i = 1;
-    int j = 0;
-    int zi = z[i];
-    int zj = z[j];
+  for (int m = 0; m < M; m++) {
     for (int i = 0; i < N; i++) {
       for (int j = 0; j < N; j++) {
         int zi = z[i];
@@ -633,6 +655,7 @@ Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
         lrmat[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,zi,zj,s,beta,N,K,P);
       }
     }
+    s = updateStatistics(s,sen[m],rec[m],N,P);
   }
   return lrmat;
 }
@@ -706,4 +729,5 @@ RCPP_MODULE(brem){
   function( "updateStatistics", &updateStatistics);
   function( "computeLambda", &computeLambda);
   function( "initializeStatistics", &initializeStatistics);
+  function( "test_last", &test_last);
 }

@@ -27,9 +27,9 @@ beta <- abind(beta,rev.along=3)
 z <- c(rep(1,N-1),2)
 
 # Make sure gibbs runs
-s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
+s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
-b <- brem$llk(beta,z-1,s$ptr(),K)
+b <- brem$llkfast(beta,z-1,s$ptr(),K)
 
 s$get_w(2,0)
 for (m in 0:(M-1)) {

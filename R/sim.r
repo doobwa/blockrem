@@ -3,7 +3,9 @@ library(ggplot2)
 require(abind)
 require(testthat)
 source("R/brem.r")
+source("R/brem.cpp.r")
 source("R/sbm.r")
+source("R/utils.r")
 N <- 10
 K <- 2
 beta <- list("intercept"=matrix(c(2,1,1,2),K,K),
@@ -24,7 +26,6 @@ M <- 2000
 set.seed(1)
 z <- c(rep(1,5),rep(2,5))
 
-source("R/brem.cpp.r")
 sim <- simulate.brem(M,N,z,beta)
 mat <- table(sim$A[,2],sim$A[,3])
 mat <- melt(as.matrix(mat))
@@ -34,43 +35,20 @@ save(sim,N,K,P,M,z,beta,file="data/sim.rdata")
 #ggsave("figs/syn/mat.pdf",width=3,height=3)
 
 
-require(testthat)
-source("R/brem.r")
 load("data/sim.rdata")
 times <- sim$A[,1]
 sen <- sim$A[,2]
 rec <- sim$A[,3]
-s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
+s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
-z <- z-1
-b <- brem$llkfast(beta,z,s$ptr(),K)
+llk1 <- brem$llkfast(beta,z,s$ptr(),K)  # Doesn't give similar answer
+lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
+llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
 
-brem.llk(sim$A,N,z,beta)
-
-brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
-  return(brem$llk(beta,z-1,s$ptr,K))
-}
-brem.llk(A,N,z,beta)
-
-# # Temporary testing
-# lrm <- brem.lrm(sim$A,N,z,beta.init)
-# llk <- brem.llk(sim$A,N,z,beta)
-# beta.init <- beta + rnorm(P*K^2,0,.1)
-# beta.init[7:11,,] <- 0
-# brem.llk(sim$A,N,z,beta.init)
-# A <- sim$A
-# brem.lpost(A,N,K,z,beta)
-# times <- A[,1]
-# sen <- A[,2]-1
-# rec <- A[,3]-1
-# lrm <- brem$lrm(beta,times,sen,rec,z-1,N,M,K,P)
-# brem$llk2(lrm,times,sen,rec,N,M)
-# brem.llk(sim$A,N,z,beta)
-# beta.init <- beta + rnorm(P*K^2,0,.01)
-# brem.llk(sim$A,N,z,beta.init)
-
+llk4 <- llk_fast(lrm,times,sen-1,rec-1)
 true.lpost <- brem.lpost(sim$A,N,K,z,beta)
 true.lpost
+brem.lpost.fast(sim$A,N,K,z,s$ptr(),beta)  # R quits here
 
 test_that("simulated lrm agrees with brem.lrm",{
   tmp <- brem.lrm(sim$A,N,z,beta)

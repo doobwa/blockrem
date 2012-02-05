@@ -39,7 +39,7 @@ test_that("statistics creation works",{
 
 
 test_that("computeLambda correct for small example",{
-  times <- c(1,2,3,4)
+  times <- c(0,2,3,4)
   sen <- c(1,3,3,1)
   rec <- c(3,1,1,3)
   M <- 4
@@ -153,91 +153,56 @@ expect_that(taus,equals(c(0,0,2,3)))
 
 
 
-test_that("llkfast compared to by hand example",{
-  
-})
 
-test_that("llk runs for larger example",{
-  
+
+test_that("lrm and llk functions work on small example for K=2",{
+  # Set up example
+  source("R/brem.r")
+  source("R/brem.cpp.r")
+  source("R/utils.r")
+  library(testthat)
   require(abind)
+  set.seed(1)
   set.seed(1)
   M <- 1000
   N <- 100
   times <- sort(runif(M,0,1))
   sen <- sample(1:N,M,replace=TRUE)
   rec <- sample(1:N,M,replace=TRUE)
-  K <- 1
-  beta <- list("intercept"=matrix(1,1,1),
-               "abba" = matrix(1,1,1),
-               "abby"=matrix(0,1,1),
-               "abxa"=matrix(0,1,1),
-               "abxb"=matrix(0,1,1),
-               "abay"=matrix(0,1,1),
-               "abab"=matrix(0,1,1),
-               "sod"=matrix(0,1,1),
-               "rod"=matrix(0,1,1),
-               "sid"=matrix(0,1,1),
-               "rid"=matrix(0,1,1))
-  P <- length(beta)
-  beta <- abind(beta,rev.along=3)
-  z <- rep(1,N)
-  system.time(llk1 <- brem$llk(beta,times,sen-1,rec-1,z-1,N,M,K,P))
-  #system.time(llk2 <- brem$llkp(beta,times,sen-1,rec-1,z-1,N,M,K,P))
-  
-})
-
-test_that("lrm and llk functions work on small example for K=2",{
-  # Set up example
-  set.seed(1)
-  M <- 5
-  N <- 6
-  K <- 2
-  times <- c(1,2,3,4,5)
-  sen <- c(1,5,1,5,1)
-  rec <- c(3,1,5,6,3)
-  
-  beta <- list("intercept"=matrix(1,K,K),
+  ix <- which(sen==rec)
+  times <- times[-ix]
+  sen <- sen[-ix]
+  rec <- rec[-ix]
+  M <- length(times)
+  beta <- list("intercept"=matrix(-1,K,K),
                "abba" = matrix(c(1,2,3,4),K,K),
                "abby"=matrix(0,K,K),
                "abxa"=matrix(0,K,K),
                "abxb"=matrix(0,K,K),
-               "abay"=matrix(0,K,K),
+               "abay"=matrix(1,K,K),
                "abab"=matrix(0,K,K),
                "sod"=matrix(0,K,K),
                "rod"=matrix(0,K,K),
                "sid"=matrix(0,K,K),
                "rid"=matrix(0,K,K))
-  z <- c(1,1,1,2,2,2)
+  z <- c(rep(1,N/2),rep(2,N/2))
   P <- length(beta)
   beta <- abind(beta,rev.along=3)
   
-  # Constract log rate matrix by hand and compare to drem$lrm
-  a <- array(1,c(M,N,N))
-  a[1,,] <- matrix(0,N,N)
-  a[2,3,1] <- 1 + 1
-  a[4,5,1] <- 1 + 2
-  a[3,1,5] <- 1 + 3
-  a[5,6,5] <- 1 + 4
   lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
-  expect_that(lrm,equals(a))
-  
-  # Compute log likelihood by hand.  
-  diag(a[1,,]) <- diag(a[2,,]) <- diag(a[3,,]) <- diag(a[4,,]) <- diag(a[5,,]) <-  -Inf
-  llks <- c(a[1,sen[1],rec[1]],
-            a[2,sen[2],rec[2]] - (times[2]-times[2-1]) * sum(exp(a[2,,])),
-            a[3,sen[3],rec[3]] - (times[3]-times[3-1]) * sum(exp(a[3,,])),
-            a[4,sen[4],rec[4]] - (times[4]-times[4-1]) * sum(exp(a[4,,])),
-            a[5,sen[5],rec[5]] - (times[5]-times[5-1]) * sum(exp(a[5,,])))
-  sum(llks)
+  llks <- llk_slow(lrm,times,sen-1,rec-1)
   
   # Compare to drem$llk2
   llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
-  expect_that(sum(llks),equals(llk2))
+  #expect_that(sum(llks),equals(llk2))
   
-  # Test R interface
-  A <- cbind(times,sen,rec)
-  expect_that(sum(llks),equals(sum(brem.llk(A,N,z,beta))))
+  s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
+  s$precompute()
+  llk3 <- brem$llkfast(beta,z-1,s$ptr(),K)
   
-  # make sure lpost runs
-  brem.lpost(A,N,K,z,beta)
+  llk4 <- llk_fast(lrm,times,sen-1,rec-1)
+  
+  x <- llk_fast_last(lrm,times,sen-1,rec-1)
+  y <- brem$test_last(beta,z-1,s$ptr(),K)
+  
 })

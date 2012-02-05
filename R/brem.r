@@ -76,8 +76,13 @@ brem.lpost <- function(A,N,K,z,beta) {
   lprior <- sum(dnorm(unlist(beta),0,1,log=TRUE)) + N * log(1/K)
   sum(llks)+lprior
 }
+brem.lpost.fast <- function(A,N,K,z,sptr,beta) {
+  llks <- brem$llkfast(beta,z-1,sptr,K)
+  lprior <- sum(dnorm(unlist(beta),0,1,log=TRUE)) + N * log(1/K)
+  sum(llks)+lprior
+}
 
-brem.mcmc <- function(A,N,K,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs=TRUE,mh=TRUE) {
+brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs=TRUE,mh=TRUE) {
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 11
@@ -110,7 +115,7 @@ brem.mcmc <- function(A,N,K,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NUL
         ps <- rep(0,K)
         for (k in 1:K) {
           z[i] <- k
-          ps[k] <- brem.lpost(A,N,K,z,current)
+          ps[k] <- brem.lpost.fast(A,N,K,z,s,current)
         }
         ps <- exp(ps - max(ps))
         z[i] <- sample(1:K,size=1,prob=ps)
@@ -118,7 +123,7 @@ brem.mcmc <- function(A,N,K,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NUL
     }
     
     param[iter,,,] <- current
-    llks[iter] <- brem.lpost(A,N,K,z,current)
+    llks[iter] <- brem.lpost.fast(A,N,K,z,s,current)
     
     cat("iter",iter,":",llks[iter],"z:",table(z),"\n")
     
@@ -129,14 +134,14 @@ brem.mh <- function(A,N,K,P,z,current,model.type="baserates",mcmc.sd=.1,first.it
   if (first.iter) {
     olp <- -Inf
   }  else {
-    olp <- brem.lpost(A,N,K,z,current)
+    olp <- brem.lpost.fast(A,N,K,z,s,current)
   }
   
   cand <- current
   if (model.type=="baserates") {
     cand[1,,] <- cand[1,,] + rnorm(K^2,0,mcmc.sd)
     cand[-1,,] <- 0
-    clp <- brem.lpost(A,N,K,z,cand)
+    clp <- brem.lpost.fast(A,N,K,z,s,cand)
     if (clp - olp > log(runif(1))) {
       current <- cand
       olp <- clp
@@ -162,7 +167,7 @@ brem.mh <- function(A,N,K,P,z,current,model.type="baserates",mcmc.sd=.1,first.it
       }
       
       # MH sampler
-      clp <- brem.lpost(A,N,K,z,cand)
+      clp <- brem.lpost.fast(A,N,K,z,s,cand)
       if (clp - olp > log(runif(1))) {
         current <- cand
         olp <- clp
@@ -173,7 +178,7 @@ brem.mh <- function(A,N,K,P,z,current,model.type="baserates",mcmc.sd=.1,first.it
     cand <- current
     for (p in which(px==1)) {
       cand[p,,]  <- cand[p,,] + rnorm(K^2,0,mcmc.sd)
-      clp <- brem.lpost(A,N,K,z,cand)
+      clp <- brem.lpost.fast(A,N,K,z,s,cand)
       if (clp - olp > log(runif(1))) {
         current <- cand
         olp <- clp
