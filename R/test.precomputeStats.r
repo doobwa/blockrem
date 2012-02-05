@@ -5,18 +5,18 @@ source("R/utils.r")
 M <- 7
 N <- 5
 P <- 11
-times <- seq(.1,.7,by=.1)
+times <- seq(0,.6,by=.1)
 sen <- c(1,3,3,1,2,5,2)
 rec <- c(3,1,1,3,5,1,4)
 
-s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
+s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
 
 x <- s$get_all_s()
 v <- s$get_all_v()
 s$ptr()
 
-test_that("statistics vectors are correct",{
+test_that("a few statistics vectors are correct",{
   sij <- s$get_all_s()[[3]][[1]]
   expect_that(sij[[1]],equals(rep(0,11)))
   ans <- rep(0,P)
@@ -35,10 +35,21 @@ test_that("statistics vectors are correct",{
 test_that("get_v gets vectors as expected",{
   a <- s$get_all_s()[[3]][[1]]
   b <- s$get_v(3-1,1-1)
+  d <- s$get_w(3-1,1-1)
   expect_that(b,equals(c(0,1,2,3,5,6)))
+  expect_that(d,equals(c(0,1,2,3,3,4,5)))
   expect_that(length(a), equals(length(b)))
-  expect_that(s$get_w(3-1,1-1),equals(c(0,1,2,3,3,4,5)))
+  
+  for (i in 1:N) {
+    for (j in 1:N) {
+      if (i!=j) {
+        a <- s$get_v(i-1,j-1)
+        b <- s$get_all_s()[[i]][[j]]
+        expect_that(length(a),equals(length(b)))
+      }
+    }
+  }
 })
 
-times <- seq(.1,.7,by=.1)
-expect_that(s$get_tau(M-1,3-1,1-1),equals(.6))
+times <- seq(0,.6,by=.1)
+expect_that(s$get_tau(M-1,3-1,1-1),equals(.5))

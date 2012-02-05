@@ -29,7 +29,7 @@ z <- c(rep(1,N-1),2)
 # Make sure gibbs runs
 s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
-b <- bremf$llk(beta,z-1,s$ptr(),K)
+b <- brem$llk(beta,z-1,s$ptr(),K)
 
 s$get_w(2,0)
 for (m in 0:(M-1)) {
@@ -37,7 +37,7 @@ for (m in 0:(M-1)) {
 }
 s$get_s(6,1,3)
 st <- proc.time()
-b <- bremf$gibbs(beta,z-1,s$ptr(),K)
+b <- brem$gibbs(beta,z-1,s$ptr(),K)
 proc.time() - st
 
 
@@ -67,34 +67,6 @@ llks <- c(a[1,sen[1],rec[1]],
           a[4,sen[4],rec[4]] - (times[4]-times[4-1]) * sum(exp(a[4,,])) )
 sum(llks)
 
-llk_indiv <- function(a,lrm,times,sen,rec) {
-  mp <- matrix(0,N,N)
-  llks <- rep(0,M)
-  for (m in 0:(M-1)) {
-    i <- sen[m+1]
-    j <- rec[m+1]
-    if (i==a | j==a | m==(M-1)) {
-      llks[m+1] <- lrm[m+1,i+1,j+1]
-      for (r in 0:(N-1)) {
-        if (r != i) {
-          llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[i+1,r+1]+1]) * sum(exp(lrm[m+1,i+1,r+1]))
-          llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[r+1,i+1]+1]) * sum(exp(lrm[m+1,r+1,i+1]))
-        }
-        if (r != j) {
-          llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[j+1,r+1]+1]) * sum(exp(lrm[m+1,j+1,r+1]))
-          llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[r+1,j+1]+1]) * sum(exp(lrm[m+1,r+1,j+1]))
-        }
-      }
-      llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[j+1,i+1]+1]) * sum(exp(lrm[m+1,i+1,r+1]))
-      llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[i+1,j+1]+1]) * sum(exp(lrm[m+1,r+1,i+1]))
-    }
-    mp[i+1,] <- m
-    mp[,i+1] <- m
-    mp[j+1,] <- m
-    mp[,j+1] <- m
-  }
-  return(llks)
-}
 
 
 a <- llk_indiv(1,lrm,times,sen-1,rec-1)

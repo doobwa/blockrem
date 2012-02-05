@@ -105,57 +105,64 @@ public:
 // Returns v, where v[i][j] is a vector of event indices m where lambda_{ij} changed (due to an event involving either i or j).  All vectors begin with 0 (since all intensities are assumed to change at time 0).  Element v of stats[i][j] are the statistics that were applicable up to event v[i][j][v].  TODO: Should also have M-1?
 
   void precompute() {
+      Rprintf("size %i %i\n",x[1][0].size(),v[1][0].size());
     for (int m = 0; m < (M-1); m++) {
       Rprintf(".");
       int i = sen[m];
       int j = rec[m];
-      for (int r = 0; r < N; r++) {
-        if (r!=j && r!=i) {
-          update(i,j,i,r);
-          update(i,j,r,i);
-          update(i,j,j,r);
-          update(i,j,r,j);
-          x[i][r].push_back(s[i][r]); // pushing to m+1 element
-          x[r][i].push_back(s[r][i]);
-          x[j][r].push_back(s[j][r]);
-          x[r][j].push_back(s[r][j]);
-          if (m>0 && m < (M-1)) { // initialized with 0
+      if (0 < m && m < (M-1)) { // initialized with 0
+        for (int r = 0; r < N; r++) {
+          if (r!=i && r!=j) {
+            x[i][r].push_back(s[i][r]); // pushing to m+1 element
+            x[r][i].push_back(s[r][i]);
+            x[j][r].push_back(s[j][r]);
+            x[r][j].push_back(s[r][j]);
             v[i][r].push_back(m);
             v[r][i].push_back(m);
             v[j][r].push_back(m);
             v[r][j].push_back(m);
           }
         }
-      }
-      update(i,j,i,j);
-      update(i,j,j,i);
-      x[i][j].push_back(s[i][j]);
-      x[j][i].push_back(s[j][i]);
-      if (m > 0 && m < (M-1)) {  // M-1 case handled below
+        x[i][j].push_back(s[i][j]);
+        x[j][i].push_back(s[j][i]);
         v[i][j].push_back(m);
         v[j][i].push_back(m);
-      }
-      if (m < (M-1)) {
         u[i].push_back(m);
         u[j].push_back(m);
-      }
-      if (m < (M-1)) {  // M-1 case handled below
         for (int i = 0; i < N; i++) {
           for (int j = 0; j < N; j++) {
             w[i][j][m] = v[i][j].size() - 1;
           }
         }
       }
+
+      // Update statistics
+      for (int r = 0; r < N; r++) {
+        if (r!=j && r!=i) {
+          update(i,j,i,r);
+          update(i,j,r,i);
+          update(i,j,j,r);
+          update(i,j,r,j);
+        }
+      }
+      update(i,j,i,j);
+      update(i,j,j,i);
     }
 
     // Handle last event differently: all v[i][j] get M-1 at the end.
     // Update w[i][j][M-1] to be the final size of v[i][j]
+    int a = sen[M-1];
+    int b = rec[M-1];
+
     for (int i = 0; i < N; i++) {
       u[i].push_back(M-1);
       for (int j = 0; j < N; j++) {
-        x[i][j].push_back(s[i][j]);
-        v[i][j].push_back(M-1);
-        w[i][j][M-1] = v[i][j].size() - 1;
+        if (i != j) {
+          update(a,b,i,j);
+          x[i][j].push_back(s[i][j]);
+          v[i][j].push_back(M-1);
+          w[i][j][M-1] = v[i][j].size() - 1;
+        }
       }
     }
       
@@ -373,15 +380,22 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
         llk -= (s->times[m] - s->get_tau(m,r,j)) * exp(lam);
       }
     }
+    lam  = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+    llk -= (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
+    lam  = computeLambdaFast(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
+    llk -= (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
     llks[m] = llk;
   }
   //All intensities assumed to change at the last event
+  int m = M-1;
+  i = sen[m];
+  j = rec[m];
+  int zi = z[i];
+  int zj = z[j];
   llk = computeLambdaFast(i,j,zi,zj,s->get_s(M-1,i,j),beta,N,K,P);
   for (int i = 0; i < N; i++) {
    for (int j = 0; j < N; j++) {
      //     Rprintf("%f %i %i\n",llk,i,j);
-     int zi = z[i];
-     int zj = z[j];
      if (i != j) {
        lam  = computeLambdaFast(i,j,zi,zj,s->get_s(M-1,i,j),beta,N,K,P);
        llk -= (s->times[M-1] - s->get_tau(M-1,i,j)) * exp(lam);

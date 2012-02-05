@@ -1,5 +1,6 @@
 source("R/brem.r")
 source("R/brem.cpp.r")
+source("R/utils.r")
 library(testthat)
 
 require(abind)
@@ -70,12 +71,12 @@ test_that("computeLambda correct for small example",{
   ans[b,a] <- ans[b,a] + beta[2,1,1]
   expect_that(ans,equals(tmp))
 })
-test_that("lrm and llk functions work on small example for K=1",{
+#test_that("lrm and llk functions work on small example for K=1",{
   # Set up example
   set.seed(1)
   M <- 4
   N <- 5
-  times <- c(1,2,3,4)
+  times <- c(0,2,3,4)
   sen <- c(1,3,3,1)
   rec <- c(3,1,1,3)
   K <- 1
@@ -101,18 +102,16 @@ test_that("lrm and llk functions work on small example for K=1",{
   
   # Constract log rate matrix by hand and compare to drem$lrm
   a <- array(1,c(M,N,N))
-  a[1,,] <- matrix(0,N,N)
   a[2,3,1] <- 2
   a[3,1,3] <- 2
   a[4,1,3] <- 2
   z <- rep(1,N)
   K <- 1
   lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
-  expect_that(lrm,equals(a))
+#   expect_that(lrm,equals(a))
   
   # Compute log likelihood by hand.  
   diag(a[1,,]) <- diag(a[2,,]) <- diag(a[3,,]) <- diag(a[4,,]) <- -Inf
-  a[1,,] <- 1
   llks <- c(a[1,sen[1],rec[1]],
             a[2,sen[2],rec[2]] - (times[2]-times[2-1]) * sum(exp(a[2,,])),
             a[3,sen[3],rec[3]] - (times[3]-times[3-1]) * sum(exp(a[3,,])),
@@ -121,16 +120,19 @@ test_that("lrm and llk functions work on small example for K=1",{
   
   # Compare to drem$llk2
   llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
-  expect_that(sum(llks),equals(llk2))
   
   s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   llk3 <- brem$llkfast(beta,z-1,s$ptr(),K)
-  expect_that(sum(llks),equals(llk3))
   
-  true.fast <- c(1,2 - 13*exp(1) - exp(2), 1 - 13*exp(1) - exp(2), 2 - 13*exp(1) - exp(2) - 6*3*exp(1))
+  true.fast <- c(1,2 - 2*(13*exp(1) + exp(2)), 1 - 13*exp(1) - exp(2), 2 - 13*exp(1) - exp(2) - (times[4] - times[1])*6*exp(1))
   
   llk4 <- llk_fast(lrm,times,sen-1,rec-1)
+  browser()
+  expect_that(sum(llks),equals(llk2))
+  expect_that(sum(llks),equals(llk3))
+  
+  
 #   llk3 <- brem.llk.slow(lrm,times,sen,rec,z,N,M)
 #   expect_that(sum(llks),equals(llk3))
 #   
@@ -143,7 +145,7 @@ test_that("lrm and llk functions work on small example for K=1",{
 #   px <- c(1,1,0,0,0,0,0)  
 #   allk <- drem$allk(beta,times,sen-1,rec-1,ix-1,ix-1,px,N,M,N)
 #   expect_that(sum(llks),equals(allk))
-})
+#})
 
 
 
