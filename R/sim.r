@@ -2,7 +2,6 @@ library(releventhier)
 library(ggplot2)
 require(abind)
 require(testthat)
-source("R/brem.cpp.r")
 source("R/brem.r")
 source("R/sbm.r")
 N <- 10
@@ -25,12 +24,33 @@ M <- 2000
 set.seed(1)
 z <- c(rep(1,5),rep(2,5))
 
+source("R/brem.cpp.r")
 sim <- simulate.brem(M,N,z,beta)
 mat <- table(sim$A[,2],sim$A[,3])
 mat <- melt(as.matrix(mat))
 colnames(mat) <- c("X1","X2","value")
-plotmat(mat)
-ggsave("figs/syn/mat.pdf",width=3,height=3)
+save(sim,N,K,P,M,z,beta,file="data/sim.rdata")
+#plotmat(mat)
+#ggsave("figs/syn/mat.pdf",width=3,height=3)
+
+
+require(testthat)
+source("R/brem.r")
+load("data/sim.rdata")
+times <- sim$A[,1]
+sen <- sim$A[,2]
+rec <- sim$A[,3]
+s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
+s$precompute()
+z <- z-1
+b <- brem$llkfast(beta,z,s$ptr(),K)
+
+brem.llk(sim$A,N,z,beta)
+
+brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
+  return(brem$llk(beta,z-1,s$ptr,K))
+}
+brem.llk(A,N,z,beta)
 
 # # Temporary testing
 # lrm <- brem.lrm(sim$A,N,z,beta.init)

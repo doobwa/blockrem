@@ -27,6 +27,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 Implement gibbs sampler for latent group assignment.
 - Pass tests with one that computes mp ahead of time.
 - Determine what's slowing things down.  Overhead?
+
 Compare submodels for eckmann subset.
 Write abstract.
 Add px feature to define which parameters to fit.
@@ -42,3 +43,6 @@ Research maximization of beta rather than sampling.
 
 Low priority:
 Port simulator over to Rcpp.
+
+Bugs:
+- llk_fast and llkfast both do not use the first event for the likelihood computation

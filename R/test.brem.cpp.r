@@ -1,5 +1,5 @@
-source("brem.r")
-source("brem.cpp.r")
+source("R/brem.r")
+source("R/brem.cpp.r")
 library(testthat)
 
 require(abind)
@@ -112,6 +112,7 @@ test_that("lrm and llk functions work on small example for K=1",{
   
   # Compute log likelihood by hand.  
   diag(a[1,,]) <- diag(a[2,,]) <- diag(a[3,,]) <- diag(a[4,,]) <- -Inf
+  a[1,,] <- 1
   llks <- c(a[1,sen[1],rec[1]],
             a[2,sen[2],rec[2]] - (times[2]-times[2-1]) * sum(exp(a[2,,])),
             a[3,sen[3],rec[3]] - (times[3]-times[3-1]) * sum(exp(a[3,,])),
@@ -122,23 +123,36 @@ test_that("lrm and llk functions work on small example for K=1",{
   llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
   expect_that(sum(llks),equals(llk2))
   
-  llk3 <- brem.llk.slow(lrm,times,sen,rec,z,N,M)
+  s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
+  s$precompute()
+  llk3 <- brem$llkfast(beta,z-1,s$ptr(),K)
   expect_that(sum(llks),equals(llk3))
   
-  # Compare to drem$llk
-  system.time(llk4 <- brem$llk(beta,times,sen-1,rec-1,z-1,N,M,K,P))
-  browser()
-  expect_that(sum(llks),equals(llk3))
+  true.fast <- c(1,2 - 13*exp(1) - exp(2), 1 - 13*exp(1) - exp(2), 2 - 13*exp(1) - exp(2) - 6*3*exp(1))
   
+  llk4 <- llk_fast(lrm,times,sen-1,rec-1)
+#   llk3 <- brem.llk.slow(lrm,times,sen,rec,z,N,M)
+#   expect_that(sum(llks),equals(llk3))
+#   
+#   # Compare to drem$llk
+#   system.time(llk4 <- brem$llk(beta,times,sen-1,rec-1,z-1,N,M,K,P))
+#   browser()
+#   expect_that(sum(llks),equals(llk3))
+#   
   # Compare to drem$allk
 #   px <- c(1,1,0,0,0,0,0)  
 #   allk <- drem$allk(beta,times,sen-1,rec-1,ix-1,ix-1,px,N,M,N)
 #   expect_that(sum(llks),equals(allk))
 })
 
+
+
+test_that("llkfast compared to by hand example",{
+  
+})
+
 test_that("llk runs for larger example",{
   
-  source("R/brem.cpp.r")
   require(abind)
   set.seed(1)
   M <- 1000
@@ -162,7 +176,7 @@ test_that("llk runs for larger example",{
   beta <- abind(beta,rev.along=3)
   z <- rep(1,N)
   system.time(llk1 <- brem$llk(beta,times,sen-1,rec-1,z-1,N,M,K,P))
-  system.time(llk2 <- brem$llkp(beta,times,sen-1,rec-1,z-1,N,M,K,P))
+  #system.time(llk2 <- brem$llkp(beta,times,sen-1,rec-1,z-1,N,M,K,P))
   
 })
 
@@ -216,7 +230,7 @@ test_that("lrm and llk functions work on small example for K=2",{
   
   # Test R interface
   A <- cbind(times,sen,rec)
-  expect_that(sum(llks),equals(brem.llk(A,N,z,beta)))
+  expect_that(sum(llks),equals(sum(brem.llk(A,N,z,beta))))
   
   # make sure lpost runs
   brem.lpost(A,N,K,z,beta)

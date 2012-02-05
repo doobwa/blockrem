@@ -29,6 +29,8 @@ z <- c(rep(1,N-1),2)
 # Make sure gibbs runs
 s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
+b <- bremf$llk(beta,z-1,s$ptr(),K)
+
 s$get_w(2,0)
 for (m in 0:(M-1)) {
   s$get_s(m,2,0)
@@ -38,22 +40,32 @@ st <- proc.time()
 b <- bremf$gibbs(beta,z-1,s$ptr(),K)
 proc.time() - st
 
+
+
 # Try on twitter dataset
-load("data/twitter.example.rdata")
-z <- c(rep(1,N-1),2)
-s <- new(bremf$Stat,B[,1],B[,2]-1,B[,3]-1,N,M,P)
-s$precompute()
+# load("data/twitter.example.rdata")
+# z <- c(rep(1,N-1),2)
+# s <- new(bremf$Stat,B[,1],B[,2]-1,B[,3]-1,N,M,P)
+# s$precompute()
+# 
+# st <- proc.time()
+# b <- bremf$gibbs(beta,z-1,s$ptr(),K)
+# proc.time() - st
 
-st <- proc.time()
-b <- bremf$gibbs(beta,z-1,s$ptr(),K)
-proc.time() - st
-
-
-A <- cbind(times,sen,rec)
-indx <- get.indices(A,N)
 
 lrm <- brem$lrm(beta, times, sen-1, rec-1, z-1, N, M, K, P)
+lrm[1,,] <- 1
 for (i in 1:M) diag(lrm[i,,]) <- -Inf
+
+llks <- rep(0,M)
+for (i in 1:M) {
+  llks[i] <- a[i,sen[i],rec[i]] - (times[i]-times[i-1]) * sum(exp(a[i,,]))
+}
+llks <- c(a[1,sen[1],rec[1]],
+          a[2,sen[2],rec[2]] - (times[2]-times[2-1]) * sum(exp(a[2,,])),
+          a[3,sen[3],rec[3]] - (times[3]-times[3-1]) * sum(exp(a[3,,])),
+          a[4,sen[4],rec[4]] - (times[4]-times[4-1]) * sum(exp(a[4,,])) )
+sum(llks)
 
 llk_indiv <- function(a,lrm,times,sen,rec) {
   mp <- matrix(0,N,N)
@@ -73,6 +85,8 @@ llk_indiv <- function(a,lrm,times,sen,rec) {
           llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[r+1,j+1]+1]) * sum(exp(lrm[m+1,r+1,j+1]))
         }
       }
+      llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[j+1,i+1]+1]) * sum(exp(lrm[m+1,i+1,r+1]))
+      llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[i+1,j+1]+1]) * sum(exp(lrm[m+1,r+1,i+1]))
     }
     mp[i+1,] <- m
     mp[,i+1] <- m
@@ -83,19 +97,19 @@ llk_indiv <- function(a,lrm,times,sen,rec) {
 }
 
 
-a <- llk_indiv(0,lrm,times,sen-1,rec-1)
+a <- llk_indiv(1,lrm,times,sen-1,rec-1)
 #b <- bremf$gibbs(beta,times,sen-1,rec-1,z-1,N,M,K,P,indx)$llks[[1]][[1]]
 #expect_that(a,equals(b))
 
 # Timing test
-set.seed(1)
-M <- 1000
-N <- 100
-times <- sort(runif(M,0,1))
-sen <- sample(1:N,M,replace=TRUE)
-rec <- sample(1:N,M,replace=TRUE)
-z <- sample(1:2,N,replace=TRUE)
-K <- 2
-s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
-s$precompute()
-b <- bremf$gibbs(beta,z-1,s$ptr(),K)
+# set.seed(1)
+# M <- 1000
+# N <- 100
+# times <- sort(runif(M,0,1))
+# sen <- sample(1:N,M,replace=TRUE)
+# rec <- sample(1:N,M,replace=TRUE)
+# z <- sample(1:2,N,replace=TRUE)
+# K <- 2
+# s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
+# s$precompute()
+# b <- bremf$gibbs(beta,z-1,s$ptr(),K)

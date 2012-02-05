@@ -1,3 +1,40 @@
+# 0 based indexing on sen and rec
+llk_fast <- function(lrm,times,sen,rec) {
+  mp <- matrix(0,N,N)
+  llks <- rep(0,M)
+  for (m in 1:(M-1)) {
+    i <- sen[m+1]
+    j <- rec[m+1]
+    llks[m+1] <- lrm[m+1,i+1,j+1]
+    for (r in 0:(N-1)) {
+      if (r != i) {
+        llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[i+1,r+1]+1]) * sum(exp(lrm[m+1,i+1,r+1]))
+        llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[r+1,i+1]+1]) * sum(exp(lrm[m+1,r+1,i+1]))
+      }
+      if (r != j) {
+        llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[j+1,r+1]+1]) * sum(exp(lrm[m+1,j+1,r+1]))
+        llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[r+1,j+1]+1]) * sum(exp(lrm[m+1,r+1,j+1]))
+      }
+    }
+    llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[j+1,i+1]+1]) * sum(exp(lrm[m+1,i+1,j+1]))
+    llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[i+1,j+1]+1]) * sum(exp(lrm[m+1,j+1,i+1]))
+    
+    mp[i+1,] <- m
+    mp[,i+1] <- m
+    mp[j+1,] <- m
+    mp[,j+1] <- m
+  }
+  m <- M-1
+  for (i in 0:(N-1)) {
+    for (j in 0:(N-1)) {
+      if (i!=j) {
+        llks[m+1] <- llks[m+1] - (times[m+1]-times[mp[i+1,j+1]+1]) * sum(exp(lrm[m+1,i+1,j+1]))
+      }
+    }
+  }
+  return(llks)
+}
+
 precomputeTau <- function(A,N) {
   M <- nrow(A)
   sen <- A[,2]
