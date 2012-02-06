@@ -42,13 +42,14 @@ rec <- sim$A[,3]
 s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
 llk1 <- brem$llkfast(beta,z-1,s$ptr(),K)  # Doesn't give similar answer
+
 lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
 llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
 #lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
 llk4 <- llk_fast(lrm,times,sen-1,rec-1)
 true.lpost <- brem.lpost(sim$A,N,K,z,beta)
 true.lpost
-brem.lpost.fast(sim$A,N,K,z,s$ptr(),beta)  # R quits here
+brem.lpost.fast(sim$A,N,K,z,beta)
 
 test_that("simulated lrm agrees with brem.lrm",{
   tmp <- brem.lrm(sim$A,N,z,beta)

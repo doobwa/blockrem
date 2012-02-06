@@ -76,10 +76,9 @@ brem.lpost <- function(A,N,K,z,beta) {
   lprior <- sum(dnorm(unlist(beta),0,1,log=TRUE)) + N * log(1/K)
   sum(llks)+lprior
 }
-brem.lpost.fast <- function(A,N,K,z,sptr,beta) {
-  llks <- brem$llkfast(beta,z-1,sptr,K)
-  lprior <- sum(dnorm(unlist(beta),0,1,log=TRUE)) + N * log(1/K)
-  sum(llks)+lprior
+brem.lpost.fast <- function(A,N,K,z,beta) {
+  # hack: someow s$ptr() wrks if you putit inthe return. something aboutenvironments i'm guessing.)
+  return(sum(brem$llkfast(beta,z-1,s$ptr(),K))+sum(dnorm(unlist(beta),0,1,log=TRUE)) + N * log(1/K))
 }
 
 brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs=TRUE,mh=TRUE) {
