@@ -74,14 +74,19 @@ a <- llk_indiv(1,lrm,times,sen-1,rec-1)
 #expect_that(a,equals(b))
 
 # Timing test
-# set.seed(1)
-# M <- 1000
-# N <- 100
-# times <- sort(runif(M,0,1))
-# sen <- sample(1:N,M,replace=TRUE)
-# rec <- sample(1:N,M,replace=TRUE)
-# z <- sample(1:2,N,replace=TRUE)
-# K <- 2
-# s <- new(bremf$Stat,times,sen-1,rec-1,N,M,P)
-# s$precompute()
-# b <- bremf$gibbs(beta,z-1,s$ptr(),K)
+set.seed(1)
+M <- 1000
+N <- 500
+times <- sort(runif(M,0,1))
+sen <- sample(1:N,M,replace=TRUE)
+rec <- sample(1:N,M,replace=TRUE)
+z <- sample(1:2,N,replace=TRUE)
+ix <- which(sen==rec)
+sen <- sen[-ix]
+rec <- rec[-ix]
+times <- times[-ix]
+K <- 2
+s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
+s$precompute()
+b <- brem$gibbs(beta,z-1,s$ptr(),K)
+b <- brem$llkfast(beta,z-1,s$ptr(),K)

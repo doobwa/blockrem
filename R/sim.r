@@ -41,7 +41,8 @@ sen <- sim$A[,2]
 rec <- sim$A[,3]
 s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
-llk1 <- brem$llkfast(beta,z-1,s$ptr(),K)  # Doesn't give similar answer
+llk1 <- brem$llkfast(beta,z-1,s$ptr(),K)  # Occasionally dies
+b <- brem$gibbs(beta,z-1,s$ptr(),K)
 
 lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
 llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
@@ -49,7 +50,8 @@ llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
 llk4 <- llk_fast(lrm,times,sen-1,rec-1)
 true.lpost <- brem.lpost(sim$A,N,K,z,beta)
 true.lpost
-brem.lpost.fast(sim$A,N,K,z,beta)
+a <- proc.time();brem.lpost(sim$A,N,K,z,beta);proc.time()-a
+a <- proc.time();brem.lpost.fast(sim$A,N,K,z,beta);proc.time()-a
 
 test_that("simulated lrm agrees with brem.lrm",{
   tmp <- brem.lrm(sim$A,N,z,beta)

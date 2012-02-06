@@ -184,11 +184,13 @@ public:
     Rprintf("\n");
   }
 
+  // Get the statistic vector s_(i,j) that is used before event m.
   vector<int> get_s(int m, int i, int j) {
     int r = w[i][j][m - 1];
     return x[i][j][r];
   }
 
+  // Get the time of the event that last affected dyad (i,j)
   double get_tau(int m, int i, int j) {
     //    int r = get_prev(v[i][j],m);
     if (m > M-1) {
@@ -197,20 +199,18 @@ public:
     if (m == 0) {
       m = 1;
     }
-    // int r = w[i][j][m] - 1;
-    // if (r < 0) {
-    //   r = 0;
-    // }
     int r = w[i][j][m - 1];
     int y = v[i][j][r];
-    //    Rprintf("%i %i %i\n",r,v[i][j].size(),y);
     return times[y];
   }
 
+  // For each (i,j) a vector of event indicies for lambda_ij changepoints.
+  // All vectors start with 0 (since all are assumed to have a changepoint at 0)
   vector< vector< vector<int> > >  get_all_v() {
     return v;
   }
 
+  // For each (i,j,v_ij) a vector of P statistics.  First vector for each (i,j) is all 0 (the vector of statistics for that dyad before the first event occurs)
   vector< vector< vector< vector<int> > > > get_all_s() {
     return x;
   }
@@ -226,38 +226,16 @@ public:
     return u;
   }
 
+  // Vector of changepoints for a given actor
   vector<int> get_u(int a) {
     return u[a];
   }
 
-// Get previous event index for a given vector of indices.  
-// e.g. indx = [0 1 3 4].  get_prev(indx,2)=1 and get_prev(indx,1)=0.
-// DEPRECATED
-  // int get_prev(vector<int> indx, int m) {
-  //   if (m==0) {
-  //     return 0;
-  //   } else {
-  //     return indx[get_prev_index(indx,m)];
-  //   }
-  // }
-
-  // int get_prev_index(vector<int> ms, int m) {
-  //   if (m==0) {
-  //     return 0;
-  //   } else {
-  //     vector<int>::iterator low;
-  //     sort (ms.begin(), ms.end());                // 10 10 10 20 20 20 30 30
-  //     low = lower_bound (ms.begin(), ms.end(), m); //          &
-  //     int ans = low - ms.begin();
-  //     // Rprintf("%i\n",ans);
-  //     // Rprintf("%i\n",ans-1);
-  //     return ans - 1;
-  //   }
-  // }
 
   SEXP ptr() {
     //Rprintf("%i",this);
-    return wrap(XPtr<Stat>(this, true));
+    //return wrap(XPtr<Stat>(this, true));
+    return XPtr<Stat>(this, false);
   }
 
   // Number of nodes, events, parameters, and clusters.
@@ -285,7 +263,7 @@ private:
 };
 
 
-
+// Use the precomputed set of statistics to copmute lambda
 
 double computeLambdaFast(int i, int j, int zi, int zj, vector<int> s, Rcpp::NumericVector beta, int N, int K, int P) {
   double lam = beta[threeDIndex(0,zi,zj,P,K,K)]; // intercept
@@ -296,7 +274,6 @@ double computeLambdaFast(int i, int j, int zi, int zj, vector<int> s, Rcpp::Nume
 }
 
 
-// (i,j,v) represents the statistic vector that
 
 // Compute the loglikelihood corresponding to a single actor, a.
 
@@ -335,6 +312,7 @@ Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z,
   return llks;
 }
 
+// TODO: sample z
 Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
   Rcpp::NumericVector x;
   Rcpp::List llks;
@@ -355,7 +333,7 @@ Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_,
   return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("z") = z);
 }
 
-
+// Use the precomputed statistics s to compute the likelihood
 Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
   Stat *s = XPtr<Stat>(statptr_);
   int N = s->N;
@@ -422,7 +400,7 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
   llks[M-1] = llk;
   return llks;
 }
-
+// TEMP
 Rcpp::List test_last(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
   Stat *s = XPtr<Stat>(statptr_);
   int N = s->N;
@@ -462,13 +440,6 @@ Rcpp::List test_last(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statp
 
 Rcpp::NumericVector initializeStatistics(int N, int P) {
   Rcpp::NumericVector s     = Rcpp::NumericVector(Dimension(P,N,N));
-
-  //  Intercept statistic: all (0,i,j) are equal to 1
-  // for (int i = 0; i < N; i++) {
-  //   for (int j = 0; j < N; j++) {
-  //     s[threeDIndex(0,i,j,P,N,N)] = 1;
-  //   }
-  // }
 
   return s;
 }
@@ -518,6 +489,8 @@ Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N,
    s[threeDIndex(10,a,b,P,N,N)] += 1;
   return s;
 }
+
+// TEMP?
 vector< vector< vector<int> > > initializeStatistics2(int N, int P) {
   vector< vector< vector<int> > > s;
   for (int i = 0; i < N; i++) {
@@ -543,6 +516,7 @@ double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::
   return lam;
 }
 
+// TEMP: Parallel attempt
 // Rcpp::NumericVector llkp(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M, int K, int P) {
 //   omp_set_num_threads(16);
 //   double lam = 0;
@@ -662,7 +636,7 @@ Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
   return llks;
 }
 
-
+// Compute (M,N,N) array of log rates (see lrm()).  This one uses computeLambdaFast.
 Rcpp::NumericVector lrmfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
   Stat *s = XPtr<Stat>(statptr_);
   int N = s->N;
@@ -675,7 +649,7 @@ Rcpp::NumericVector lrmfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
         int zi = z[i];
         int zj = z[j];
        double lam  = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
-       lrmat[threeDIndex(m,i,j,M,N,N)] = lam;//computeLambda(i,j,zi,zj,s,beta,N,K,P);
+       lrmat[threeDIndex(m,i,j,M,N,N)] = lam;
       }
     }
   }
@@ -701,7 +675,7 @@ Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
   }
   return lrmat;
 }
-// Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
+// Use lrm to compute the likelihood in the naive way
 double llk2(Rcpp::NumericVector lrm,
             Rcpp::NumericVector times,
             Rcpp::IntegerVector sen, 
@@ -730,12 +704,9 @@ double llk2(Rcpp::NumericVector lrm,
 
 RCPP_MODULE(brem){
   
-  //  function( "getTau", &getTau);
   class_<Stat>( "Stat" )
     .constructor<Rcpp::NumericVector,Rcpp::IntegerVector,Rcpp::IntegerVector,
                  int,int,int>()
-    //    .property( "x", &Stat::get_x, &Stat::set_x,
-    //               "Docstring for x" )
     .method( "precompute", &Stat::precompute,
              "Precompute the data structure of REM statistics")
     .method( "get_s", &Stat::get_s,
