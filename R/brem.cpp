@@ -159,17 +159,24 @@ public:
 
     // Handle last event differently: all v[i][j] get M-1 at the end.
     // Update w[i][j][M-1] to be the final size of v[i][j]
-    int a = sen[M-1];
-    int b = rec[M-1];
+    int m = M-1;
+    int a = sen[m];
+    int b = rec[m];
 
     for (int i = 0; i < N; i++) {
-      u[i].push_back(M-1);
+      u[i].push_back(m);
       for (int j = 0; j < N; j++) {
         if (i != j) {
+          if (i==0 & j==1) {
+            Rprintf("%i %i\n",s[i][j][1],s[i][j][2]);
+          }
           update(a,b,i,j);
+          if (i==0 & j==1) {
+            Rprintf("%i %i\n",s[i][j][1],s[i][j][2]);
+          }
           x[i][j].push_back(s[i][j]);  // should go unused.
-          v[i][j].push_back(M-1);
-          w[i][j][M-1] = v[i][j].size() - 1;
+          v[i][j].push_back(m);
+          w[i][j][m] = v[i][j].size() - 1;
         }
       }
     }
@@ -355,6 +362,10 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
   int P = s->P;
   int M = s->M;
 
+  //   Rprintf("%i %i ",5,s->get_s(5,0,1));
+  //   Rprintf("%f\n",s->get_tau(5,0,1));
+
+
   double llk = 0.0; 
   double lam = 0;
   int i,j,r,zi,zj;
@@ -362,6 +373,8 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
   Rcpp::IntegerVector sen = s->sen;
   Rcpp::IntegerVector rec = s->rec;
 
+  i = sen[0];
+  j = rec[0];
   zi = z[i];
   zj = z[j];
   llks[0] = beta[threeDIndex(0,zi,zj,P,K,K)];
@@ -488,10 +501,10 @@ Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N,
             s[threeDIndex(7,i,j,P,N,N)] += 1;  // sender out degree
           }
           if (b==i & a!=j) {
-            s[threeDIndex(8,i,j,P,N,N)] += 1;  // sender in degree
+            s[threeDIndex(9,i,j,P,N,N)] += 1;  // sender in degree
           }
           if (a==j & b!=i) { 
-            s[threeDIndex(9,i,j,P,N,N)] += 1;  // receiver out degree
+            s[threeDIndex(8,i,j,P,N,N)] += 1;  // receiver out degree
           }
           if (b==j & a!=i) {
             s[threeDIndex(10,i,j,P,N,N)] += 1; // receiver in degree
@@ -523,8 +536,8 @@ vector< vector< vector<int> > > initializeStatistics2(int N, int P) {
 
 //
 double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::NumericVector beta, int N, int K, int P) {
-  double lam = 0;
-  for (int p = 0; p < P; p++) {
+  double lam = beta[threeDIndex(0,zi,zj,P,K,K)];//s[threeDIndex(0,i,j,P,N,N)];
+  for (int p = 1; p < P; p++) {
     lam += s[threeDIndex(p,i,j,P,N,N)] * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
   return lam;
@@ -650,6 +663,24 @@ Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
 }
 
 
+Rcpp::NumericVector lrmfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
+  Stat *s = XPtr<Stat>(statptr_);
+  int N = s->N;
+  int P = s->P;
+  int M = s->M;
+  Rcpp::NumericVector lrmat = Rcpp::NumericVector(Dimension(M,N,N));
+  for (int m = 0; m < M; m++) {
+    for (int i = 0; i < N; i++) {
+      for (int j = 0; j < N; j++) {
+        int zi = z[i];
+        int zj = z[j];
+       double lam  = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+       lrmat[threeDIndex(m,i,j,M,N,N)] = lam;//computeLambda(i,j,zi,zj,s,beta,N,K,P);
+      }
+    }
+  }
+  return lrmat;
+}
 
 // Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
 
@@ -698,7 +729,7 @@ double llk2(Rcpp::NumericVector lrm,
 }
 
 RCPP_MODULE(brem){
-  //  function( "computeLambdaFast", &computeLambdaFast);
+  
   //  function( "getTau", &getTau);
   class_<Stat>( "Stat" )
     .constructor<Rcpp::NumericVector,Rcpp::IntegerVector,Rcpp::IntegerVector,
@@ -737,8 +768,10 @@ RCPP_MODULE(brem){
    function( "llk", &llk ) ;
   function( "llk2", &llk2 ) ;
   function( "lrm", &lrm ) ;
+  function( "lrmfast", &lrmfast ) ;
   function( "updateStatistics", &updateStatistics);
   function( "computeLambda", &computeLambda);
   function( "initializeStatistics", &initializeStatistics);
   function( "test_last", &test_last);
+  function( "computeLambdaFast", &computeLambdaFast);
 }

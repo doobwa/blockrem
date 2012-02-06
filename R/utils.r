@@ -1,4 +1,21 @@
-llk_indiv <- function(a,lrm,times,sen,rec) {
+#' Full lograte array using computeLambdaFast.  lrm[m,i,j] is lambda_ij prior m'th event.  
+#' All lambda=0 for m=0.
+lrm_slow <- function(beta,z,s,M,N,K,P) {
+  lrms <- array(0,c(M,N,N))
+  for (m in 2:M) {
+    for (i in 1:N) {
+      for (j in 1:N) {
+        if (i!=j) {
+          x <- s$get_s(m-2,i-1,j-1)  # why m-2?  because this should be for the rateprior to current event m-1
+          lrms[m,i,j] <- brem$computeLambdaFast(i,j,z[i],z[j],x,beta,N,K,P)
+        } 
+      }
+    }
+  }
+  return(lrms)
+}
+  
+  llk_indiv <- function(a,lrm,times,sen,rec) {
   mp <- matrix(0,N,N)
   llks <- rep(0,M)
   for (m in 0:(M-1)) {

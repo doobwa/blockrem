@@ -40,8 +40,8 @@ test_that("get_v gets vectors as expected",{
   a <- x[[3]][[1]]
   b <- s$get_v(3-1,1-1)
   d <- s$get_w(3-1,1-1)
-  expect_that(b,equals(c(0,1,2,3,5,6)))
-  expect_that(d,equals(c(0,1,2,3,3,4,5)))
+  expect_that(b,equals(c(0,0,1,2,3,5,6)))
+  expect_that(d,equals(c(1,2,3,4,4,5,6)))
   expect_that(length(a), equals(length(b)))
   
   for (i in 1:N) {
@@ -56,12 +56,12 @@ test_that("get_v gets vectors as expected",{
 })
 
 test_that("taus from get_tau match with R version",{
-#   source("R/brem.r")
-#   source("R/brem.cpp.r")
-#   source("R/utils.r")
-#   library(testthat)
-#   require(abind)
-#   set.seed(1)
+  source("R/brem.r")
+  source("R/brem.cpp.r")
+  source("R/utils.r")
+  library(testthat)
+  require(abind)
+  set.seed(1)
   set.seed(1)
   M <- 100
   N <- 10
@@ -89,6 +89,13 @@ test_that("taus from get_tau match with R version",{
   beta <- abind(beta,rev.along=3)
   
   lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
+  
+  s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
+  s$precompute()
+  #lrm2 <- brem$lrmfast(beta,z-1,s$ptr(),K)
+  lrm2=lrm_slow(beta,z-1,s,M,N,K,P)
+  
+  
   taus <- test_taus(lrm,times,sen-1,rec-1)
   taus2 <- test_taus_from_s(times,sen-1,rec-1,N,M,P)
   expect_that(all.equal(taus,taus2),is_true())
@@ -97,8 +104,6 @@ test_that("taus from get_tau match with R version",{
   llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
   expect_that(sum(llks),equals(llk2))
   
-  s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
-  s$precompute()
   llk3 <- brem$llkfast(beta,z-1,s$ptr(),K)
   llk4 <- llk_fast(lrm,times,sen-1,rec-1)
   expect_that(llk3,equals(llk4))
@@ -107,13 +112,28 @@ test_that("taus from get_tau match with R version",{
 
 test_stats_from_s <- function(times,sen,rec,N,M,P) {
   source("R/brem.cpp.r")
+  source("R/utils.r")
+  library(testthat)
+  require(abind)
+  set.seed(1)
+  set.seed(1)
+  M <- 100
+  N <- 10
+  times <- sort(runif(M,0,1))
+  sen <- sample(1:N,M,replace=TRUE)
+  rec <- sample(1:N,M,replace=TRUE)
+  ix <- which(sen==rec)
+  times <- times[-ix]
+  sen <- sen[-ix]
+  rec <- rec[-ix]
+  M <- length(times)
   s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
   s$precompute()
-  r <- brem$initializeStatistics(N,P);
-  z <- z-1
+  r <- brem$initializeStatistics(N,P)
   for (m in 0:(M-1)) {
     a <- sen[m+1]-1
     b <- rec[m+1]-1
+    r <- brem$updateStatistics(r,a,b,N,P)
     for (i in 0:(N-1)) {
       for (j in 0:(N-1)) {
         if (i != j) {
@@ -123,6 +143,5 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
         }
       }
     }
-    r <- brem$updateStatistics(r,a,b,N,P)
   }
 }

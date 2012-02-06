@@ -106,12 +106,6 @@ test_that("computeLambda correct for small example",{
 #   expect_that(lrm,equals(a))
   
   # Compute log likelihood by hand.  
-  diag(a[1,,]) <- diag(a[2,,]) <- diag(a[3,,]) <- diag(a[4,,]) <- -Inf
-  llks <- c(a[1,sen[1],rec[1]],
-            a[2,sen[2],rec[2]] - (times[2]-times[2-1]) * sum(exp(a[2,,])),
-            a[3,sen[3],rec[3]] - (times[3]-times[3-1]) * sum(exp(a[3,,])),
-            a[4,sen[4],rec[4]] - (times[4]-times[4-1]) * sum(exp(a[4,,])) )
-  sum(llks)
   llks <- llk_slow(lrm,times,sen-1,rec-1)
   
   # Compare to drem$llk2
@@ -121,7 +115,10 @@ test_that("computeLambda correct for small example",{
   s$precompute()
   llk3 <- brem$llkfast(beta,z-1,s$ptr(),K)
   
-  true.fast <- c(1,2 - 2*(13*exp(1) + exp(2)), 1 - 13*exp(1) - exp(2), 2 - 13*exp(1) - exp(2) - (times[4] - times[1])*6*exp(1))
+  true.fast <- c(1,
+                 2 - 2*(13*exp(1) + exp(2)), 
+                 1 - (13*exp(1) + exp(2)), 
+                 2 -  (times[4] - times[1])*6*exp(1))
 
   llk4 <- llk_fast(lrm,times,sen-1,rec-1)
 
