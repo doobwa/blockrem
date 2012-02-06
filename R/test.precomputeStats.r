@@ -92,7 +92,6 @@ test_that("taus from get_tau match with R version",{
   
   s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
   s$precompute()
-  #lrm2 <- brem$lrmfast(beta,z-1,s$ptr(),K)
   lrm2=lrm_slow(beta,z-1,s,M,N,K,P)
   
   

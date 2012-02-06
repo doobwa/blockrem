@@ -185,7 +185,7 @@ public:
   }
 
   vector<int> get_s(int m, int i, int j) {
-    int r = w[i][j][m];
+    int r = w[i][j][m - 1];
     return x[i][j][r];
   }
 
@@ -377,7 +377,7 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
   j = rec[0];
   zi = z[i];
   zj = z[j];
-  llks[0] = beta[threeDIndex(0,zi,zj,P,K,K)];
+  llks[0] = computeLambdaFast(i,j,zi,zj,s->get_s(0,i,j),beta,N,K,P);
 
   for (int m = 1; m < (M-1); m++) {
     i = sen[m];

@@ -114,6 +114,8 @@ test_that("computeLambda correct for small example",{
   s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   llk3 <- brem$llkfast(beta,z-1,s$ptr(),K)
+  lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
+
   
   true.fast <- c(1,
                  2 - 2*(13*exp(1) + exp(2)), 

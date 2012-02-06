@@ -25,12 +25,12 @@ beta <- abind(beta,rev.along=3)
 M <- 2000
 set.seed(1)
 z <- c(rep(1,5),rep(2,5))
-
-sim <- simulate.brem(M,N,z,beta)
-mat <- table(sim$A[,2],sim$A[,3])
-mat <- melt(as.matrix(mat))
-colnames(mat) <- c("X1","X2","value")
-save(sim,N,K,P,M,z,beta,file="data/sim.rdata")
+# 
+# sim <- simulate.brem(M,N,z,beta)
+# mat <- table(sim$A[,2],sim$A[,3])
+# mat <- melt(as.matrix(mat))
+# colnames(mat) <- c("X1","X2","value")
+# save(sim,N,K,P,M,z,beta,file="data/sim.rdata")
 #plotmat(mat)
 #ggsave("figs/syn/mat.pdf",width=3,height=3)
 
@@ -41,10 +41,10 @@ sen <- sim$A[,2]
 rec <- sim$A[,3]
 s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
-llk1 <- brem$llkfast(beta,z,s$ptr(),K)  # Doesn't give similar answer
+llk1 <- brem$llkfast(beta,z-1,s$ptr(),K)  # Doesn't give similar answer
 lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
 llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
-
+#lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
 llk4 <- llk_fast(lrm,times,sen-1,rec-1)
 true.lpost <- brem.lpost(sim$A,N,K,z,beta)
 true.lpost
