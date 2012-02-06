@@ -63,6 +63,7 @@ public:
       for (int j = 0; j < N; j++) {
         vector< vector<int> > x_ij;
         vector<int> x_ijp(P);
+        //        x_ijp[0] = 1;
         x_ij.push_back(x_ijp);
         x_i.push_back(x_ij);
       }
@@ -72,6 +73,7 @@ public:
 
 
   void update(int a, int b, int i, int j) {
+    s[i][j][0] = 1;
     // (a,b) the event that occurred.  
     // (i,j) the event that we are computing statistics for
     if (i != j) { 
@@ -105,38 +107,13 @@ public:
 // Returns v, where v[i][j] is a vector of event indices m where lambda_{ij} changed (due to an event involving either i or j).  All vectors begin with 0 (since all intensities are assumed to change at time 0).  Element v of stats[i][j] are the statistics that were applicable up to event v[i][j][v].  TODO: Should also have M-1?
 
   void precompute() {
-      Rprintf("size %i %i\n",x[1][0].size(),v[1][0].size());
     for (int m = 0; m < (M-1); m++) {
       Rprintf(".");
+
       int i = sen[m];
       int j = rec[m];
-      if (0 < m && m < (M-1)) { // initialized with 0
-        for (int r = 0; r < N; r++) {
-          if (r!=i && r!=j) {
-            x[i][r].push_back(s[i][r]); // pushing to m+1 element
-            x[r][i].push_back(s[r][i]);
-            x[j][r].push_back(s[j][r]);
-            x[r][j].push_back(s[r][j]);
-            v[i][r].push_back(m);
-            v[r][i].push_back(m);
-            v[j][r].push_back(m);
-            v[r][j].push_back(m);
-          }
-        }
-        x[i][j].push_back(s[i][j]);
-        x[j][i].push_back(s[j][i]);
-        v[i][j].push_back(m);
-        v[j][i].push_back(m);
-        u[i].push_back(m);
-        u[j].push_back(m);
-        for (int i = 0; i < N; i++) {
-          for (int j = 0; j < N; j++) {
-            w[i][j][m] = v[i][j].size() - 1;
-          }
-        }
-      }
 
-      // Update statistics
+     // Update statistics
       for (int r = 0; r < N; r++) {
         if (r!=j && r!=i) {
           update(i,j,i,r);
@@ -147,6 +124,44 @@ public:
       }
       update(i,j,i,j);
       update(i,j,j,i);
+
+
+      // Update statistics and changepoints for all dyads affected by (i,j)@m
+      for (int r = 0; r < N; r++) {
+        if (r!=i && r!=j) {
+          if (m < (M-2)) {
+            x[i][r].push_back(s[i][r]); // pushing to m+1 element
+            x[r][i].push_back(s[r][i]);
+            x[j][r].push_back(s[j][r]);
+            x[r][j].push_back(s[r][j]);
+          }
+          if (m > 0) {
+            v[i][r].push_back(m);
+            v[r][i].push_back(m);
+            v[j][r].push_back(m);
+            v[r][j].push_back(m);
+          }
+        }
+      }
+      if (m < (M-2)) {
+        x[i][j].push_back(s[i][j]);
+        x[j][i].push_back(s[j][i]);
+      }
+      if (m > 0) {
+        v[i][j].push_back(m);
+        v[j][i].push_back(m);
+      }
+
+      // Update index of changepoint for this dyad
+      for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+          w[i][j][m] = v[i][j].size() - 1;
+        }
+      }
+
+      u[i].push_back(m);
+      u[j].push_back(m);
+ 
     }
 
     // Handle last event differently: all v[i][j] get M-1 at the end.
@@ -443,11 +458,11 @@ Rcpp::NumericVector initializeStatistics(int N, int P) {
   Rcpp::NumericVector s     = Rcpp::NumericVector(Dimension(P,N,N));
 
   //  Intercept statistic: all (0,i,j) are equal to 1
-  for (int i = 0; i < N; i++) {
-    for (int j = 0; j < N; j++) {
-      s[threeDIndex(0,i,j,P,N,N)] = 1;
-    }
-  }
+  // for (int i = 0; i < N; i++) {
+  //   for (int j = 0; j < N; j++) {
+  //     s[threeDIndex(0,i,j,P,N,N)] = 1;
+  //   }
+  // }
 
   return s;
 }
@@ -464,6 +479,9 @@ Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N,
         int i = sen[k];
         int j = rec[k];
         if (i != j) {
+          // intercept
+          s[threeDIndex(0,i,j,P,N,N)] = 1;
+
           // P-shifts
           s[threeDIndex(1,i,j,P,N,N)] = (i!=a & i==b & j==a & j!=b);
           s[threeDIndex(2,i,j,P,N,N)] = (i!=a & i==b & j!=a & j!=b);

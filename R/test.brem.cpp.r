@@ -101,11 +101,6 @@ test_that("computeLambda correct for small example",{
   brem$computeLambda(1,0,0,0,s,beta,N,K,P)  # 
   
   # Constract log rate matrix by hand and compare to drem$lrm
-  a <- array(1,c(M,N,N))
-  a[2,3,1] <- 2
-  a[3,1,3] <- 2
-  a[4,1,3] <- 2
-  z <- rep(1,N)
   K <- 1
   lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
 #   expect_that(lrm,equals(a))
@@ -117,6 +112,7 @@ test_that("computeLambda correct for small example",{
             a[3,sen[3],rec[3]] - (times[3]-times[3-1]) * sum(exp(a[3,,])),
             a[4,sen[4],rec[4]] - (times[4]-times[4-1]) * sum(exp(a[4,,])) )
   sum(llks)
+  llks <- llk_slow(lrm,times,sen-1,rec-1)
   
   # Compare to drem$llk2
   llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
@@ -204,5 +200,5 @@ test_that("lrm and llk functions work on small example for K=2",{
   
   x <- llk_fast_last(lrm,times,sen-1,rec-1)
   y <- brem$test_last(beta,z-1,s$ptr(),K)
-  
+  browser()
 })

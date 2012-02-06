@@ -38,6 +38,8 @@ llk_slow <- function(lrm,times,sen,rec) {
   return(llks)
 }
 
+
+
 test_taus_from_s <- function(times,sen,rec,N,M,P) {
   s <- new(brem$Stat,times,sen,rec,N,M,P)
   s$precompute()
@@ -117,7 +119,7 @@ llk_slow <- function(lrm,times,sen,rec) {
   llks <- rep(0,M)
   for (m in 1:M) diag(lrm[m,,]) <- -Inf
   llks[1] = lrm[1,sen[1],rec[1]]
-  for (m in 2:(M-1)) {
+  for (m in 2:M) {
     llks[m] <- lrm[m,sen[m],rec[m]] - (times[m]-times[m-1]) * sum(exp(lrm[m,,]))
   }
   return(llks)
