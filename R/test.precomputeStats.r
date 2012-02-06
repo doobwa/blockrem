@@ -36,8 +36,8 @@ test_that("a few statistics vectors are correct",{
   ans[11] <- 1
   expect_that(sij[[3]],equals(ans))
 })
-#test_that("get_v gets vectors as expected",{
-  a <- s$get_all_s()[[3]][[1]]
+test_that("get_v gets vectors as expected",{
+  a <- x[[3]][[1]]
   b <- s$get_v(3-1,1-1)
   d <- s$get_w(3-1,1-1)
   expect_that(b,equals(c(0,1,2,3,5,6)))
@@ -56,12 +56,12 @@ test_that("a few statistics vectors are correct",{
 })
 
 test_that("taus from get_tau match with R version",{
-  source("R/brem.r")
-  source("R/brem.cpp.r")
-  source("R/utils.r")
-  library(testthat)
-  require(abind)
-  set.seed(1)
+#   source("R/brem.r")
+#   source("R/brem.cpp.r")
+#   source("R/utils.r")
+#   library(testthat)
+#   require(abind)
+#   set.seed(1)
   set.seed(1)
   M <- 100
   N <- 10
@@ -95,12 +95,13 @@ test_that("taus from get_tau match with R version",{
   
   llks <- llk_slow(lrm,times,sen-1,rec-1)
   llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
+  expect_that(sum(llks),equals(llk2))
   
   s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   llk3 <- brem$llkfast(beta,z-1,s$ptr(),K)
-  
   llk4 <- llk_fast(lrm,times,sen-1,rec-1)
+  expect_that(llk3,equals(llk4))
 })
 
 

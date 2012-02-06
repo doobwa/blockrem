@@ -107,13 +107,14 @@ public:
 // Returns v, where v[i][j] is a vector of event indices m where lambda_{ij} changed (due to an event involving either i or j).  All vectors begin with 0 (since all intensities are assumed to change at time 0).  Element v of stats[i][j] are the statistics that were applicable up to event v[i][j][v].  TODO: Should also have M-1?
 
   void precompute() {
+    // Save nothing to v or x (as they were anlready initalized with 0)
+
     for (int m = 0; m < (M-1); m++) {
       Rprintf(".");
 
       int i = sen[m];
       int j = rec[m];
-
-     // Update statistics
+     // Update statistics for those affected by previous event
       for (int r = 0; r < N; r++) {
         if (r!=j && r!=i) {
           update(i,j,i,r);
@@ -129,28 +130,20 @@ public:
       // Update statistics and changepoints for all dyads affected by (i,j)@m
       for (int r = 0; r < N; r++) {
         if (r!=i && r!=j) {
-          if (m < (M-2)) {
-            x[i][r].push_back(s[i][r]); // pushing to m+1 element
-            x[r][i].push_back(s[r][i]);
-            x[j][r].push_back(s[j][r]);
-            x[r][j].push_back(s[r][j]);
-          }
-          if (m > 0) {
-            v[i][r].push_back(m);
-            v[r][i].push_back(m);
-            v[j][r].push_back(m);
-            v[r][j].push_back(m);
-          }
+          x[i][r].push_back(s[i][r]); // pushing to m element
+          x[r][i].push_back(s[r][i]);
+          x[j][r].push_back(s[j][r]);
+          x[r][j].push_back(s[r][j]);
+          v[i][r].push_back(m);
+          v[r][i].push_back(m);
+          v[j][r].push_back(m);
+          v[r][j].push_back(m);
         }
       }
-      if (m < (M-2)) {
-        x[i][j].push_back(s[i][j]);
-        x[j][i].push_back(s[j][i]);
-      }
-      if (m > 0) {
-        v[i][j].push_back(m);
-        v[j][i].push_back(m);
-      }
+      x[i][j].push_back(s[i][j]);
+      x[j][i].push_back(s[j][i]);
+      v[i][j].push_back(m);
+      v[j][i].push_back(m);
 
       // Update index of changepoint for this dyad
       for (int i = 0; i < N; i++) {
@@ -174,7 +167,7 @@ public:
       for (int j = 0; j < N; j++) {
         if (i != j) {
           update(a,b,i,j);
-          x[i][j].push_back(s[i][j]);
+          x[i][j].push_back(s[i][j]);  // should go unused.
           v[i][j].push_back(M-1);
           w[i][j][M-1] = v[i][j].size() - 1;
         }
