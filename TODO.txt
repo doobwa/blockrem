@@ -24,19 +24,21 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 [done] Understand why we do better than truth on llk/ranking. [It was a bug in llk.]
 [done, still buggy] Make faster llk function that doesn't use lrm w/ llk.
 [done. overhead too big?] Try to speed up with OpenMP
-Implement gibbs sampler for latent group assignment.
+[done] Implement gibbs sampler for latent group assignment.
 - Pass tests with one that computes mp ahead of time.
 - Determine what's slowing things down.  Overhead?
 
+Week 3:
 Compare submodels for eckmann subset.
 Write abstract.
 Add px feature to define which parameters to fit.
-See if we can learn groups on synthetic data.
+[done] See if we can learn groups on synthetic data.
 Derive/implement EM for baseline model.
 Write up other possibilities for layering additional types of data, DP, or other extensions.
 Try random groups and see if REM still picks out (significantly) different parameters
 Consider MIT dataset or classroom dataset.
 Clean up interfaces to Rcpp code.
+Document Rcpp code better.
 Add other statistics other than pshifts
 Initialize with guess at z's, rather than guess at beta.
 Research maximization of beta rather than sampling.
