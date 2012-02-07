@@ -325,9 +325,4 @@ rcatlog <- function(ps) {
     if (u < ps[i]) return(i)
   }
 }
-rcategorical <- function(ps) {
-  max=0
-  N <- length(ps)
-  for (i in 0:length(ps))
-}
 rcatlog(log(c(2,3,1,4,5)))

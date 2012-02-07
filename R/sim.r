@@ -68,10 +68,10 @@ set.seed(4)
 niter <- 300
 px <- rep(1,11)
 px[7:11] <- 0
-fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z,gibbs=FALSE)
-fit1 <- brem.mcmc(sim$A,N,K,s,model.type="diag.rem",niter=niter,gibbs=TRUE)
-fit2 <- brem.mcmc(sim$A,N,K,s,model.type="full",niter=niter,z=z,gibbs=FALSE)
-fit3 <- brem.mcmc(sim$A,N,1,s,model.type="full",niter=niter,gibbs=FALSE,mcmc.sd=.05)
+fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z,gibbs=TRUE)
+fit1 <- brem.mcmc(sim$A,N,K,s,model.type="shared",niter=niter,gibbs="fast")
+fit2 <- brem.mcmc(sim$A,N,K,s,model.type="full",niter=niter,z=z,gibbs="fast")
+fit3 <- brem.mcmc(sim$A,N,1,s,model.type="full",niter=niter,gibbs="fast",mcmc.sd=.05)
 save(sim,true.lpost,fit0,fit1,fit2,fit3,file="data/syn/fits.rdata")
 
 llks <- melt(list(base=fit0$llks,diag=fit1$llks,full=fit2$llks,sing=fit3$llks))

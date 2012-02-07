@@ -38,7 +38,13 @@ sbm.mcmc <- function(A,N,K,niter=100,z=NULL,mcmc.sd=.1,gibbs=TRUE) {
         olp <- clp
       }
     }
-    
+    for (k in 1:K) {
+      if (length(which(z==k))==0) {
+        current[k,] <- rnorm(K,0,1)
+        current[,k] <- rnorm(K,0,1)
+        cat("sampling empty cluster params\n",current,"\n")
+      }
+    }
     if (gibbs) {
       for (i in 1:N) {
         ps <- rep(0,K)
