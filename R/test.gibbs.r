@@ -43,14 +43,16 @@ proc.time() - st
 
 
 # Try on twitter dataset
-# load("data/twitter.example.rdata")
-# z <- c(rep(1,N-1),2)
-# s <- new(bremf$Stat,B[,1],B[,2]-1,B[,3]-1,N,M,P)
-# s$precompute()
-# 
-# st <- proc.time()
-# b <- bremf$gibbs(beta,z-1,s$ptr(),K)
-# proc.time() - st
+source("R/brem.cpp.r")
+source("R/utils.r")
+require(abind)
+require(testthat)
+load("data/twitter.example.rdata")
+z <- c(rep(1,N-1),2)
+s <- new(brem$Stat,B[,1],B[,2]-1,B[,3]-1,N,M,P)
+s$precompute()
+system.time(b <- brem$gibbs(beta,z-1,s$ptr(),K))
+system.time(b <- brem$llkfast(beta,z-1,s$ptr(),K))
 
 
 lrm <- brem$lrm(beta, times, sen-1, rec-1, z-1, N, M, K, P)

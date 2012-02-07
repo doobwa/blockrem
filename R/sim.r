@@ -41,8 +41,12 @@ sen <- sim$A[,2]
 rec <- sim$A[,3]
 s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
-llk1 <- brem$llkfast(beta,z-1,s$ptr(),K)  # Occasionally dies
-b <- brem$gibbs(beta,z-1,s$ptr(),K)
+llk.true <- brem$llkfast(beta,z-1,s$ptr(),K)  
+fit1 <- brem.mcmc(sim$A,N,K,s,model.type="shared",niter=50,gibbs="fast")
+# Occasionally dies
+system.time(brem$gibbs(fit1$beta,fit1$z-1,s$ptr(),K))
+system.time(brem$llkfast(fit1$beta,fit1$z-1,s$ptr(),K))
+
 
 lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
 llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
@@ -65,9 +69,9 @@ niter <- 300
 px <- rep(1,11)
 px[7:11] <- 0
 fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z,gibbs=FALSE)
-fit1 <- brem.mcmc(sim$A,N,K,model.type="diag.rem",niter=niter,z=z,gibbs=FALSE)
-fit2 <- brem.mcmc(sim$A,N,K,model.type="full",niter=niter,z=z,gibbs=FALSE)
-fit3 <- brem.mcmc(sim$A,N,1,model.type="full",niter=niter,gibbs=FALSE,mcmc.sd=.05)
+fit1 <- brem.mcmc(sim$A,N,K,s,model.type="diag.rem",niter=niter,gibbs=TRUE)
+fit2 <- brem.mcmc(sim$A,N,K,s,model.type="full",niter=niter,z=z,gibbs=FALSE)
+fit3 <- brem.mcmc(sim$A,N,1,s,model.type="full",niter=niter,gibbs=FALSE,mcmc.sd=.05)
 save(sim,true.lpost,fit0,fit1,fit2,fit3,file="data/syn/fits.rdata")
 
 llks <- melt(list(base=fit0$llks,diag=fit1$llks,full=fit2$llks,sing=fit3$llks))

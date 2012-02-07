@@ -76,12 +76,12 @@ brem.lpost <- function(A,N,K,z,beta) {
   lprior <- sum(dnorm(unlist(beta),0,1,log=TRUE)) + N * log(1/K)
   sum(llks)+lprior
 }
-brem.lpost.fast <- function(A,N,K,z,beta) {
+brem.lpost.fast <- function(A,N,K,z,s,beta) {
   # hack: someow s$ptr() wrks if you putit inthe return. something aboutenvironments i'm guessing.)
   return(sum(brem$llkfast(beta,z-1,s$ptr(),K))+sum(dnorm(unlist(beta),0,1,log=TRUE)) + N * log(1/K))
 }
 
-brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs=TRUE,mh=TRUE) {
+brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE) {
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 11
@@ -98,17 +98,20 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
     
     # For each effect sample via MH
     first.iter <- (iter==1)
-    current <- brem.mh(A,N,K,P,z,current,model.type,mcmc.sd,first.iter,px)
+    for (i in 1:2) {
+      current <- brem.mh(A,N,K,P,z,s,current,model.type,mcmc.sd,first.iter)
+    }
     
-    # Sample empty cluster parameters from prior
-#     for (k in 1:K) {
-#       if (length(which(z==k))==0) {
-#         current[k,,] <- rnorm(K*P,0,5)
-#         current[,k,] <- rnorm(K*P,0,5)
-#       }
-#     }
+    # Sample empty cluster parameters from prior.  Only sample baserates.
+    for (k in 1:K) {
+      if (length(which(z==k))==0) {
+        current[,k,] <- current[,,k] <- 0
+        current[1,k,] <- current[1,,k] <- rnorm(K,0,1)
+        cat("sampling empty cluster params\n",current[1,,],"\n")
+      }
+    }
     
-    if (gibbs) {
+    if (gibbs=="slow") {
       # Gibbs sample assignments
       for (i in 1:N) {
         ps <- rep(0,K)
@@ -120,16 +123,20 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
         z[i] <- sample(1:K,size=1,prob=ps)
       }
     }
+    if (gibbs=="fast") {
+      z <- brem$gibbs(current,z-1,s$ptr(),K)$z + 1
+    }
     
     param[iter,,,] <- current
     llks[iter] <- brem.lpost.fast(A,N,K,z,s,current)
     
-    cat("iter",iter,":",llks[iter],"z:",table(z),"\n")
+    cat("iter",iter,":",llks[iter],"z:",z,"\n")
     
   }
   return(list(z=z,llks=llks,param=param,beta=current))
 }
-brem.mh <- function(A,N,K,P,z,current,model.type="baserates",mcmc.sd=.1,first.iter=FALSE,px=c(1,1,1,1,1,1,1,0,0,0,0)) {
+brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",mcmc.sd=.1,first.iter=FALSE) {
+  px=c(1,1,1,1,1,1,1,0,0,0,0)  # TODO: Eventually allow MH updates on degree effects
   if (first.iter) {
     olp <- -Inf
   }  else {
@@ -146,7 +153,7 @@ brem.mh <- function(A,N,K,P,z,current,model.type="baserates",mcmc.sd=.1,first.it
       olp <- clp
     }
   }
-  if (model.type=="diag.rem") {
+  if (model.type=="shared") {
     for (p in which(px==1)) {
       
       # Sample new values for diagonal element (a) and all off diagonal (b)

@@ -144,3 +144,5 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
     }
   }
 }
+
+brem$rcategorical(log(c(2,3,2,10)))

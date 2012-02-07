@@ -1,8 +1,11 @@
+//#include <RInside.h>
 #include <iostream>
 #include <algorithm>
 #include <vector>
 #include <omp.h>
 using namespace std;
+RNGScope scope;
+
 
 int threeDIndex(int j, int k, int l, int J, int K, int L) { 
   return l*J*K + k*J + j;
@@ -273,16 +276,15 @@ double computeLambdaFast(int i, int j, int zi, int zj, vector<int> s, Rcpp::Nume
   return lam;
 }
 
-
-
 // Compute the loglikelihood corresponding to a single actor, a.
 
-Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, Stat *s, int K) {
+double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, Stat *s, int K) {
   int N = s->N;
   int M = s->M;
   int P = s->P;
   int i,j,zi,zj,m,t,v;
   double llk,lam;
+  double total = 0;
   vector<int> smij;
   vector<int> ma = s->get_u(a);
   Rcpp::NumericVector llks(ma.size());
@@ -308,9 +310,101 @@ Rcpp::NumericVector llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z,
       }
     }
     llks(ix) = llk;
+    total += llk;
   }
-  return llks;
+  return total;
 }
+
+
+// int rcategorical(Rcpp::NumericVector lp) {
+  // int max;
+  // for (int i = 0; i < lp.size(); i++) {
+  //   if (lp[i] > lp[max]) max = i;
+  // }
+//   // for (int i = 0; i < lp.size(); i++) {
+//   //   lp[i] = exp(lp[i] - lp[max]);
+//   // }
+//   //  lp = exp(lp - lp[max]);
+//   for (int i = 0; i < lp.size(); i++) {
+//     lp[i] = exp(lp[i]);
+//   }
+//   for (int i = 1; i < lp.size(); i++) {
+//     lp[i] = lp[i-1];
+//   }
+//   Rprintf("%f %f\n",lp[0],lp[1]);
+//   int i;
+//   double lpm = lp[lp.size()-1];
+//   double u = as<double>(Rcpp::runif(1));
+//   for (i = 0; i < lp.size(); i++) {
+//     if (u < lp[i]/lpm) {
+//       return i;
+//     }
+//   }
+// int rcategorical2 (Rcpp::NumericVector lp) {
+//   RInside R(argc, argv);                      // create an embedded R instance
+//   R["lp"] = lp;
+//   std::string evalstr = "\
+// p <- exp(lp - max(lp)) \
+// sample(1,1:length(lp),prob=p) - 1
+// ";                     // returns Z
+
+//   ans = R.parseEval(evalstr);    // eval the init string -- Z is now in ans
+
+//   Rcpp::IntegerVector k(ans);
+//   return as<int>(k);
+// }
+ bool IsFiniteNumber(double x) 
+    {
+        return (x <= DBL_MAX && x >= -DBL_MAX); 
+    } 
+int rcategorical (Rcpp::NumericVector lp) {
+  int max = 0;
+  int min = 0;
+  int K = lp.size();
+  for (int i = 0; i < K; i++) {
+    if (lp[i] > lp[max]) {
+      max = i;
+    }
+    if (lp[i] < lp[min]) {
+      min = i;
+    }
+  }
+  
+  // If all small values, subtract max value for numeric stability
+  if (lp[max] < 0) {
+    double lmax = lp[max];
+    for (int i = 0; i < K; i++) {
+      lp[i] -= lmax;
+    }
+  }
+  if (lp[min] > 0) {
+    double lmin = lp[min];
+    for (int i = 0; i < K; i++) {
+      lp[i] -= lmin;
+    }
+  }
+
+  // Inverse CDF method
+  Rcpp::NumericVector p = exp(lp);
+  int k;
+  double cuml = 0;
+  double sum = 0;
+  for (k=0;k<K;k++) {
+    if (!IsFiniteNumber(p[k])) return k;
+    sum += p[k];
+  }
+
+  //  Rprintf("%f %f %f\n",p[0],p[1],sum);
+  double r = as<double>(Rcpp::runif(1));//unif_rand();
+  for (k=0;k<K;k++) {
+    cuml += p[k]/sum;
+    if (r < cuml) {
+      break;
+    } 
+  }
+  return k;
+}
+
 
 // TODO: sample z
 Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
@@ -319,19 +413,21 @@ Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_,
   Stat *s = XPtr<Stat>(statptr_);
   int N = s->N;
   for (int a = 0; a < N; a++) {
-    Rcpp::List llk_a;
+
+    Rcpp::NumericVector y(K);
     // Compute p(z[a] = k | all else) for each k
     for (int k = 0; k < K; k++) {
       z[a] = k;
-      x = llki(a,beta,z,s,K);
-      llk_a.push_back(x);
+      y[k] = llki(a,beta,z,s,K);
     }
-    llks.push_back(llk_a);
-    Rprintf(".");
+    llks.push_back(y);
+    
     // Sample z[a]
+    z[a] = rcategorical(y);
   }
   return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("z") = z);
 }
+
 
 // Use the precomputed statistics s to compute the likelihood
 Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
@@ -745,4 +841,5 @@ RCPP_MODULE(brem){
   function( "initializeStatistics", &initializeStatistics);
   function( "test_last", &test_last);
   function( "computeLambdaFast", &computeLambdaFast);
+  function( "rcategorical", &rcategorical);
 }

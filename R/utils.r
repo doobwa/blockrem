@@ -315,3 +315,19 @@ block.ps <- function(A,z) {
   rownames(ds) <- c()
   return(ds)
 }
+rcatlog <- function(ps) {
+  ps <- ps - max(ps)
+  ps <- exp(ps)
+  ps <- ps/sum(ps)
+  ps <- cumsum(ps)
+  u <- runif(1)
+  for (i in 1:length(ps)) {
+    if (u < ps[i]) return(i)
+  }
+}
+rcategorical <- function(ps) {
+  max=0
+  N <- length(ps)
+  for (i in 0:length(ps))
+}
+rcatlog(log(c(2,3,1,4,5)))
