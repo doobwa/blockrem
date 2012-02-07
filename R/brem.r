@@ -91,8 +91,8 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   sigma <- .5
   current <- array(rnorm(P*K^2,mu,sigma),c(P,K,K))
   current[7:11,,] <- 0
-  if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
   if (!is.null(beta)) current <- beta
+  if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
   
   for (iter in 1:niter) {
     
@@ -106,7 +106,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
     for (k in 1:K) {
       if (length(which(z==k))==0) {
         current[,k,] <- current[,,k] <- 0
-        current[1,k,] <- current[1,,k] <- rnorm(K,0,1)
+        current[1,k,] <- current[1,,k] <- rnorm(K,0,3)
         cat("sampling empty cluster params\n",current[1,,],"\n")
       }
     }

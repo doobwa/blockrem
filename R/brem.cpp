@@ -1,4 +1,25 @@
-//#include <RInside.h>
+/* 
+Christopher DuBois
+
+C++ code for block model relational events.  There are currently two ways of fitting such models with the following code.  The first computes the likelihood of the model by updating statistic vectors after each event.  These functions include:
+llk: compute the likelihood
+llk2: compute the likelihood using a log rate array
+lrm:  compute a log rate array (T x N x N)
+initializeStatistics: initialize an P x N x N
+updateStatistics: update the current most recent set of statistics with an observed event.
+computeLambda: compute the log intentisty function, lambda, using a vector of statistics and parameters beta.
+
+The second method precomputes the statistic vector for every dyad at every observed event.  Though this requires a large amount of memory, searching for the last observed time will not be required.  The Stat class encapsulates this data structure and allows one to precompute all the necessary statistics given the observed data, as well as query for s(t,i,j) and tau(t,i,j).  The folowing functions use a Stat object.
+
+llkfast: 
+lrmfast
+gibbs
+computeLambdaFast
+
+rcategorical is a helper function for gibbs.  It draws from a categorical distribution when the log probabilities are given.
+ */
+
+
 #include <iostream>
 #include <algorithm>
 #include <vector>
@@ -6,7 +27,7 @@
 using namespace std;
 RNGScope scope;
 
-
+// Return the (j,k,l) element of a (J,K,L) array represented as a vector.
 int threeDIndex(int j, int k, int l, int J, int K, int L) { 
   return l*J*K + k*J + j;
 }
@@ -20,8 +41,6 @@ public:
   Stat(Rcpp::NumericVector times_, Rcpp::IntegerVector sen_, 
         Rcpp::IntegerVector rec_, int N_, int M_, int P_) : 
     times(times_),sen(sen_),rec(rec_),N(N_),M(M_),P(P_) {
-
-
 
     // Current vectors of statistics
     for (int i = 0; i < N; i++) {
@@ -160,7 +179,7 @@ public:
  
     }
 
-    // Handle last event differently: all v[i][j] get M-1 at the end.
+    // Handle last event separately: all v[i][j] get M-1 at the end.
     // Update w[i][j][M-1] to be the final size of v[i][j]
     int m = M-1;
     int a = sen[m];
@@ -170,13 +189,7 @@ public:
       u[i].push_back(m);
       for (int j = 0; j < N; j++) {
         if (i != j) {
-          if (i==0 & j==1) {
-            Rprintf("%i %i\n",s[i][j][1],s[i][j][2]);
-          }
           update(a,b,i,j);
-          if (i==0 & j==1) {
-            Rprintf("%i %i\n",s[i][j][1],s[i][j][2]);
-          }
           x[i][j].push_back(s[i][j]);  // should go unused.
           v[i][j].push_back(m);
           w[i][j][m] = v[i][j].size() - 1;
@@ -195,11 +208,12 @@ public:
 
   // Get the time of the event that last affected dyad (i,j)
   double get_tau(int m, int i, int j) {
-    //    int r = get_prev(v[i][j],m);
+    // If asking for an event past the observed events, return the last time
     if (m > M-1) {
       m = M-1;
     }
-    if (m == 0) {
+    // If asking for the first (or negative) event, return the first time
+    if (m < 1) {
       m = 1;
     }
     int r = w[i][j][m - 1];
@@ -370,7 +384,7 @@ int rcategorical (Rcpp::NumericVector lp) {
     }
   }
   
-  // If all small values, subtract max value for numeric stability
+  // If all small/large values, subtract max/min value for numeric stability.
   if (lp[max] < 0) {
     double lmax = lp[max];
     for (int i = 0; i < K; i++) {
@@ -386,6 +400,9 @@ int rcategorical (Rcpp::NumericVector lp) {
 
   // Inverse CDF method
   Rcpp::NumericVector p = exp(lp);
+
+  // Get sum.  If any Infinite values, return that index. 
+  // TODO: This probably introduces a bias towards smaller k.
   int k;
   double cuml = 0;
   double sum = 0;
@@ -394,8 +411,7 @@ int rcategorical (Rcpp::NumericVector lp) {
     sum += p[k];
   }
 
-  //  Rprintf("%f %f %f\n",p[0],p[1],sum);
-  double r = as<double>(Rcpp::runif(1));//unif_rand();
+  double r = as<double>(Rcpp::runif(1));
   for (k=0;k<K;k++) {
     cuml += p[k]/sum;
     if (r < cuml) {
