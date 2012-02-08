@@ -325,4 +325,12 @@ rcatlog <- function(ps) {
     if (u < ps[i]) return(i)
   }
 }
-rcatlog(log(c(2,3,1,4,5)))
+plot.blockmodel <- function(B,z) {
+  nmap <- order(z)
+  s <- match(B[,2],nmap)
+  r <- match(B[,3],nmap)
+  plot(s,r,pch=".",xlab="sender",ylab="recipient")
+  cpoints <- sapply(1:K,function(k) min(which(sort(z)==k)))
+  abline(v=cpoints[-1])
+  abline(h=cpoints[-1])
+}

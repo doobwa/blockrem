@@ -2,10 +2,13 @@ library(releventhier)
 library(ggplot2)
 require(abind)
 require(testthat)
-source("R/brem.r")
-source("R/brem.cpp.r")
-source("R/sbm.r")
-source("R/utils.r")
+setwd("R")
+source("brem.r")
+source("brem.cpp.r")
+source("sbm.r")
+source("utils.r")
+setwd("..")
+
 N <- 10
 K <- 2
 beta <- list("intercept"=matrix(c(2,1,1,2),K,K),
@@ -25,13 +28,13 @@ beta <- abind(beta,rev.along=3)
 M <- 2000
 set.seed(1)
 z <- c(rep(1,5),rep(2,5))
-# 
-# sim <- simulate.brem(M,N,z,beta)
-# mat <- table(sim$A[,2],sim$A[,3])
-# mat <- melt(as.matrix(mat))
-# colnames(mat) <- c("X1","X2","value")
-# save(sim,N,K,P,M,z,beta,file="data/sim.rdata")
-#plotmat(mat)
+
+sim <- simulate.brem(M,N,z,beta)
+mat <- table(sim$A[,2],sim$A[,3])
+mat <- melt(as.matrix(mat))
+colnames(mat) <- c("X1","X2","value")
+save(sim,N,K,P,M,z,beta,file="data/sim.rdata")
+plotmat(mat)
 #ggsave("figs/syn/mat.pdf",width=3,height=3)
 
 
@@ -42,26 +45,13 @@ rec <- sim$A[,3]
 s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
 llk.true <- brem$llkfast(beta,z-1,s$ptr(),K)  
-fit1 <- brem.mcmc(sim$A,N,K,s,model.type="shared",niter=50,gibbs="fast")
-# Occasionally dies
-system.time(brem$gibbs(fit1$beta,fit1$z-1,s$ptr(),K))
-system.time(brem$llkfast(fit1$beta,fit1$z-1,s$ptr(),K))
-
-
-lrm <- brem$lrm(beta,times,sen-1,rec-1,z-1,N,M,K,P)
-llk2 <-  brem$llk2(lrm,times,sen-1,rec-1,N,M)
-#lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
-llk4 <- llk_fast(lrm,times,sen-1,rec-1)
-true.lpost <- brem.lpost(sim$A,N,K,z,beta)
-true.lpost
-a <- proc.time();brem.lpost(sim$A,N,K,z,beta);proc.time()-a
-a <- proc.time();brem.lpost.fast(sim$A,N,K,z,beta);proc.time()-a
+fit <- brem.mcmc(sim$A,N,K,s,model.type="baserates",niter=200,mcmc.sd=.1)
 
 test_that("simulated lrm agrees with brem.lrm",{
   tmp <- brem.lrm(sim$A,N,z,beta)
   for (i in 1:M) diag(tmp[i,,]) <- -Inf
   diag(sim$lrm[1,,]) <- -Inf
-  expect_that(all.equal(tmp,sim$lrm),is_true())
+  expect_that(all.equal(tmp[-1,,],sim$lrm[-1,,]),is_true())
 })
 
 set.seed(4)
@@ -69,15 +59,15 @@ niter <- 300
 px <- rep(1,11)
 px[7:11] <- 0
 fit0 <- sbm.mcmc(sim$A,N,K,niter=niter,z=z,gibbs=TRUE)
-fit1 <- brem.mcmc(sim$A,N,K,s,model.type="shared",niter=niter,gibbs="fast")
-fit2 <- brem.mcmc(sim$A,N,K,s,model.type="full",niter=niter,z=z,gibbs="fast")
-fit3 <- brem.mcmc(sim$A,N,1,s,model.type="full",niter=niter,gibbs="fast",mcmc.sd=.05)
+fit1 <- brem.mcmc(sim$A,N,K,s,model.type="shared",niter=niter)
+fit2 <- brem.mcmc(sim$A,N,K,s,model.type="full",niter=niter)
+fit3 <- brem.mcmc(sim$A,N,1,s,model.type="full",niter=niter,mcmc.sd=.05)
 save(sim,true.lpost,fit0,fit1,fit2,fit3,file="data/syn/fits.rdata")
 
 llks <- melt(list(base=fit0$llks,diag=fit1$llks,full=fit2$llks,sing=fit3$llks))
 llks$iter <- 1:niter
 qplot(iter,value,data=subset(llks,iter>50),geom="line",colour=factor(L1)) + geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
-ggsave("figs/syn/logposterior.pdf",height=4,width=5)
+ggsave("figs/syn/logposterior2.pdf",height=4,width=5)
 
 # Compute dyad counts for each pshift
 source("R/utils.r")
