@@ -95,3 +95,5 @@ r <- unlist(rec[ix])
 datetime <- strptime(df$date[ix],format="%Y-%m-%dT%H:%M:%S")
 A <- data.frame(datetime=datetime,s=s,r=r)
 save(A,file="data/rstats/rstats.interaction.rdata")
+
+

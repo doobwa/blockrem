@@ -38,4 +38,4 @@ sen <- match(A[,2],nmap)
 rec <- match(A[,3],nmap)
 
 A <- cbind(times,sen,rec)
-save(A,N,M,nmap,file="data/twitter.example.rdata")
+save(A,N,M,nmap,file="data/twitter.subset.rdata")
