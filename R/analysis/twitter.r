@@ -1,29 +1,18 @@
+source("R/brem.r")
+source("R/brem.cpp.r")
+load("data/twitter.example.rdata")
+s <- new(brem$Stat,A[,1],A[,2]-1,A[,3]-1,N,M,P)
+s$precompute()
 
-# Create unique ids
-load("data/rstats/rstats.interaction.rdata")
-users <- sort(unique(c(as.character(A$s),as.character(A$r))))
-A$sid <- match(as.character(A$s),users)
-A$rid <- match(as.character(A$r),users)
-
-# Visualize adjacency matrix
-pdf("figs/twitter/adjmat.pdf",width=4,height=4)
-plot(A[,4:5],pch=".",xlab="sender",ylab="recipient")
-dev.off()
-
-# Fit baseline model
-N <- length(users)
 K <- 2
-P <- 7
-M <- nrow(A)
-
-# Rescale time to be in (0,1)
-B <- A[,c(1,4,5)]
-B[,1] <- as.numeric(B[,1])
-B[,1] <- B[,1] - B[1,1]
-B[,1] <- B[,1]/B[nrow(B),1]
+niter <- 500
+#fit0 <- sbm.mcmc(A,N,K,niter=niter,gibbs=TRUE)
+fit1 <- brem.mcmc(A,N,K,s,model.type="shared",niter=niter,gibbs="fast")
+fit2 <- brem.mcmc(A,N,K,s,model.type="full",niter=niter,gibbs="fast")
+fit3 <- brem.mcmc(A,N,1,s,model.type="full",niter=niter,gibbs="fast",mcmc.sd=.05)
+save(fit0,fit1,fit2,fit3,file="data/twitter/fits.rdata")
 
 z <- sample(1:K,N,replace=TRUE)
-save(B,N,M,file="data/twitter.example.rdata")
 beta <- matrix(rnorm(K^2),K,K)
 
 set.seed(4)

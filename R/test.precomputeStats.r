@@ -1,7 +1,6 @@
-
-source("R/brem.cpp.r")
+source("brem.cpp.r")
 library(testthat)
-source("R/utils.r")
+source("utils.r")
 library(abind)
 
 M <- 7
@@ -56,12 +55,6 @@ test_that("get_v gets vectors as expected",{
 })
 
 test_that("taus from get_tau match with R version",{
-  source("R/brem.r")
-  source("R/brem.cpp.r")
-  source("R/utils.r")
-  library(testthat)
-  require(abind)
-  set.seed(1)
   set.seed(1)
   M <- 100
   N <- 10
@@ -92,8 +85,8 @@ test_that("taus from get_tau match with R version",{
   
   s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
   s$precompute()
-  lrm2=lrm_slow(beta,z-1,s,M,N,K,P)
   
+  lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
   
   taus <- test_taus(lrm,times,sen-1,rec-1)
   taus2 <- test_taus_from_s(times,sen-1,rec-1,N,M,P)
@@ -106,15 +99,13 @@ test_that("taus from get_tau match with R version",{
   llk3 <- brem$llkfast(beta,z-1,s$ptr(),K)
   llk4 <- llk_fast(lrm,times,sen-1,rec-1)
   expect_that(llk3,equals(llk4))
+  
+  # First event of non-fast version has a mistake
+  expect_that(sum(llk3),equals(llk2 + 1))
 })
 
 
 test_stats_from_s <- function(times,sen,rec,N,M,P) {
-  source("R/brem.cpp.r")
-  source("R/utils.r")
-  library(testthat)
-  require(abind)
-  set.seed(1)
   set.seed(1)
   M <- 100
   N <- 10
@@ -132,7 +123,6 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
   for (m in 0:(M-1)) {
     a <- sen[m+1]-1
     b <- rec[m+1]-1
-    r <- brem$updateStatistics(r,a,b,N,P)
     for (i in 0:(N-1)) {
       for (j in 0:(N-1)) {
         if (i != j) {
@@ -142,7 +132,6 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
         }
       }
     }
+    r <- brem$updateStatistics(r,a,b,N,P)
   }
 }
-
-brem$rcategorical(log(c(2,3,2,10)))

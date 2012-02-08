@@ -1,4 +1,8 @@
-
+#' Simulate data from the block relational event model
+#' @M number of events
+#' @N number of actors
+#' @z latent class assignments
+#' @beta P x K x K array of parameters
 simulate.brem <- function(M,N,z,beta) {
 
   # start with a event from 1 to 2
@@ -71,35 +75,35 @@ brem.mle <- function(A,N,K,P,z,beta=NULL) {
   beta.hat <- optim(as.vector(beta),fn)$par
   array(beta.hat,c(P,K,K))
 }
-brem.lpost <- function(A,N,K,z,beta) {
+brem.lpost <- function(A,N,K,z,beta,priors) {
   llks <- brem.llk(A,N,z,beta)
-  lprior <- sum(dnorm(unlist(beta),0,1,log=TRUE)) + N * log(1/K)
+  lprior <- sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + N * log(1/K)
   sum(llks)+lprior
 }
-brem.lpost.fast <- function(A,N,K,z,s,beta) {
-  # hack: someow s$ptr() wrks if you putit inthe return. something aboutenvironments i'm guessing.)
-  return(sum(brem$llkfast(beta,z-1,s$ptr(),K))+sum(dnorm(unlist(beta),0,1,log=TRUE)) + N * log(1/K))
+brem.lpost.fast <- function(A,N,K,z,s,beta,priors) {   
+  sum(brem$llkfast(beta,z-1,s$ptr(),K))+
+  sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + 
+  N * log(1/K)
 }
 
-brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE) {
+brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE,outfile="mcmc.progress.rdata",priors=list(beta=list(mu=0,sigma=1))) {
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 11
   param <- array(0,c(niter,K,K,P))
-  px <- c(1,1,1,1,1,1,0,0,0,0)  # skip degree effects
-  mu <- 0#log(M/A[M,1]/N/N)  # MLE for beta for uniform rate across all events
-  sigma <- .5
-  current <- array(rnorm(P*K^2,mu,sigma),c(P,K,K))
+  zs <- NULL
+
+  current <- array(rnorm(P*K^2,priors$beta$mu,priors$beta$sigma),c(P,K,K))
   current[7:11,,] <- 0
+  
   if (!is.null(beta)) current <- beta
   if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
   
   for (iter in 1:niter) {
     
     # For each effect sample via MH
-    first.iter <- (iter==1)
     for (i in 1:2) {
-      current <- brem.mh(A,N,K,P,z,s,current,model.type,mcmc.sd,first.iter)
+      current <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd)
     }
     
     # Sample empty cluster parameters from prior.  Only sample baserates.
@@ -117,7 +121,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
         ps <- rep(0,K)
         for (k in 1:K) {
           z[i] <- k
-          ps[k] <- brem.lpost.fast(A,N,K,z,s,current)
+          ps[k] <- brem.lpost.fast(A,N,K,z,s,current,priors)
         }
         ps <- exp(ps - max(ps))
         z[i] <- sample(1:K,size=1,prob=ps)
@@ -127,21 +131,20 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
       z <- brem$gibbs(current,z-1,s$ptr(),K)$z + 1
     }
     
+    zs[[iter]] <- z
     param[iter,,,] <- current
-    llks[iter] <- brem.lpost.fast(A,N,K,z,s,current)
+    llks[iter] <- brem.lpost.fast(A,N,K,z,s,current,priors)
     
     cat("iter",iter,":",llks[iter],"z:",z,"\n")
     
+    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs)
+    save(res,file=outfile)
   }
-  return(list(z=z,llks=llks,param=param,beta=current))
+  return(res)
 }
-brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",mcmc.sd=.1,first.iter=FALSE) {
+brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1) {
   px=c(1,1,1,1,1,1,1,0,0,0,0)  # TODO: Eventually allow MH updates on degree effects
-  if (first.iter) {
-    olp <- -Inf
-  }  else {
-    olp <- brem.lpost.fast(A,N,K,z,s,current)
-  }
+  olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
   
   cand <- current
   if (model.type=="baserates") {
@@ -173,7 +176,7 @@ brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",mcmc.sd=.1,first.
       }
       
       # MH sampler
-      clp <- brem.lpost.fast(A,N,K,z,s,cand)
+      clp <- brem.lpost.fast(A,N,K,z,s,cand,priors)
       if (clp - olp > log(runif(1))) {
         current <- cand
         olp <- clp
@@ -184,7 +187,7 @@ brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",mcmc.sd=.1,first.
     cand <- current
     for (p in which(px==1)) {
       cand[p,,]  <- cand[p,,] + rnorm(K^2,0,mcmc.sd)
-      clp <- brem.lpost.fast(A,N,K,z,s,cand)
+      clp <- brem.lpost.fast(A,N,K,z,s,cand,priors)
       if (clp - olp > log(runif(1))) {
         current <- cand
         olp <- clp
