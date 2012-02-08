@@ -29,6 +29,10 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Determine what's slowing things down.  Overhead?
 
 Week 3:
+Add features for saving progress during MCMC
+Clean up experiment code so that you can fit all needed models on arbitrary dataset
+Pull out code for plotting results from experiment
+Include degree effects (transform: sqrt? log?)
 Compare submodels for eckmann subset.
 Write abstract.
 Add px feature to define which parameters to fit.
