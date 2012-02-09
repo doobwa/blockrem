@@ -283,8 +283,11 @@ private:
 
 double computeLambdaFast(int i, int j, int zi, int zj, vector<int> s, Rcpp::NumericVector beta, int N, int K, int P) {
   double lam = beta[threeDIndex(0,zi,zj,P,K,K)]; // intercept
-  for (int p = 1; p < P; p++) {
+  for (int p = 1; p < 7; p++) {
     lam += s[p] * beta[threeDIndex(p,zi,zj,P,K,K)];
+  }
+  for (int p = 7; p < P; p++) {
+    lam += log(s[p]+1) * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
   return lam;
 }

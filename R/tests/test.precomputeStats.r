@@ -1,5 +1,5 @@
-source("../brem.cpp.r")
-source("../utils.r")
+source("brem.cpp.r")
+source("utils.r")
 library(abind)
 
 M <- 7
@@ -9,13 +9,21 @@ times <- seq(0,.6,by=.1)
 sen <- c(1,3,3,1,2,5,2)
 rec <- c(3,1,1,3,5,1,4)
 
-s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
-s$precompute()
-
-x <- s$get_all_s()
-sij <- x[[3]][[1]]
-v <- s$get_all_v()
-s$ptr()
+test_that("Can use precomputed data structures",{
+  
+  s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
+  s$precompute()
+  
+  x <- s$get_all_s()
+  expect_that(length(x),equals(5))
+  
+  sij <- x[[3]][[1]]
+  expect_that(length(sij),equals(7))
+  
+  v <- s$get_all_v()
+  
+  expect_that( s$ptr(), is_a("externalptr") )
+})
 
 test_that("a few statistics vectors are correct",{
   expect_that(sij[[1]],equals(rep(0,11)))
@@ -134,3 +142,26 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
     r <- brem$updateStatistics(r,a,b,N,P)
   }
 }
+
+test_that("computeLambdaFast uses degree effects properly",{
+  s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
+  s$precompute()
+  i <- 1
+  j <- 3
+  zi <- 1
+  zj <- 1
+  # Add in some degree effects
+  beta[8,1,1] <- 4
+  beta[9,1,1] <- 3
+  beta[10,1,1] <- 2
+  beta[11,1,1] <- 1
+  
+  sij <- s$get_s(3,i-1,j-1)
+  lam <- brem$computeLambdaFast(i-1,j-1,zi-1,zj-1,sij,beta,N,K,P)
+  
+  sij[8:11] <- log(sij[8:11] + 1)
+  ans <- beta[,zi,zj] %*% sij
+  expect_that(lam,equals(ans))
+  
+})
+
