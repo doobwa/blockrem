@@ -1,0 +1,2 @@
+useDynLib(brem)
+import(Rcpp)
