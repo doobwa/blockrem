@@ -334,3 +334,15 @@ plot.blockmodel <- function(B,z) {
   abline(v=cpoints[-1])
   abline(h=cpoints[-1])
 }
+
+#' Compute an (M x N x N) array of previous events for each dyad.  
+#' @edgelist event history matrix
+#' @n total number of nodes
+ratemat.online <- function(edgelist,n) {
+  M <- nrow(edgelist)
+  rms <- array(0,c(M,n,n))
+  for (i in 2:M) {
+    rms[i:M,edgelist[i-1,2],edgelist[i-1,3]] <- rms[i:M,edgelist[i-1,2],edgelist[i-1,3]] + 1
+  }
+  return(rms)
+}

@@ -1,75 +1,113 @@
-#!Rscript
+#!/usr/bin/env Rscript
+suppressPackageStartupMessages(library("optparse"))
+
+option_list <- list(
+  make_option(c("-d", "--dataset"), 
+              help="Name of dataset with data at /data/[dataset].rdata and results at /results/[dataset]/."),
+  make_option(c("-s", "--save.figs"),default=FALSE,
+              help="Save figures to figs/[dataset]/ [default %default]."),
+  )
+parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
+opts   <- parse_args(OptionParser(option_list=option_list))
 
 dataset <- "eckmann-small"
-
-library(ggplot2)
+save.figs <- FALSE
 
 #' Perform analysis for a given dataset given the the current results of model fits.  
 #' @dataset name of dataset.  Searches /results/[dataset]/ for results, and saves figures to /figs/[dataset]/
-#' Each fit object should have:
+#' 
+#' Each "res" object should have:
 #' @z latent class assignments
 #' @beta values of parameters in the last iteration
 #' @llks log posterior at each MCMC iteration
 #' @param array of parameter values at each MCMC iteration
 #' @zs list of latent class assignment vectors at each MCMC iteration
-#' The synthetic dataset should also have true.lpost variable available.
-results.dir <- paste("results/",dataset,sep="")
+#' The synthetic dataset should also have true.lpost variable available as well as the true beta parameters.
+#' 
+
+library(ggplot2)
+setwd("R")
+source("brem.cpp.r")
+setwd("..")
+
 
 # Pull data from each saved file and grab the name of the fit
+results.dir <- paste("results/",dataset,sep="")
+load(paste("data/",dataset,".rdata",sep=""))
 fits <- lapply(dir(results.dir,full.names=TRUE),function(f) {
   load(f)
   return(res)
 })
 fnames <- unlist(strsplit(dir(results.dir),".rdata"))
 
-# Get likelihood for each fit.
+
+cat("Plotting log posterior during MCMC.\n")
 niter <- 2000
 llks <- lapply(fits,function(f) f$llks)#cbind(llk=f$llks,iter=1:f$niter))
 names(llks) <- fnames
 llks <- melt(llks)
 llks$iter <- 1:niter
-q <- qplot(iter,value,data=subset(llks,iter>10),geom="line",colour=factor(L1)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
+
 if (dataset == "synthetic") {
-  q + geom_abline(intercept=true.lpost,slope=0)
+  q1 <- qplot(iter,value,data=subset(llks,iter>10),geom="line",colour=factor(L1)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + geom_abline(intercept=true.lpost,slope=0)
 } else {
-  q
+  q1 <- qplot(iter,value,data=subset(llks,iter>10),geom="line",colour=factor(L1)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 }
-ggsave(paste("figs/",dataset,"/lpost.pdf",sep=""),height=4,width=5)
 
 
-# Plot progress of z at each MCMC iteration
+cat("Plotting progress of z at each MCMC iteration.\n")
 zs <- lapply(fits,function(f) do.call(rbind,f$zs))
 names(zs) <- fnames
 zs <- melt(zs)
-qplot(X1,X2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1)
-ggsave(paste("figs/",dataset,"/zs.pdf",sep=""),height=4,width=5)
+q2 <- qplot(X1,X2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1) + labs(x="iteration",y="node")
 
 
-# Compute dyad counts for each pshift
+cat("Compute dyad counts for each pshift using results from the full model.\n")
+fx <- grep("full",fnames)
+z <- fits[[fx]]$z
 source("R/utils.r")
 df <- dyad.ps(train,N)
 df <- melt(df)
 df$i <- z[df$X1]
 df$j <- z[df$X2]
-qplot(X3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="shift type",y="count for a given dyad") + opts(axis.text.x=theme_text(angle=90))
-ggsave(paste("figs/",dataset,"/counts.pdf",sep=""),width=6,height=4)
+q3 <- qplot(X3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="shift type",y="count for a given dyad") + opts(axis.text.x=theme_text(angle=90))
 
 
-# Prediction experiment on test data: precision
-table(test[,2],test[,3])
-lrms <- list(unif = array(1,c(M,N,N)),
-             true = brem.lrm(test$A,N,z,beta),
-             base = sbm.lrm(test$A,N,fit0$z,fit0$beta),
-             diag = brem.lrm(test$A,N,fit1$z,fit1$beta),
-             full = brem.lrm(test$A,N,fit2$z,fit2$beta),
-             sing = brem.lrm(test$A,N,fit3$z,fit3$beta))
+cat("Recall experiment on test data.\n")
+lrms <- lapply(fits,function(f) {
+  brem.lrm(test,N,f$z,f$beta)
+})
+names(lrms) <- fnames
+lrms$unif   <- array(1,c(nrow(test),N,N))
+lrms$online <- ratemat.online(test,N)
+if (dataset == "synthetic") {
+  lrms$true <- brem.lrm(test,N,z,beta)
+}
+
+# TODO: add SBM baseline
+# TODO: add 
+
 ps <- lapply(lrms,function(lrm) {
-  recall(ranks(test$A,-lrm,ties.method="random"),top=1:100)
+  recall(ranks(test,-lrm,ties.method="random"),top=1:100)
 })
 res <- melt(ps,id.vars=c("k"),measure.vars="recall")
-qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
-qplot(k,value,data=subset(res,k<50),geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
-ggsave("figs/syn/test-recall.pdf",width=5,height=4)
+q4 <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+
+chosen <- seq(1,N^2,length.out=100)
+ps <- lapply(lrms,function(lrm) {
+  recall(ranks(test,-lrm,ties.method="random"),top=chosen)
+})
+res <- melt(ps,id.vars=c("k"),measure.vars="recall")
+q5 <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+
+#q4 <- qplot(k,value,data=subset(res,k<50),geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+
+
+cat("Plotting parameter estimates.\n")
+betas <- lapply(fits,function(f) f$beta)
+names(betas) <- fnames
+b <- melt(betas)
+q6 <- qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) + theme_bw() + labs(colour="model")
 
 
 # Compute out of sample log posterior
@@ -79,4 +117,22 @@ lposts <- list(true = brem.lpost(test$A,N,K,z,beta),
                full = brem.lpost(test$A,N,K,fit2$z,fit2$beta),
                sing = brem.lpost(test$A,N,K,fit3$z,fit3$beta))
 unlist(lposts)
-save(lposts,file="data/syn/lpost.rdata")
+
+
+cat("Creating dashboard.\n")
+library(gridExtra)
+blankPanel <- grid.rect(gp=gpar(col="white"))
+grid.arrange(q1, q2, q3, q4, q5, q6, ncol=3)
+ggsave(paste("figs/",dataset,"/dashboard.pdf",sep=""),width=20,height=10)
+
+if (save.figs) {
+  print(q1)
+  ggsave(paste("figs/",dataset,"/lpost.pdf",sep=""),height=4,width=5)
+  print(q2)
+  ggsave(paste("figs/",dataset,"/zs.pdf",sep=""),height=4,width=5)
+  print(q3)
+  ggsave(paste("figs/",dataset,"/counts.pdf",sep=""),width=6,height=4)
+  print(q4)
+  ggsave(paste("figs/",dataset,"/test-recall.pdf",sep=""),width=5,height=4)
+}
+
