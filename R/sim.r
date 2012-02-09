@@ -1,4 +1,3 @@
-library(releventhier)
 library(ggplot2)
 require(abind)
 require(testthat)
@@ -33,19 +32,24 @@ sim <- simulate.brem(M,N,z,beta)
 mat <- table(sim$A[,2],sim$A[,3])
 mat <- melt(as.matrix(mat))
 colnames(mat) <- c("X1","X2","value")
-A <- sim$A
-save(A,sim,N,K,P,M,z,beta,file="data/synthetic.rdata")
-plotmat(mat)
-#ggsave("figs/syn/mat.pdf",width=3,height=3)
+A <- train <- sim$A
+test <- simulate.brem(5000,N,z,beta)
 
-
-load("data/sim.rdata")
+# Compute log likelihood and log posterior of data under true model
 times <- sim$A[,1]
 sen <- sim$A[,2]
 rec <- sim$A[,3]
 s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
 llk.true <- brem$llkfast(beta,z-1,s$ptr(),K)  
+true.lpost <- brem.lpost.fast(A,N,K,z,s,beta)
+
+save(A,sim,N,K,P,M,z,beta,train,test,true.lpost,file="data/synthetic.rdata")
+plotmat(mat)
+#ggsave("figs/syn/mat.pdf",width=3,height=3)
+
+
+load("data/sim.rdata")
 fit <- brem.mcmc(sim$A,N,K,s,model.type="baserates",niter=200,mcmc.sd=.1)
 
 test_that("simulated lrm agrees with brem.lrm",{

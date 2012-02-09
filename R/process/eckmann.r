@@ -18,10 +18,11 @@ plot(as.numeric(table(table(c(d$from,d$to)))),type="l")
 nodes <- sort(unique(c(d$from,d$to)))
 d$s <- as.numeric(factor(d$from,nodes))
 d$r <- as.numeric(factor(d$to,nodes))
-
+N <- length(unique(c(d$s,d$r)))
 A <- d[,c("ntime","s","r")]
-
-save(A,file="data/eckmann/dyadic.rdata")
+train <- A[1:20000,]
+test  <- A[20001:nrow(A),]
+save(A,train,test,N,file="data/eckmann.dyadic.rdata")
 
 # Create even smaller subset
 ix <- which(A[,2] %in% 40:130 & A[,3] %in% 40:130)
@@ -37,5 +38,7 @@ all <- sort(unique(c(A[,2],A[,3])))
 all <- sample(all)
 A[,2] <- match(A[,2],all)
 A[,3] <- match(A[,3],all)
-
-save(A,file="data/eckmann/dyadic-small.rdata")
+train <- A[1:2000,]
+test  <- A[2001:nrow(A),]
+N <- length(all)
+save(A,N,train,test,file="data/eckmann.dyadic.small.rdata")
