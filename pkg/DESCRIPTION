@@ -5,10 +5,10 @@ Version: 0.1
 Date: 2012-02-09
 Maintainer: Chris DuBois <chris.dubois@gmail.com>
 Author: Chris DuBois <chris.dubois@gmail.com>
-Depends: R (>= 2.13.0), Rcpp (>= 0.9.7), methods
+Depends: R (>= 2.13.0), Rcpp (>= 0.9.7), methods, inline, optparse
 Suggests: testthat (>= 0.2), multicore, relevent
 Imports: abind
 LinkingTo: Rcpp
 License: LGPL
 LazyData: true
-
+RcppModules: brem

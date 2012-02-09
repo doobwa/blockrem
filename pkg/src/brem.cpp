@@ -23,8 +23,10 @@ rcategorical is a helper function for gibbs.  It draws from a categorical distri
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <omp.h>
+//#include <omp.h>
+#include <Rcpp.h>
 using namespace std;
+using namespace Rcpp;
 RNGScope scope;
 
 // Return the (j,k,l) element of a (J,K,L) array represented as a vector.
@@ -39,7 +41,7 @@ int threeDIndex(int j, int k, int l, int J, int K, int L) {
 class Stat {
 public:
   Stat(Rcpp::NumericVector times_, Rcpp::IntegerVector sen_, 
-        Rcpp::IntegerVector rec_, int N_, int M_, int P_) : 
+       Rcpp::IntegerVector rec_, int N_, int M_, int P_) : 
     times(times_),sen(sen_),rec(rec_),N(N_),M(M_),P(P_) {
 
     // Current vectors of statistics
@@ -251,7 +253,7 @@ public:
   SEXP ptr() {
     //Rprintf("%i",this);
     //return wrap(XPtr<Stat>(this, true));
-    return XPtr<Stat>(this, false);
+    return Rcpp::XPtr<Stat>(this, false);
   }
 
   // Number of nodes, events, parameters, and clusters.
@@ -418,7 +420,9 @@ int rcategorical (Rcpp::NumericVector lp) {
   double cuml = 0;
   double sum = 0;
   for (k=0;k<K;k++) {
-    if (!IsFiniteNumber(p[k])) return k;
+    if (!IsFiniteNumber(p[k])) {
+      return k;
+    }
     sum += p[k];
   }
 

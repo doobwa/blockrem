@@ -32,10 +32,16 @@ Week 3:
 [done] Add features for saving progress during MCMC
 [done] Clean up experiment code so that you can fit all needed models on arbitrary dataset
 [done] Pull out code for plotting results from experiment
-Include degree effects (transform: sqrt? log?)
-Compare submodels for eckmann subset.
+[done] Compare submodels for eckmann subset with K=2. [online baseline was much better than BREM.]
+[done] Include degree effects (transform: sqrt? log?)
+Get test suite to display results on all test scripts.
+Make into a package.
+Try eckmann-small with degree effects.
+Work on better proposal dist. and better mixing of group assignments. 
+Type up Gibbs sampling equations.
 Log likelihood baseline that only knows timing effects.
 Write abstract.
+Add Enron.
 Add px feature to define which parameters to fit.
 [done] See if we can learn groups on synthetic data.
 Derive/implement EM for baseline model.
@@ -52,4 +58,4 @@ Low priority:
 Port simulator over to Rcpp.
 
 Bugs:
-- llk_fast and llkfast both do not use the first event for the likelihood computation
+- old likelihood does not use the baserates when computing first event for the likelihood computation
