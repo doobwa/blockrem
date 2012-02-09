@@ -86,7 +86,7 @@ brem.lpost.fast <- function(A,N,K,z,s,beta,priors) {
   N * log(1/K)
 }
 
-brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE,outfile="mcmc.progress.rdata",priors=list(beta=list(mu=0,sigma=1))) {
+brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE,outdir=getwd(),priors=list(beta=list(mu=0,sigma=1))) {
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 11
@@ -138,6 +138,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
     cat("iter",iter,":",llks[iter],"z:",z,"\n")
     
     res <- list(z=z,beta=current,llks=llks,param=param,zs=zs)
+    outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
     save(res,file=outfile)
   }
   return(res)

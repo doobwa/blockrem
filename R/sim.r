@@ -33,7 +33,8 @@ sim <- simulate.brem(M,N,z,beta)
 mat <- table(sim$A[,2],sim$A[,3])
 mat <- melt(as.matrix(mat))
 colnames(mat) <- c("X1","X2","value")
-save(sim,N,K,P,M,z,beta,file="data/sim.rdata")
+A <- sim$A
+save(A,sim,N,K,P,M,z,beta,file="data/synthetic.rdata")
 plotmat(mat)
 #ggsave("figs/syn/mat.pdf",width=3,height=3)
 

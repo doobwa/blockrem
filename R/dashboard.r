@@ -1,3 +1,7 @@
+#!Rscript
+
+#' Perform analysis for a given dataset given the the current results of model fits.  
+#' @dataset name of dataset.  Searches /results/[dataset]/ for results, and saves figures to /figs/[dataset]/
 
 llks <- melt(list(base=fit0$llks,diag=fit1$llks,full=fit2$llks,sing=fit3$llks))
 llks$iter <- 1:niter
