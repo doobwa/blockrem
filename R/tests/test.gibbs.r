@@ -1,7 +1,6 @@
-source("R/brem.cpp.r")
-source("R/utils.r")
+source("../brem.cpp.r")
+source("../utils.r")
 require(abind)
-require(testthat)
 set.seed(1)
 M <- 7
 N <- 5
@@ -26,69 +25,25 @@ P <- length(beta)
 beta <- abind(beta,rev.along=3)
 z <- c(rep(1,N-1),2)
 
-# Make sure gibbs runs
-s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
-s$precompute()
-b <- brem$llkfast(beta,z-1,s$ptr(),K)
+test_that("gibbs runs on small example",{
+  s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
+  s$precompute()
+  b <- brem$llkfast(beta,z-1,s$ptr(),K)
+  b <- brem$gibbs(beta,z-1,s$ptr(),K)
+  
+})
+# 
+# # TODO: Test gibbs probabilities
+# lrm <- brem$lrm(beta, times, sen-1, rec-1, z-1, N, M, K, P)
+# lrm[1,,] <- 1
+# for (i in 1:M) diag(lrm[i,,]) <- -Inf
+# 
+# llks <- rep(0,M)
+# for (i in 1:M) {
+#   llks[i] <- a[i,sen[i],rec[i]] - (times[i]-times[i-1]) * sum(exp(a[i,,]))
+# }
+# sum(llks)
 
-s$get_w(2,0)
-for (m in 0:(M-1)) {
-  s$get_s(m,2,0)
-}
-s$get_s(6,1,3)
-st <- proc.time()
-b <- brem$gibbs(beta,z-1,s$ptr(),K)
-proc.time() - st
-
-
-
-# Try on twitter dataset
-source("R/brem.cpp.r")
-source("R/utils.r")
-require(abind)
-require(testthat)
-load("data/twitter.example.rdata")
-z <- c(rep(1,N-1),2)
-s <- new(brem$Stat,B[,1],B[,2]-1,B[,3]-1,N,M,P)
-s$precompute()
-system.time(b <- brem$gibbs(beta,z-1,s$ptr(),K))
-system.time(b <- brem$llkfast(beta,z-1,s$ptr(),K))
-
-
-lrm <- brem$lrm(beta, times, sen-1, rec-1, z-1, N, M, K, P)
-lrm[1,,] <- 1
-for (i in 1:M) diag(lrm[i,,]) <- -Inf
-
-llks <- rep(0,M)
-for (i in 1:M) {
-  llks[i] <- a[i,sen[i],rec[i]] - (times[i]-times[i-1]) * sum(exp(a[i,,]))
-}
-llks <- c(a[1,sen[1],rec[1]],
-          a[2,sen[2],rec[2]] - (times[2]-times[2-1]) * sum(exp(a[2,,])),
-          a[3,sen[3],rec[3]] - (times[3]-times[3-1]) * sum(exp(a[3,,])),
-          a[4,sen[4],rec[4]] - (times[4]-times[4-1]) * sum(exp(a[4,,])) )
-sum(llks)
-
-
-
-a <- llk_indiv(1,lrm,times,sen-1,rec-1)
-#b <- bremf$gibbs(beta,times,sen-1,rec-1,z-1,N,M,K,P,indx)$llks[[1]][[1]]
-#expect_that(a,equals(b))
-
-# Timing test
-set.seed(1)
-M <- 1000
-N <- 500
-times <- sort(runif(M,0,1))
-sen <- sample(1:N,M,replace=TRUE)
-rec <- sample(1:N,M,replace=TRUE)
-z <- sample(1:2,N,replace=TRUE)
-ix <- which(sen==rec)
-sen <- sen[-ix]
-rec <- rec[-ix]
-times <- times[-ix]
-K <- 2
-s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
-s$precompute()
-b <- brem$gibbs(beta,z-1,s$ptr(),K)
-b <- brem$llkfast(beta,z-1,s$ptr(),K)
+# a <- llk_indiv(1,lrm,times,sen-1,rec-1)
+# b <- bremf$gibbs(beta,times,sen-1,rec-1,z-1,N,M,K,P,indx)$llks[[1]][[1]]
+# expect_that(a,equals(b))

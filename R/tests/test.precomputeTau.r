@@ -1,5 +1,4 @@
-library(testthat)
-source("R/utils.r")
+source("../utils.r")
 
 M <- 7
 N <- 5

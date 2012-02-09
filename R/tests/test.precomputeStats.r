@@ -1,6 +1,5 @@
-source("brem.cpp.r")
-library(testthat)
-source("utils.r")
+source("../brem.cpp.r")
+source("../utils.r")
 library(abind)
 
 M <- 7

@@ -1,4 +1,4 @@
-source("R/brem.cpp.r")
+source("../brem.cpp.r")
 
 K <- 5
 
