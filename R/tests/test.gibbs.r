@@ -30,7 +30,6 @@ test_that("gibbs runs on small example",{
   s$precompute()
   b <- brem$llkfast(beta,z-1,s$ptr(),K)
   b <- brem$gibbs(beta,z-1,s$ptr(),K)
-  
 })
 # 
 # # TODO: Test gibbs probabilities

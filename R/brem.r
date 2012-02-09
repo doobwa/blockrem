@@ -80,7 +80,7 @@ brem.lpost <- function(A,N,K,z,beta,priors) {
   lprior <- sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + N * log(1/K)
   sum(llks)+lprior
 }
-brem.lpost.fast <- function(A,N,K,z,s,beta,priors) {   
+brem.lpost.fast <- function(A,N,K,z,s,beta,priors=list(beta=list(mu=0,sigma=1))) {   
   sum(brem$llkfast(beta,z-1,s$ptr(),K))+
   sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + 
   N * log(1/K)
@@ -137,14 +137,14 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
     
     cat("iter",iter,":",llks[iter],"z:",z,"\n")
     
-    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs)
+    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter)
     outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
     save(res,file=outfile)
   }
   return(res)
 }
 brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1) {
-  px=c(1,1,1,1,1,1,1,0,0,0,0)  # TODO: Eventually allow MH updates on degree effects
+  px <- c(1,1,1,1,1,1,1,0,0,0,0)  # TODO: Eventually allow MH updates on degree effects
   olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
   
   cand <- current

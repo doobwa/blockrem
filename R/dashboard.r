@@ -1,39 +1,62 @@
 #!Rscript
 
+dataset <- "eckmann-small"
+
+library(ggplot2)
+
 #' Perform analysis for a given dataset given the the current results of model fits.  
 #' @dataset name of dataset.  Searches /results/[dataset]/ for results, and saves figures to /figs/[dataset]/
+#' Each fit object should have:
+#' @z latent class assignments
+#' @beta values of parameters in the last iteration
+#' @llks log posterior at each MCMC iteration
+#' @param array of parameter values at each MCMC iteration
+#' @zs list of latent class assignment vectors at each MCMC iteration
+#' The synthetic dataset should also have true.lpost variable available.
+results.dir <- paste("results/",dataset,sep="")
 
-llks <- melt(list(base=fit0$llks,diag=fit1$llks,full=fit2$llks,sing=fit3$llks))
+# Pull data from each saved file and grab the name of the fit
+fits <- lapply(dir(results.dir,full.names=TRUE),function(f) {
+  load(f)
+  return(res)
+})
+fnames <- unlist(strsplit(dir(results.dir),".rdata"))
+
+# Get likelihood for each fit.
+niter <- 2000
+llks <- lapply(fits,function(f) f$llks)#cbind(llk=f$llks,iter=1:f$niter))
+names(llks) <- fnames
+llks <- melt(llks)
 llks$iter <- 1:niter
-qplot(iter,value,data=subset(llks,iter>50),geom="line",colour=factor(L1)) + geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
-ggsave("figs/syn/logposterior2.pdf",height=4,width=5)
+q <- qplot(iter,value,data=subset(llks,iter>10),geom="line",colour=factor(L1)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
+if (dataset == "synthetic") {
+  q + geom_abline(intercept=true.lpost,slope=0)
+} else {
+  q
+}
+ggsave(paste("figs/",dataset,"/lpost.pdf",sep=""),height=4,width=5)
+
+
+# Plot progress of z at each MCMC iteration
+zs <- lapply(fits,function(f) do.call(rbind,f$zs))
+names(zs) <- fnames
+zs <- melt(zs)
+qplot(X1,X2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1)
+ggsave(paste("figs/",dataset,"/zs.pdf",sep=""),height=4,width=5)
+
 
 # Compute dyad counts for each pshift
 source("R/utils.r")
-df <- dyad.ps(sim$A,N)
+df <- dyad.ps(train,N)
 df <- melt(df)
 df$i <- z[df$X1]
 df$j <- z[df$X2]
 qplot(X3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="shift type",y="count for a given dyad") + opts(axis.text.x=theme_text(angle=90))
-ggsave("figs/syn/counts.pdf",width=6,height=4)
+ggsave(paste("figs/",dataset,"/counts.pdf",sep=""),width=6,height=4)
 
-# Look at distance between true and estimated parameter vectors
-fit <- fit2
-dist <- function(x,y) sqrt(sum((x-y)^2))
-ds <- sapply(1:niter,function(i) {
-  c(dist(beta[2:6,1,1],fit$param[i,1,1,2:6]),# - beta[1,1,1]),
-    dist(beta[2:6,2,2],fit$param[i,2,2,2:6]),#, - beta[1,2,2]),
-    dist(beta[2:6,2,1],fit$param[i,2,1,2:6]),#, - beta[1,2,1]),
-    dist(beta[2:6,1,2],fit$param[i,1,2,2:6]))# - beta[1,1,2]))
-})
-ds <- melt(t(ds))
-qplot(X1,value,data=ds,geom="line",colour=factor(X2)) + theme_bw() + labs(x="iteration",colour="block",y="Euclidean distance to truth")
-ggsave("figs/syn/bias.pdf",width=5,height=4)
 
 # Prediction experiment on test data: precision
-M <- 5000
-test <- simulate.brem(M,N,z,beta)
-table(test$A[,2],test$A[,3])
+table(test[,2],test[,3])
 lrms <- list(unif = array(1,c(M,N,N)),
              true = brem.lrm(test$A,N,z,beta),
              base = sbm.lrm(test$A,N,fit0$z,fit0$beta),
@@ -48,6 +71,7 @@ qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw(
 qplot(k,value,data=subset(res,k<50),geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 ggsave("figs/syn/test-recall.pdf",width=5,height=4)
 
+
 # Compute out of sample log posterior
 lposts <- list(true = brem.lpost(test$A,N,K,z,beta),
                base = sbm.lpost(test$A,N,K,fit0$z,fit0$beta),
@@ -56,11 +80,3 @@ lposts <- list(true = brem.lpost(test$A,N,K,z,beta),
                sing = brem.lpost(test$A,N,K,fit3$z,fit3$beta))
 unlist(lposts)
 save(lposts,file="data/syn/lpost.rdata")
-
-# Look at bias of estimates
-true <- brem.lrm(sim$A,N,z,beta)
-full <- brem.lrm(sim$A,N,fit2$z,fit2$beta)
-dimnames(beta) <- NULL
-b <- melt(list(beta,fit2$beta))
-qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) + theme_bw()
-ggsave("figs/syn/bias.pdf",width=5,height=5)

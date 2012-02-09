@@ -93,11 +93,10 @@ public:
     }
   }
 
+  // Update the statistics for dyad (i,j) with the information that dyad (a,b) just occurred.  s_1{(i,j)} (the statistic for an abba effect)  will now be 1 if b==i and a==j.
 
   void update(int a, int b, int i, int j) {
     s[i][j][0] = 1;
-    // (a,b) the event that occurred.  
-    // (i,j) the event that we are computing statistics for
     if (i != j) { 
       // P-shifts
       s[i][j][1] = (i!=a & i==b & j==a & j!=b); // abba
@@ -297,7 +296,7 @@ double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, Stat *s, int
   int M = s->M;
   int P = s->P;
   int i,j,zi,zj,m,t,v;
-  double llk,lam;
+  double llk;
   double total = 0;
   vector<int> smij;
   vector<int> ma = s->get_u(a);
@@ -310,7 +309,13 @@ double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, Stat *s, int
     zi = z[i];
     zj = z[j];
     llk += computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+
+    // #pragma omp parallel reduction(+:llk)
+    // {
+    // #pragma omp for
+
     for (int r = 0; r < N; r++) {
+      double lam;
       int zr = z[r];
       if (r != i && r !=j) {
         lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
@@ -323,6 +328,9 @@ double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, Stat *s, int
         llk -= (s->times[m] - s->get_tau(m,r,j)) * exp(lam);
       }
     }
+
+    //    } // openmp
+
     llks(ix) = llk;
     total += llk;
   }
@@ -428,18 +436,28 @@ Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_,
   Rcpp::List llks;
   Stat *s = XPtr<Stat>(statptr_);
   int N = s->N;
+  Rcpp::IntegerVector counts;
+  double alpha = 1.0;
+
+  // Get counts for the number assigned each class
+  for (int i = 0; i < N; i++) {
+    counts[z[i]] += 1;
+  }
+
   for (int a = 0; a < N; a++) {
 
+    counts[z[a]] -= 1;
     Rcpp::NumericVector y(K);
     // Compute p(z[a] = k | all else) for each k
     for (int k = 0; k < K; k++) {
       z[a] = k;
-      y[k] = llki(a,beta,z,s,K);
+      y[k] = llki(a,beta,z,s,K) + log(counts[k] + alpha) - log(N + alpha);
     }
     llks.push_back(y);
     
     // Sample z[a]
     z[a] = rcategorical(y);
+    counts[z[a]] += 1;
   }
   return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("z") = z);
 }
@@ -457,7 +475,7 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
 
 
   double llk = 0.0; 
-  double lam = 0;
+  double lam;
   int i,j,r,zi,zj;
   Rcpp::NumericVector llks(M);
   Rcpp::IntegerVector sen = s->sen;
@@ -474,28 +492,40 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
     j = rec[m];
     zi = z[i];
     zj = z[j];
-    llk = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+    llk = 0;
 
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
+    // #pragma omp parallel reduction(+:llk)
+    // {
+    // #pragma omp for
+
     for (int r = 0; r < N; r++) {
+      double lambda;
       int zr = z[r];
       if (r != i && r != j) {
-        lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
-        llk -= (s->times[m] - s->get_tau(m,i,r)) * exp(lam);
-        lam  = computeLambdaFast(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
-        llk -= (s->times[m] - s->get_tau(m,r,i)) * exp(lam);
-        lam  = computeLambdaFast(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
-        llk -= (s->times[m] - s->get_tau(m,j,r)) * exp(lam);
-        lam  = computeLambdaFast(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
-        llk -= (s->times[m] - s->get_tau(m,r,j)) * exp(lam);
+        lambda  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
+        llk  = llk - (s->times[m] - s->get_tau(m,i,r)) * exp(lambda);
+        lambda  = computeLambdaFast(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
+        llk  = llk - (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
+        lambda  = computeLambdaFast(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
+        llk  = llk - (s->times[m] - s->get_tau(m,j,r)) * exp(lambda);
+        lambda  = computeLambdaFast(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
+        llk  = llk - (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
       }
     }
+
+    // } // openmp
+
     lam  = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
     llk -= (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
     lam  = computeLambdaFast(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
     llk -= (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
+    
+    // observed event
+    llk += computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
     llks[m] = llk;
   }
+
   //All intensities assumed to change at the last event
   int m = M-1;
   llk = 0;
