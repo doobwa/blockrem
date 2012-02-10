@@ -151,6 +151,7 @@ brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1
   if (model.type=="baserates") {
     cand[1,,] <- cand[1,,] + rnorm(K^2,0,mcmc.sd)
     cand[-1,,] <- 0
+    cand[1,1,1] <- 0  # identifiability?
     clp <- brem.lpost.fast(A,N,K,z,s,cand)
     if (clp - olp > log(runif(1))) {
       current <- cand
@@ -176,6 +177,8 @@ brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1
         }
       }
       
+      cand[1,1,1] <- 0  # identifiability?
+      
       # MH sampler
       clp <- brem.lpost.fast(A,N,K,z,s,cand,priors)
       if (clp - olp > log(runif(1))) {
@@ -188,6 +191,7 @@ brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1
     cand <- current
     for (p in which(px==1)) {
       cand[p,,]  <- cand[p,,] + rnorm(K^2,0,mcmc.sd)
+      cand[1,1,1] <- 0  # identifiability?
       clp <- brem.lpost.fast(A,N,K,z,s,cand,priors)
       if (clp - olp > log(runif(1))) {
         current <- cand
