@@ -1,2 +1,3 @@
 useDynLib(brem)
+exportPattern("^[[:alpha:]]+")
 import(Rcpp)

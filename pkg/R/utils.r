@@ -7,7 +7,7 @@ lrm_slow <- function(beta,z,s,M,N,K,P) {
       for (j in 1:N) {
         if (i!=j) {
           x <- s$get_s(m-2,i-1,j-1)  # why m-2?  because this should be for the rateprior to current event m-1
-          lrms[m,i,j] <- brem$computeLambdaFast(i,j,z[i],z[j],x,beta,N,K,P)
+          lrms[m,i,j] <- compute_lambda_fast(i,j,z[i],z[j],x,beta,N,K,P)
         } 
       }
     }
@@ -15,7 +15,7 @@ lrm_slow <- function(beta,z,s,M,N,K,P) {
   return(lrms)
 }
   
-  llk_indiv <- function(a,lrm,times,sen,rec) {
+llk_indiv <- function(a,lrm,times,sen,rec) {
   mp <- matrix(0,N,N)
   llks <- rep(0,M)
   for (m in 0:(M-1)) {
@@ -58,7 +58,7 @@ llk_slow <- function(lrm,times,sen,rec) {
 
 
 test_taus_from_s <- function(times,sen,rec,N,M,P) {
-  s <- new(brem$Stat,times,sen,rec,N,M,P)
+  s <- new(Stat,times,sen,rec,N,M,P)
   s$precompute()
   taus <- array(0,c(M,N,N))
   for (m in 0:(M-1)) {
@@ -73,7 +73,7 @@ test_taus_from_s <- function(times,sen,rec,N,M,P) {
   return(taus)
 }
 
-test_taus <- function(lrm,times,sen,rec) {
+test_taus <- function(lrm,times,sen,rec,M,N) {
   mp <- matrix(0,N,N)
   llks <- matrix(0,N,N)
   M <- length(times)
@@ -129,7 +129,7 @@ llk_fast_last <- function(lrm,times,sen,rec) {
 }
 
 # 0 based indexing on sen and rec
-llk_slow <- function(lrm,times,sen,rec) {
+llk_slow <- function(lrm,times,sen,rec,M,N) {
   sen <- sen+1
   rec <- rec+1
   mp <- matrix(0,N,N)
@@ -141,7 +141,7 @@ llk_slow <- function(lrm,times,sen,rec) {
   }
   return(llks)
 }
-llk_fast <- function(lrm,times,sen,rec) {
+llk_fast <- function(lrm,times,sen,rec,M,N) {
   mp <- matrix(0,N,N)
   llks <- rep(0,M)
   llks[1] <- lrm[1,sen[1]+1,rec[1]+1]

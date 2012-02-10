@@ -859,11 +859,11 @@ RCPP_MODULE(brem){
     .method( "precompute", &Stat::precompute,
              "Precompute the data structure of REM statistics")
     .method( "get_s", &Stat::get_s,
-             "")
+             "retrieve the statistics vector prior to event m for dyad (i,j)")
     .method( "get_tau", &Stat::get_tau,
-             "")
-    .method( "get_tau", &Stat::get_u,
-             "")
+             "retrieve the last time that lambda_(i,j) changed")
+    // .method( "get_u", &Stat::get_u,
+    //          "")
     .method( "get_all_s", &Stat::get_all_s,
              "")
     .method( "get_all_v", &Stat::get_all_v,
@@ -874,25 +874,19 @@ RCPP_MODULE(brem){
              "vector where element k is the event index of the k'th changepoint for (i,j).  i.e. if w(i,j)[m] = k then v[i,j,k] = m")
     .method( "get_w", &Stat::get_w,
              "vector where element m is the index of the previous changepoint for (i,j).  i.e. if w(i,j)[m] = k then v[i,j,k] = m")
-    // .method( "get_prev", &Stat::get_prev,
-    //          "")
-    // .method( "get_prev_index", &Stat::get_prev,
-    //          "")
-    // .method( "get_prev_index2", &Stat::get_prev,
-    //          "")
     .method( "ptr", &Stat::ptr,
              "")
     ;
   function( "gibbs", &gibbs ) ;
-  function( "llkfast", &llkfast ) ;
-   function( "llk", &llk ) ;
-  function( "llk2", &llk2 ) ;
-  function( "lrm", &lrm ) ;
-  function( "lrmfast", &lrmfast ) ;
-  function( "updateStatistics", &updateStatistics);
-  function( "computeLambda", &computeLambda);
-  function( "initializeStatistics", &initializeStatistics);
+  function( "loglikelihood_fast", &llkfast ) ;
+  function( "loglikelihood", &llk ) ;
+  function( "loglikelihood_from_lrm", &llk2 ) ;
+  function( "log_intensity_array", &lrm ) ;
+  function( "log_intensity_array_fast", &lrmfast ) ;
+  function( "update_statistics", &updateStatistics);
+  function( "compute_lambda", &computeLambda);
+  function( "initialize_statistics", &initializeStatistics);
   function( "test_last", &test_last);
-  function( "computeLambdaFast", &computeLambdaFast);
+  function( "compute_lambda_fast", &computeLambdaFast);
   function( "rcategorical", &rcategorical);
 }

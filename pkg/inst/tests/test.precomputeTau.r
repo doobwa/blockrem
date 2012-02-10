@@ -1,4 +1,3 @@
-source("../utils.r")
 
 M <- 7
 N <- 5

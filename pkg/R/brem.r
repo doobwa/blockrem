@@ -10,20 +10,20 @@ simulate.brem <- function(M,N,z,beta) {
   A <- matrix(c(time,1,2),1,3)
   lambda <- beta[1,z,z]
   lrm <- array(0,c(M,N,N))
-  s <- brem$initializeStatistics(N,P);
+  s <- initialize_statistics(N,P);
   z <- z-1
   for (m in 2:M) {
     
     i <- A[m-1,2]
     j <- A[m-1,3]
     
-    s <- brem$updateStatistics(s,i-1,j-1,N,P)
+    s <- update_statistics(s,i-1,j-1,N,P)
     # Compute changes to lambda
     for (r in 1:N) {
-      lambda[r,j] <- brem$computeLambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
-      lambda[j,r] <- brem$computeLambda(j-1,r-1,z[j],z[r],s,beta,N,K,P)
-      lambda[i,r] <- brem$computeLambda(i-1,r-1,z[i],z[r],s,beta,N,K,P)
-      lambda[r,i] <- brem$computeLambda(r-1,i-1,z[r],z[i],s,beta,N,K,P)
+      lambda[r,j] <- compute_lambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
+      lambda[j,r] <- compute_lambda(j-1,r-1,z[j],z[r],s,beta,N,K,P)
+      lambda[i,r] <- compute_lambda(i-1,r-1,z[i],z[r],s,beta,N,K,P)
+      lambda[r,i] <- compute_lambda(r-1,i-1,z[r],z[i],s,beta,N,K,P)
     }
     diag(lambda) <- -Inf
     
@@ -48,7 +48,7 @@ brem.lrm <- function(A,N,z,beta) {
   sen <- A[,2]-1
   rec <- A[,3]-1
   z <- z - 1
-  brem$lrm(beta,times,sen,rec,z,N,M,K,P)
+  log_intensity_array(beta,times,sen,rec,z,N,M,K,P)
 }
 brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
   M <- nrow(A)
@@ -59,10 +59,10 @@ brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
   rec <- A[,3]-1
   z <- z-1
   if (use.lrm) {
-    lrm <- brem$lrm(beta,times,sen,rec,z,N,M,K,P)
-    return(brem$llk2(lrm,times,sen,rec,N,M))
+    tmp <- log_intensity_array(beta,times,sen,rec,z,N,M,K,P)
+    return(loglikelihood_from_lrm(tmp,times,sen,rec,N,M))
   } else {
-    return(brem$llk(beta,times,sen,rec,z,N,M,K,P))
+    return(loglikelihood(beta,times,sen,rec,z,N,M,K,P))
   }
 }
 brem.mle <- function(A,N,K,P,z,beta=NULL) {
@@ -81,7 +81,7 @@ brem.lpost <- function(A,N,K,z,beta,priors) {
   sum(llks)+lprior
 }
 brem.lpost.fast <- function(A,N,K,z,s,beta,priors=list(beta=list(mu=0,sigma=1))) {   
-  sum(brem$llkfast(beta,z-1,s$ptr(),K))+
+  sum(loglikelihood_fast(beta,z-1,s$ptr(),K))+
   sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + 
   N * log(1/K)
 }
@@ -128,7 +128,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
       }
     }
     if (gibbs=="fast") {
-      z <- brem$gibbs(current,z-1,s$ptr(),K)$z + 1
+      z <- gibbs(current,z-1,s$ptr(),K)$z + 1
     }
     
     zs[[iter]] <- z

@@ -1,5 +1,3 @@
-source("../brem.cpp.r")
-source("../utils.r")
 require(abind)
 set.seed(1)
 M <- 7
@@ -26,10 +24,10 @@ beta <- abind(beta,rev.along=3)
 z <- c(rep(1,N-1),2)
 
 test_that("gibbs runs on small example",{
-  s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
+  s <- new(Stat,times,sen-1,rec-1,N,M,P)
   s$precompute()
-  b <- brem$llkfast(beta,z-1,s$ptr(),K)
-  b <- brem$gibbs(beta,z-1,s$ptr(),K)
+  b <- loglikelihood_fast(beta,z-1,s$ptr(),K)
+  b <- gibbs(beta,z-1,s$ptr(),K)
 })
 # 
 # # TODO: Test gibbs probabilities
