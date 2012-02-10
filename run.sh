@@ -11,4 +11,6 @@ parallel --sshlogin 8/d9,8/d10,8/d11 -j 4 'cd /extra/duboisc0/blockrem; ./R/brem
 ./R/brem.Rscript -f "data/synthetic.rdata" -k 2 -n 2000 -m "baserates" -d "results/synthetic"
 ./R/brem.Rscript -f "data/synthetic.rdata" -k 2 -n 2000 -m "shared" -d "results/synthetic"
 ./R/brem.Rscript -f "data/synthetic.rdata" -k 1 -n 2000 -m "full" -d "results/synthetic"
-./R/brem.Rscript -f "data/synthetic.rdata" -k 2 -n 2000 -m "full" -d "results/synthetic"
+
+# Use this now:
+./brem.Rscript -f "data/synthetic.rdata" -k 2 -n 2000 -m "full" -d "results/synthetic"
