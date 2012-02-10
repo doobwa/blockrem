@@ -1,3 +1,5 @@
+context("computing tau")
+
 
 M <- 7
 N <- 5

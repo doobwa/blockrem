@@ -1,3 +1,5 @@
+context("rcategorical")
+
 K <- 5
 
 test_that("rcategorical does not create illogical values",{

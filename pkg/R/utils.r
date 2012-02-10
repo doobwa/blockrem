@@ -1,3 +1,18 @@
+plotmat <- function(mat,labels=c("Sender","Receiver"),limits=c(0,max(mat[,3])),color="black") {
+  require(ggplot2)
+  colnames(mat)[3] <- "value"
+  qq <- ggplot(mat,aes(x=X2,y=X1)) +
+    geom_tile(aes(fill=value)) + 
+    scale_fill_gradient(low="white",high=color,limits=limits)+
+    theme_bw() + labs(x=labels[2],y=labels[1],fill="Probability")+
+    coord_equal(ratio=1) +
+    opts(legend.position = "none",
+         panel.grid.minor=theme_blank(),
+         panel.grid.major=theme_blank())
+  qq
+}
+
+
 #' Full lograte array using computeLambdaFast.  lrm[m,i,j] is lambda_ij prior m'th event.  
 #' All lambda=0 for m=0.
 lrm_slow <- function(beta,z,s,M,N,K,P) {

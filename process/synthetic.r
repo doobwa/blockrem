@@ -1,12 +1,5 @@
+library(brem)
 library(ggplot2)
-require(abind)
-require(testthat)
-setwd("R")
-source("brem.r")
-source("brem.cpp.r")
-source("sbm.r")
-source("utils.r")
-setwd("..")
 
 N <- 10
 K <- 2
@@ -19,7 +12,7 @@ beta <- list("intercept"=matrix(c(2,1,1,2),K,K),
              "abab"=matrix(c(0,-1,-1,0),K,K),
              "sod"=matrix(0,K,K),
              "rod"=matrix(0,K,K),
-             "sid"=matrix(0,K,K),
+             "sid"=matrix(c(0,-.1,-.5,0),K,K),
              "rid"=matrix(0,K,K))
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
@@ -32,20 +25,22 @@ sim <- simulate.brem(M,N,z,beta)
 mat <- table(sim$A[,2],sim$A[,3])
 mat <- melt(as.matrix(mat))
 colnames(mat) <- c("X1","X2","value")
+plotmat(mat)
 A <- train <- sim$A
+plot(A[,1],type="l")
+
 test <- simulate.brem(5000,N,z,beta)
 
 # Compute log likelihood and log posterior of data under true model
 times <- sim$A[,1]
 sen <- sim$A[,2]
 rec <- sim$A[,3]
-s <- new(brem$Stat,times,sen-1,rec-1,N,M,P)
+s <- new(brem:::Stat,times,sen-1,rec-1,N,M,P)
 s$precompute()
-llk.true <- brem$llkfast(beta,z-1,s$ptr(),K)  
+llk.true <- loglikelihood_fast(beta,z-1,s$ptr(),K)  
 true.lpost <- brem.lpost.fast(A,N,K,z,s,beta)
 
 save(A,sim,N,K,P,M,z,beta,train,test,true.lpost,file="data/synthetic.rdata")
-plotmat(mat)
 #ggsave("figs/syn/mat.pdf",width=3,height=3)
 
 
