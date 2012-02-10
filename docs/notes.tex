@@ -218,6 +218,13 @@ Simulation from the model follows the typical racing exponentials idea with a fe
   \end{enumerate}
 \end{enumerate}
 
+\section{Gibbs sampling}
+
+Let $\mathcal{U}_a = \{a: a \in (i_m,j_m), m \in [1,M]\}$ be the set of events where actor is involved:
+
+$$p(A|z,\beta,a \ \mbox{involved}) = \prod_{a \in \mathcal{U}_a} \lambda_{i_a,j_a}(t_a|\cdot)
+\prod_{(i,j) \in \mathcal{R}_{i_a,j_a}} \exp \{ -(t_a - \tau_{ija}) \lambda_{ij}(t_a|cdot)\}$$
+
 \section{EM for baseline}
 
 In our baseline model, each block $(a,b) \in [1,K] \times [1,K]$ simply has a rate $\gamma_{a,b}$.
