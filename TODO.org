@@ -43,6 +43,9 @@ Debug issues with whether to include intercept term or not. (Understand collinea
     cluster with the same parameters as the previous cluster.  Try an
     experiment with this method where we have 2 true clusters and
     initialize everyone in one cluster.
+- Add tests for Gibbs equations.
+- Add tests for synthetic fitting?
+- Derive/check identifiability
 - Type up Gibbs sampling equations.
 - Log likelihood baseline that only knows timing effects.
 - Write abstract.
