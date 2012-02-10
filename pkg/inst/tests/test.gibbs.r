@@ -1,3 +1,5 @@
+context("gibbs")
+
 require(abind)
 set.seed(1)
 M <- 7

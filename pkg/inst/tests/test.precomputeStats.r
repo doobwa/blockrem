@@ -1,3 +1,4 @@
+context("using precomputed statistics")
 
 M <- 7
 N <- 5

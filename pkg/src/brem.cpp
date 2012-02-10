@@ -133,7 +133,7 @@ public:
     // Save nothing to v or x (as they were anlready initalized with 0)
 
     for (int m = 0; m < (M-1); m++) {
-      Rprintf(".");
+      //      Rprintf(".");
 
       int i = sen[m];
       int j = rec[m];

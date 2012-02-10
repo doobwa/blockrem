@@ -144,7 +144,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   return(res)
 }
 brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1) {
-  px <- c(1,1,1,1,1,1,1,0,0,0,0)  # TODO: Eventually allow MH updates on degree effects
+  px <- c(1,1,1,1,1,1,1,1,1,1,1)  # TODO: Eventually allow MH updates on degree effects
   olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
   
   cand <- current

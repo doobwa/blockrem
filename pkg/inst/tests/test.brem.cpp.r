@@ -1,3 +1,5 @@
+context("computing likelihoods and intensity functions")
+
 
 # Example 1
 N <- 4
