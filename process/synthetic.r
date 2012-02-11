@@ -1,5 +1,6 @@
-library(brem)
+
 library(ggplot2)
+library(brem)
 
 N <- 10
 K <- 2

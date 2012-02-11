@@ -44,7 +44,8 @@ Debug issues with whether to include intercept term or not. (Understand collinea
     experiment with this method where we have 2 true clusters and
     initialize everyone in one cluster.
   - Or just use tons of chains with few iterations?
-- Add tests for Gibbs equations.
+- Add tests for Gibbs equations.  For example, start with true data
+  and learn z's.
 - Add tests for synthetic fitting?
 - Derive/check identifiability
 - [X] Type up Gibbs sampling equations.
