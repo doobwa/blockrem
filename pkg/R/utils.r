@@ -72,7 +72,7 @@ llk_slow <- function(lrm,times,sen,rec) {
 
 
 test_taus_from_s <- function(times,sen,rec,N,M,P) {
-  s <- new(Stat,times,sen,rec,N,M,P)
+  s <- new(RemStat,times,sen,rec,N,M,P)
   s$precompute()
   taus <- array(0,c(M,N,N))
   for (m in 0:(M-1)) {

@@ -26,7 +26,7 @@ beta <- abind(beta,rev.along=3)
 z <- c(rep(1,N-1),2)
 
 test_that("gibbs runs on small example",{
-  s <- new(Stat,times,sen-1,rec-1,N,M,P)
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   b <- loglikelihood_fast(beta,z-1,s$ptr(),K)
   b <- gibbs(beta,z-1,s$ptr(),K)

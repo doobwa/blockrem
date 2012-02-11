@@ -109,7 +109,7 @@ test_that("lrm and llk functions work on small example for K=1",{
   # Compare to drem$llk2
   llk2 <-  loglikelihood_from_lrm(lrm,times,sen-1,rec-1,N,M)
   
-  s <- new(Stat,times,sen-1,rec-1,N,M,P)
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   llk3 <- loglikelihood_fast(beta,z-1,s$ptr(),K)
   lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
@@ -164,7 +164,7 @@ test_that("lrm and llk functions work on small example for K=2",{
   llk2 <-  loglikelihood_from_lrm(lrm,times,sen-1,rec-1,N,M)
   expect_that(sum(llks),equals(llk2))
   
-  s <- new(Stat,times,sen-1,rec-1,N,M,P)
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   llk3 <- loglikelihood_fast(beta,z-1,s$ptr(),K)
   

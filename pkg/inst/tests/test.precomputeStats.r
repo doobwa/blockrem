@@ -6,7 +6,7 @@ P <- 11
 times <- seq(0,.6,by=.1)
 sen <- c(1,3,3,1,2,5,2)
 rec <- c(3,1,1,3,5,1,4)
-s <- new(Stat,times,sen-1,rec-1,N,M,P)
+s <- new(RemStat,times,sen-1,rec-1,N,M,P)
 s$precompute()
 x <- s$get_all_s()
 
@@ -90,7 +90,7 @@ test_that("taus from get_tau match with R version",{
   
   lrm <- log_intensity_array(beta,times,sen-1,rec-1,z-1,N,M,K,P)
   
-  s <- new(Stat,times,sen-1,rec-1,N,M,P)
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   
   lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
@@ -124,7 +124,7 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
   sen <- sen[-ix]
   rec <- rec[-ix]
   M <- length(times)
-  s <- new(Stat,times,sen-1,rec-1,N,M,P)
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   r <- initialize_statistics(N,P)
   for (m in 0:(M-1)) {
@@ -144,7 +144,7 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
 }
 
 test_that("computeLambdaFast uses degree effects properly",{
-  s <- new(Stat,times,sen-1,rec-1,N,M,P)
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   i <- 1
   j <- 3

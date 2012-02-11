@@ -4,39 +4,6 @@
 #' @z latent class assignments
 #' @beta P x K x K array of parameters
 simulate.brem <- function(M,N,z,beta) {
-
-  # start with a event from 1 to 2
-  time <- 0
-  A <- matrix(c(time,1,2),1,3)
-  lambda <- beta[1,z,z]
-  lrm <- array(0,c(M,N,N))
-  s <- initialize_statistics(N,P);
-  z <- z-1
-  for (m in 2:M) {
-    
-    i <- A[m-1,2]
-    j <- A[m-1,3]
-    
-    s <- update_statistics(s,i-1,j-1,N,P)
-    # Compute changes to lambda
-    for (r in 1:N) {
-      lambda[r,j] <- compute_lambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
-      lambda[j,r] <- compute_lambda(j-1,r-1,z[j],z[r],s,beta,N,K,P)
-      lambda[i,r] <- compute_lambda(i-1,r-1,z[i],z[r],s,beta,N,K,P)
-      lambda[r,i] <- compute_lambda(r-1,i-1,z[r],z[i],s,beta,N,K,P)
-    }
-    diag(lambda) <- -Inf
-    
-    # Draw the next event
-    cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
-    drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
-    i <- cells[drawcell,1]
-    j <- cells[drawcell,2]
-    time <- time + rexp(1,sum(cells[,3]))
-    A <- rbind(A,c(time,i,j))
-    
-    lrm[m,,] <- lambda
-  }
   return(list(A=A,lrm=lrm))
 }
 
@@ -103,6 +70,31 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   
   for (iter in 1:niter) {
     
+#     for (k in 1:K) {
+#       if (length(which(z==k))==0) {
+#         other <- sample((1:K)[-k],1)
+#         cat("attempting split",other,"into",k,"\n")
+#         z.new <- z
+#         z.new[chosen] <- k
+#         current.new <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd)
+#       }
+#     }
+    
+    olp <- brem.lpost.fast(A,N,K,z,s,current)
+    
+    z.new <- sample(1:K,N,replace=TRUE)
+    cand <- current
+    for (i in 1:5) {
+      cand <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd)
+    }
+    clp <- brem.lpost.fast(A,N,K,z.new,s,cand)
+    if (clp - olp > log(runif(1))) {
+      z <- z.new
+      current <- cand
+      olp <- clp
+      cat("Node ordering accepted:",z,"\n")
+    }
+    
     # For each effect sample via MH
     for (i in 1:2) {
       current <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd)
@@ -146,7 +138,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   return(res)
 }
 brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1) {
-  px <- c(1,1,1,1,1,1,1,1,1,1,1)  # TODO: Eventually allow MH updates on degree effects
+  px <- c(1,1,1,1,1,1,1,0,0,0,0)  # TODO: Eventually allow MH updates on degree effects
   olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
   
   cand <- current
