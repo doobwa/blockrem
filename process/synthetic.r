@@ -3,7 +3,7 @@ library(ggplot2)
 
 N <- 10
 K <- 2
-beta <- list("intercept"=matrix(c(2,1,1,2),K,K),
+beta <- list("intercept"=matrix(c(0,-1,-1,0),K,K),
              "abba" = matrix(c(3,0,0,0),K,K),
              "abby"=matrix(0,K,K),
              "abxa"=matrix(0,K,K),
@@ -12,7 +12,7 @@ beta <- list("intercept"=matrix(c(2,1,1,2),K,K),
              "abab"=matrix(c(0,-1,-1,0),K,K),
              "sod"=matrix(0,K,K),
              "rod"=matrix(0,K,K),
-             "sid"=matrix(c(0,-.1,-.5,0),K,K),
+             "sid"=matrix(c(0,0,0,0),K,K),
              "rid"=matrix(0,K,K))
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
@@ -29,7 +29,7 @@ plotmat(mat)
 A <- train <- sim$A
 plot(A[,1],type="l")
 
-test <- simulate.brem(5000,N,z,beta)
+test <- simulate.brem(5000,N,z,beta)$A
 
 # Compute log likelihood and log posterior of data under true model
 times <- sim$A[,1]

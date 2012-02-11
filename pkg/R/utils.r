@@ -12,7 +12,6 @@ plotmat <- function(mat,labels=c("Sender","Receiver"),limits=c(0,max(mat[,3])),c
   qq
 }
 
-
 #' Full lograte array using computeLambdaFast.  lrm[m,i,j] is lambda_ij prior m'th event.  
 #' All lambda=0 for m=0.
 lrm_slow <- function(beta,z,s,M,N,K,P) {
@@ -241,7 +240,6 @@ recall <- function(rs,top=c(1:20)) {
 }
 
 dyad.ps <- function(A,N) {
-  require(relevent)
   x <- array(0,c(N,N,6))
   mp <- matrix(0,N,N)
   M <- nrow(A)

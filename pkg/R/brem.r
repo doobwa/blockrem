@@ -48,7 +48,9 @@ brem.lrm <- function(A,N,z,beta) {
   sen <- A[,2]-1
   rec <- A[,3]-1
   z <- z - 1
-  log_intensity_array(beta,times,sen,rec,z,N,M,K,P)
+  lrm <- log_intensity_array(beta,times,sen,rec,z,N,M,K,P)
+  for (i in 1:M) diag(lrm[i,,]) <- -Inf
+  return(lrm)
 }
 brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
   M <- nrow(A)
@@ -110,7 +112,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
     for (k in 1:K) {
       if (length(which(z==k))==0) {
         current[,k,] <- current[,,k] <- 0
-        current[1,k,] <- current[1,,k] <- rnorm(K,0,3)
+        current[1,k,] <- current[1,,k] <- rnorm(K,priors$beta$mu,priors$beta$sigma)
         cat("sampling empty cluster params\n",current[1,,],"\n")
       }
     }

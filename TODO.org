@@ -43,10 +43,15 @@ Debug issues with whether to include intercept term or not. (Understand collinea
     cluster with the same parameters as the previous cluster.  Try an
     experiment with this method where we have 2 true clusters and
     initialize everyone in one cluster.
+  - Or just use tons of chains with few iterations?
 - Add tests for Gibbs equations.
 - Add tests for synthetic fitting?
 - Derive/check identifiability
-- Type up Gibbs sampling equations.
+- [X] Type up Gibbs sampling equations.
+- Include random effect options.  Compute_lambda just needs to know
+  where to look in beta vector.  Proposal needs to not suggest that
+  there are K^2 of these parameters, instead just one set shared
+  across the various latent groups.
 - Log likelihood baseline that only knows timing effects.
 - Write abstract.
 - Add Enron.
