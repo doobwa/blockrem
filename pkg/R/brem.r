@@ -4,6 +4,39 @@
 #' @z latent class assignments
 #' @beta P x K x K array of parameters
 simulate.brem <- function(M,N,z,beta) {
+  
+  # start with a event from 1 to 2
+  time <- 0
+  A <- matrix(c(time,1,2),1,3)
+  lambda <- beta[1,z,z]
+  lrm <- array(0,c(M,N,N))
+  s <- initialize_statistics(N,P);
+  z <- z-1
+  for (m in 2:M) {
+    
+    i <- A[m-1,2]
+    j <- A[m-1,3]
+    
+    s <- update_statistics(s,i-1,j-1,N,P)
+    # Compute changes to lambda
+    for (r in 1:N) {
+      lambda[r,j] <- compute_lambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
+      lambda[j,r] <- compute_lambda(j-1,r-1,z[j],z[r],s,beta,N,K,P)
+      lambda[i,r] <- compute_lambda(i-1,r-1,z[i],z[r],s,beta,N,K,P)
+      lambda[r,i] <- compute_lambda(r-1,i-1,z[r],z[i],s,beta,N,K,P)
+    }
+    diag(lambda) <- -Inf
+    
+    # Draw the next event
+    cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
+    drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
+    i <- cells[drawcell,1]
+    j <- cells[drawcell,2]
+    time <- time + rexp(1,sum(cells[,3]))
+    A <- rbind(A,c(time,i,j))
+    
+    lrm[m,,] <- lambda
+  }
   return(list(A=A,lrm=lrm))
 }
 
