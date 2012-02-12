@@ -89,6 +89,13 @@ brem.lpost.fast <- function(A,N,K,z,s,beta,priors=list(beta=list(mu=0,sigma=1)))
 }
 
 brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE,outdir=getwd(),priors=list(beta=list(mu=0,sigma=1))) {
+  
+#   if (model.type=="baserates") {
+#     res <- sbm.mcmc(A,N,K,niter=niter,z=NULL,mcmc.sd=.1,gibbs=TRUE)
+#     outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
+#     save(res,file=outfile)
+#   }
+  
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 11
@@ -101,46 +108,42 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   if (!is.null(beta)) current <- beta
   if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
   
+  olp <- brem.lpost.fast(A,N,K,z,s,current)
+  
   for (iter in 1:niter) {
     
-#     for (k in 1:K) {
-#       if (length(which(z==k))==0) {
-#         other <- sample((1:K)[-k],1)
-#         cat("attempting split",other,"into",k,"\n")
-#         z.new <- z
-#         z.new[chosen] <- k
-#         current.new <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd)
-#       }
-#     }
-    
-    olp <- brem.lpost.fast(A,N,K,z,s,current)
-    
-    z.new <- sample(1:K,N,replace=TRUE)
-    cand <- current
-    for (i in 1:5) {
-      cand <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd)
+    if (K > 1) {
+      
+      z.new <- sample(1:K,N,replace=TRUE)
+      cand <- current
+      clp <- olp
+      for (i in 1:5) {
+        res <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd,olp=clp)
+        cand <- res$current
+        clp <- res$olp
+      }
+      if (clp - olp > log(runif(1))) {
+        z <- z.new
+        current <- cand
+        olp <- clp
+        cat("Node ordering accepted:",z,"\n")
+      }
     }
-    clp <- brem.lpost.fast(A,N,K,z.new,s,cand)
-    if (clp - olp > log(runif(1))) {
-      z <- z.new
-      current <- cand
-      olp <- clp
-      cat("Node ordering accepted:",z,"\n")
-    }
-    
     # For each effect sample via MH
     for (i in 1:2) {
-      current <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd)
+      res <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd,olp)
+      current <- res$current
+      olp <- res$olp
     }
     
     # Sample empty cluster parameters from prior.  Only sample baserates.
-    for (k in 1:K) {
-      if (length(which(z==k))==0) {
-        current[,k,] <- current[,,k] <- 0
-        current[1,k,] <- current[1,,k] <- rnorm(K,priors$beta$mu,priors$beta$sigma)
-        cat("sampling empty cluster params\n",current[1,,],"\n")
-      }
-    }
+#     for (k in 1:K) {
+#       if (length(which(z==k))==0) {
+#         current[,k,] <- current[,,k] <- 0
+#         current[1,k,] <- current[1,,k] <- rnorm(K,priors$beta$mu,priors$beta$sigma)
+#         cat("sampling empty cluster params\n",current[1,,],"\n")
+#       }
+#     }
     
     if (gibbs=="slow") {
       # Gibbs sample assignments
@@ -170,9 +173,11 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   }
   return(res)
 }
-brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1) {
+brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1,olp=NULL) {
   px <- c(1,1,1,1,1,1,1,0,0,0,0)  # TODO: Eventually allow MH updates on degree effects
-  olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
+  if (is.null(olp)) {
+    olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
+  }
   
   cand <- current
   if (model.type=="baserates") {
@@ -226,7 +231,7 @@ brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1
       }
     }
   }
-  return(current)
+  return(list(current=current,olp=olp))
 }
 brem.llk.slow <- function(lrm,times,sen,rec,z,N,M) {
   mp <- matrix(1,N,N)
