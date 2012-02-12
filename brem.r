@@ -29,5 +29,5 @@ s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,M,P)
 s$precompute()
 
 fit <- brem.mcmc(A,N,opts$numclusters,s,model.type=opts$model.type,
-		 niter=opts$numiterations,outdir=opts$outdir,gibbs=opts$gibbs)
+		             niter=opts$numiterations,outdir=opts$outdir,gibbs=opts$gibbs)
 

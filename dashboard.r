@@ -77,6 +77,7 @@ lrms <- lapply(fits,function(f) {
 names(lrms) <- fnames
 lrms$unif   <- array(1,c(nrow(test),N,N))
 lrms$online <- ratemat.online(test,N)
+lrms$marg   <- ratemat.from.marginals(train,test,N)
 if (opts$dataset == "synthetic") {
   load("data/synthetic.rdata")
   lrms$true <- brem.lrm(test,N,z,beta)
@@ -107,7 +108,7 @@ q6 <- qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) 
 
 # # Compute out of sample log posterior
 lposts <- lapply(fits,function(f) {
-  brem.lpost(test,N,K,f$z,f$beta,priors=list(beta=list(mu=0,sigma=1)))
+  brem.lpost(test,N,opts$K,f$z,f$beta,priors=list(beta=list(mu=0,sigma=1)))
 })
 # lposts <- list(true = brem.lpost(test$A,N,K,z,beta),
 #                base = sbm.lpost(test$A,N,K,fit0$z,fit0$beta),

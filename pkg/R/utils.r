@@ -359,3 +359,19 @@ ratemat.online <- function(edgelist,n) {
   }
   return(rms)
 }
+
+#' Compute an (M.test x N x N) array of intensities for each dyad using the marginals from a training set.
+#' @train event history
+#' @test  event history to compute the array for
+#' @N     number of nodes
+ratemat.from.marginals <- function(train,test,N) {
+  x <- table(factor(train[,1],1:N),factor(train[,2],1:N))
+  rowrates <- rowSums(x)
+  colrates <- colSums(x)
+  r <- rowrates %*% t(colrates)
+  r <- r/sum(r)
+  M <- nrow(test)
+  lrm <- array(0,c(M,N,N))
+  for (i in 1:M) lrm[i,,] <- r
+  return(lrm)
+}
