@@ -365,7 +365,7 @@ ratemat.online <- function(edgelist,n) {
 #' @test  event history to compute the array for
 #' @N     number of nodes
 ratemat.from.marginals <- function(train,test,N) {
-  x <- table(factor(train[,1],1:N),factor(train[,2],1:N))
+  x <- table(factor(train[,2],1:N),factor(train[,3],1:N))
   rowrates <- rowSums(x)
   colrates <- colSums(x)
   r <- rowrates %*% t(colrates)
