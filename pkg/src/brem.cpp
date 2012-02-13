@@ -306,8 +306,18 @@ double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, RemStat *s, 
   vector<int> smij;
   vector<int> ma = s->get_u(a);
   Rcpp::NumericVector llks(ma.size());
+  Rprintf("testing:");
+  int blah = (s->get_s(1259,2,6))[0];
+  Rprintf("%i %i",blah,z[6]);
+  double tmp = computeLambdaFast(2,6,z[2],z[6],s->get_s(1259,2,6),beta,N,K,P);
+  Rprintf("%f",tmp);
+
   for (int ix = 0; ix < ma.size(); ix++) {
     m = ma[ix];
+    if (a == 2) {
+      Rprintf("a:%i,m:%i,",a,m);
+    }
+
     i = s->sen[m];
     j = s->rec[m];
     llk = 0;
@@ -323,18 +333,40 @@ double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, RemStat *s, 
       double lam;
       int zr = z[r];
       if (r != i && r !=j) {
+        if (m == 1259 && a==2) {
+          Rprintf("%i %i %i:",i,j,r);
+          Rprintf("%f ",s->get_tau(m,i,r));
+          Rprintf("%f ",s->get_tau(m,r,i));
+          Rprintf("%f ",s->get_tau(m,j,r));
+          Rprintf("%f ",s->get_tau(m,r,j));
+          Rprintf("%i ",(s->get_s(m,i,r))[0]);
+          Rprintf("%i ",(s->get_s(m,r,i))[0]);
+          Rprintf("%i ",(s->get_s(m,j,r))[0]);
+          Rprintf("%i\n",(s->get_s(m,r,j))[0]);
+        }
         lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
+        if (m==1259 && a==2) { Rprintf("%f ",lam); }
         llk -= (s->times[m] - s->get_tau(m,i,r)) * exp(lam);
+        if (m==1259 && a==2) { Rprintf("%f \n",llk); }
         lam  = computeLambdaFast(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
+        if (m==1259 && a==2) { Rprintf("%f ",lam); }
         llk -= (s->times[m] - s->get_tau(m,r,i)) * exp(lam);
+        if (m==1259 && a==2) { Rprintf("%f \n",llk); }
         lam  = computeLambdaFast(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
+        if (m==1259 && a==2) { Rprintf("%f ",lam); }
         llk -= (s->times[m] - s->get_tau(m,j,r)) * exp(lam);
+        if (m==1259 && a==2) { Rprintf("%f \n",llk); }
         lam  = computeLambdaFast(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
+        if (m==1259 && a==2) { Rprintf("%f ",lam); }
         llk -= (s->times[m] - s->get_tau(m,r,j)) * exp(lam);
+        if (m==1259 && a==2) { Rprintf("%f \n",llk); }
       }
     }
 
     //    } // openmp
+    if (a == 2) {
+      Rprintf("llk:%f\n",llk);
+    }
 
     llks(ix) = llk;
     total += llk;
@@ -659,8 +691,11 @@ vector< vector< vector<int> > > initializeStatistics2(int N, int P) {
 //
 double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::NumericVector beta, int N, int K, int P) {
   double lam = beta[threeDIndex(0,zi,zj,P,K,K)];//s[threeDIndex(0,i,j,P,N,N)];
-  for (int p = 1; p < P; p++) {
+  for (int p = 1; p < 7; p++) {
     lam += s[threeDIndex(p,i,j,P,N,N)] * beta[threeDIndex(p,zi,zj,P,K,K)];
+  }
+  for (int p = 7; p < P; p++) {
+    lam += log(s[threeDIndex(p,i,j,P,N,N)]+1) * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
   return lam;
 }

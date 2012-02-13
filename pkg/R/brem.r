@@ -70,8 +70,7 @@ brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
 brem.mle <- function(A,N,K,P,z,beta=NULL) {
   fn <- function(par) {
     beta <- array(par,c(P,K,K))
-    beta[7:11,,] <- 0
-    -brem.llk(A,N,z,beta)
+    - sum(brem.llk(A,N,z,beta))
   }
   if (is.null(beta)) beta <- array(0,c(P,K,K))
   beta.hat <- optim(as.vector(beta),fn)$par
@@ -88,7 +87,7 @@ brem.lpost.fast <- function(A,N,K,z,s,beta,priors=list(beta=list(mu=0,sigma=1)))
   N * log(1/K)
 }
 
-brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE,outdir=getwd(),priors=list(beta=list(mu=0,sigma=1))) {
+brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE,outdir=getwd(),priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE) {
   
 #   if (model.type=="baserates") {
 #     res <- sbm.mcmc(A,N,K,niter=niter,z=NULL,mcmc.sd=.1,gibbs=TRUE)
@@ -113,24 +112,25 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   for (iter in 1:niter) {
     
     if (K > 1) {
-      
+      if (verbose) cat("Node reorder:")
       z.new <- sample(1:K,N,replace=TRUE)
       cand <- current
-      clp <- olp
+      clp <- brem.lpost.fast(A,N,K,z.new,s,cand,priors)
       for (i in 1:5) {
-        res <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd,olp=clp)
+        res  <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd,olp=clp)
         cand <- res$current
-        clp <- res$olp
+        clp  <- res$olp
       }
       if (clp - olp > log(runif(1))) {
+        cat("Node ordering accepted:",z.new,olp,clp,"\n")
         z <- z.new
         current <- cand
         olp <- clp
-        cat("Node ordering accepted:",z,"\n")
       }
     }
     # For each effect sample via MH
     for (i in 1:2) {
+      if (verbose) cat("\nMH")
       res <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd,olp)
       current <- res$current
       olp <- res$olp
@@ -157,12 +157,21 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
         z[i] <- sample(1:K,size=1,prob=ps)
       }
     }
+    
+     # TEMP:
+    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter)
+    outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
+    save(res,file=outfile)
+    
+    
     if (gibbs=="fast") {
+      if (verbose) cat("\nGibbs")
       z <- gibbs(current,z-1,s$ptr(),K)$z + 1
     }
     
     zs[[iter]] <- z
     param[iter,,,] <- current
+    if (verbose) cat("\nLlk")
     llks[iter] <- brem.lpost.fast(A,N,K,z,s,current,priors)
     
     cat("iter",iter,":",llks[iter],"z:",z,"\n")

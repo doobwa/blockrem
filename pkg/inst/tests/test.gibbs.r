@@ -31,6 +31,34 @@ test_that("gibbs runs on small example",{
   b <- loglikelihood_fast(beta,z-1,s$ptr(),K)
   b <- gibbs(beta,z-1,s$ptr(),K)
 })
+
+test_that("gibbs runs with K>2",{
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
+  s$precompute()
+  
+  K <- 5
+  beta <- array(rnorm(K*K*P),c(P,K,K))
+  z <- sample(1:K,N,replace=TRUE)
+  b <- loglikelihood_fast(beta,z-1,s$ptr(),K)
+  b <- gibbs(beta,z-1,s$ptr(),K)
+  
+  
+  K <- 5
+  z <- c(4,4,4,4,4,5,5,5,5,5)
+  b <- loglikelihood_fast(beta,z-1,s$ptr(),K)
+  b <- gibbs(beta,z-1,s$ptr(),K)
+})
+
+library(brem)
+load("data/synthetic.rdata")
+s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,M,P)
+s$precompute()
+
+K <- 10
+load("results/synthetic/full.10.rdata")
+b <- loglikelihood_fast(res$beta,res$z-1,s$ptr(),K)
+b <- gibbs(res$beta,res$z-1,s$ptr(),K)
+
 # 
 # # TODO: Test gibbs probabilities
 # lrm <- brem$lrm(beta, times, sen-1, rec-1, z-1, N, M, K, P)
