@@ -38,7 +38,10 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [X] Get test suite to display results on all test scripts.
 - [X] Make into a package.
 * TODO Week 4:
-- Try eckmann-small and synthetic dataset with degree effects.  Tinker with simulating with degree effects.  Perhaps come up with other parameterization that is less sensitive to explosion.
+- Try eckmann-small and synthetic dataset with degree effects.  
+  - Tinker with simulating with degree effects.  Perhaps come up with
+    other parameterization that is less sensitive to explosion.
+  - 
 - Work on better proposal dist. and better mixing of group assignments.
   - Try split moves where we select a subset and offer them a new
     cluster with the same parameters as the previous cluster.  Try an
