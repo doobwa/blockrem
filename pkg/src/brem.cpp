@@ -439,11 +439,10 @@ int rcategorical (Rcpp::NumericVector lp) {
 
 // TODO: sample z
 Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
-  Rcpp::NumericVector x;
   Rcpp::List llks;
   RemStat *s = XPtr<RemStat>(statptr_);
   int N = s->N;
-  Rcpp::IntegerVector counts;
+  Rcpp::IntegerVector counts(N);
   double alpha = 1.0;
 
   // Get counts for the number assigned each class
