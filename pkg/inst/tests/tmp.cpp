@@ -294,6 +294,15 @@ double computeLambdaFast(int i, int j, int zi, int zj, vector<int> s, Rcpp::Nume
   return lam;
 }
 
+double myFunction(int i, vector<int> s) {//,  Rcpp::NumericVector beta, int N, int K, int P) {
+  double lam = 0;
+  for (int p = 0; p < s.size(); p++) {
+    lam += i * s[p];
+  }
+  return lam;
+}
+
+
 // Compute the loglikelihood corresponding to a single actor, a.
 
 double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, RemStat *s, int K) {
@@ -330,9 +339,8 @@ double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, RemStat *s, 
       double lam;
       int zr = z[r];
       if (r != i && r !=j) {
-        Rprintf("%i %i %i %i %i %i %i %i:",a,m,i,j,r,zi,zj,zr);
+        // Rprintf("%i %i %i %i %i %i %i %i:",a,m,i,j,r,zi,zj,zr);
         //        if (m==1259 && i==2 && j==3 && r==6 && a==2) {
-        if (a==7 && m==1205 && i==7 && j==6 && r==5) {
           // Rprintf("%f ",s->get_tau(m,i,r));
           // Rprintf("%f ",s->get_tau(m,r,i));
           // Rprintf("%f ",s->get_tau(m,j,r));
@@ -341,25 +349,24 @@ double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, RemStat *s, 
           // Rprintf("%i ",(s->get_s(m,r,i))[0]);
           // Rprintf("%i ",(s->get_s(m,j,r))[0]);
           // Rprintf("%i\n",(s->get_s(m,r,j))[0]);
-          lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
-          Rprintf("%f ",lam); 
-          llk -= (s->times[m] - s->get_tau(m,i,r)) * exp(lam);
-          Rprintf("%f \n",llk);
-          lam  = computeLambdaFast(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
-          Rprintf("%f ",lam); 
-          llk -= (s->times[m] - s->get_tau(m,r,i)) * exp(lam);
-          Rprintf("%f \n",llk); 
-          lam  = computeLambdaFast(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
-          Rprintf("%f ",lam); 
-          llk -= (s->times[m] - s->get_tau(m,j,r)) * exp(lam);
-          Rprintf("%f \n",llk); 
-          lam  = computeLambdaFast(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
-          Rprintf("%f ",lam); 
-          llk -= (s->times[m] - s->get_tau(m,r,j)) * exp(lam);
-          Rprintf("%f \n",llk);
-          }
-        lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
-        Rprintf("%f \n",lam); 
+           lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
+          // Rprintf("%f ",lam); 
+           llk -= (s->times[m] - s->get_tau(m,i,r)) * exp(lam);
+          // Rprintf("%f \n",llk);
+           lam  = computeLambdaFast(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
+          // Rprintf("%f ",lam); 
+           llk -= (s->times[m] - s->get_tau(m,r,i)) * exp(lam);
+          // Rprintf("%f \n",llk); 
+           lam  = computeLambdaFast(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
+          // Rprintf("%f ",lam); 
+           llk -= (s->times[m] - s->get_tau(m,j,r)) * exp(lam);
+          // Rprintf("%f \n",llk); 
+           lam  = computeLambdaFast(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
+          // Rprintf("%f ",lam); 
+           llk -= (s->times[m] - s->get_tau(m,r,j)) * exp(lam);
+          // Rprintf("%f \n",llk);
+           lam  = computeLambdaFast(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
+        // Rprintf("%f \n",lam); 
       }
     }
 
@@ -369,6 +376,14 @@ double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, RemStat *s, 
     total += llk;
   }
   return total;
+}
+
+double MyFunction(Rcpp::IntegerVector z, Rcpp::NumericVector beta, RemStat *s) {
+  int i;
+  for (int ix = 0; ix < 300; ix++) {
+    i = s->sen[1];
+  }
+  return 0;
 }
 
 
@@ -431,6 +446,7 @@ int rcategorical (Rcpp::NumericVector lp) {
 
 // TODO: sample z
 Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
+  //  Rcpp::NumericVector x;
   Rcpp::List llks;
   RemStat *s = XPtr<RemStat>(statptr_);
   int N = s->N;
@@ -460,6 +476,60 @@ Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_,
   return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("z") = z);
 }
 
+Rcpp::List gibbs_with_init( Rcpp::NumericVector times_, Rcpp::IntegerVector sen_, Rcpp::IntegerVector rec_, Rcpp::NumericVector beta, Rcpp::IntegerVector z,  int N_, int M_, int P_, int K) {
+  Rcpp::NumericVector x;
+  Rcpp::List llks;
+  //  RemStat *s = XPtr<RemStat>(statptr_);
+  RemStat *s = new RemStat(times_,sen_,rec_,N_,M_,P_);
+  s->precompute();
+  int N = s->N;
+  Rcpp::IntegerVector counts(N);
+  double alpha = 1.0;
+
+  // Get counts for the number assigned each class
+  for (int i = 0; i < N; i++) {
+    counts[z[i]] += 1;
+  }
+
+  for (int a = 0; a < N; a++) {
+
+    counts[z[a]] -= 1;
+    Rcpp::NumericVector y(K);
+    // Compute p(z[a] = k | all else) for each k
+    for (int k = 0; k < K; k++) {
+      z[a] = k;
+       y[k] = llki(a,beta,z,s,K);// + log(counts[k] + alpha) - log(N + alpha);
+       //y[k] = MyFunction(a,beta,s);// + log(counts[k] + alpha) - log(N + alpha);
+    }
+    llks.push_back(y);
+    
+    // Sample z[a]
+    z[a] = rcategorical(y);
+    counts[z[a]] += 1;
+  }
+  delete s;
+  return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("z") = z);
+}
+
+
+
+
+// TODO: sample z
+Rcpp::List gibbs_with_init_old( Rcpp::NumericVector times_, Rcpp::IntegerVector sen_, Rcpp::IntegerVector rec_, Rcpp::NumericVector beta, Rcpp::IntegerVector z,  int N_, int M_, int P_, int K) {
+  Rcpp::NumericVector x;
+  Rcpp::List llks;
+  //  RemStat *s = XPtr<RemStat>(statptr_);
+  RemStat *s = new RemStat(times_,sen_,rec_,N_,M_,P_);
+  s->precompute();
+  int N = s->N;
+  double y = 0;
+  for (int a = 0; a < N; a++) {
+    //    y += MyFunction(z,s);// + log(counts[k] + alpha) - log(N + alpha);
+    y = llki(0,beta,z,s,K);
+  }
+  delete s;
+return Rcpp::List::create(Rcpp::Named("llks") = y,Rcpp::Named("z") = z);
+}
 
 // Use the precomputed statistics s to compute the likelihood
 Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
@@ -540,310 +610,7 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
   llks[M-1] = llk;
   return llks;
 }
-// TEMP
-Rcpp::List test_last(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
-  RemStat *s = XPtr<RemStat>(statptr_);
-  int N = s->N;
-  int P = s->P;
-  int M = s->M;
 
-  double llk = 0.0; 
-  double lam = 0;
-  int i,j,r,zi,zj;
-  Rcpp::NumericMatrix llks(N,N);
-  Rcpp::IntegerVector sen = s->sen;
-  Rcpp::IntegerVector rec = s->rec;
-  Rcpp::NumericMatrix taus(N,N);
-  //All intensities assumed to change at the last event
-  int m = M-1;
-  i = sen[m];
-  j = rec[m];
-  for (int i = 0; i < N; i++) {
-   for (int j = 0; j < N; j++) {
-     zi = z[i];
-     zj = z[j];
-     if (i != j) {
-       //       Rprintf("%i %i %f\n",i,j,s->get_tau(m,i,j));
-       taus(i,j) = s->get_tau(m,i,j);
-       lam  = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
-       double llk = (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
-       llks(i,j) = 0;//NumericVector(llk);
-     }
-   }
-  }
-  return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("taus") = taus);
-}
-/////////////////
-// OLDER VERSION
-// Update each s(t,i,j) vector with event (a,b).
-// s: List of NxN matrices with named elements.  Each matrix represents the current value for that statistic.
-
-Rcpp::NumericVector initializeStatistics(int N, int P) {
-  Rcpp::NumericVector s     = Rcpp::NumericVector(Dimension(P,N,N));
-
-  return s;
-}
-
-
-Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N, int P) {
-  // Create vector of indicators for each pshift.
-  // i.e. If I[(i,j) is ab-ba from last event (a,b)]
-    // Iterate through dyads having either a or b as a sender or receiver
-   for (int r = 0; r < N; r++) {
-      Rcpp::IntegerVector sen = Rcpp::IntegerVector::create(a,r,b,r);
-      Rcpp::IntegerVector rec = Rcpp::IntegerVector::create(r,a,r,b);
-      for (int k = 0; k < sen.size(); k++) {
-        int i = sen[k];
-        int j = rec[k];
-        if (i != j) {
-          // intercept
-          s[threeDIndex(0,i,j,P,N,N)] = 1;
-
-          // P-shifts
-          s[threeDIndex(1,i,j,P,N,N)] = (i!=a & i==b & j==a & j!=b);
-          s[threeDIndex(2,i,j,P,N,N)] = (i!=a & i==b & j!=a & j!=b);
-          s[threeDIndex(3,i,j,P,N,N)] = (i!=a & i!=b & j==a & j!=b);
-          s[threeDIndex(4,i,j,P,N,N)] = (i!=a & i!=b & j!=a & j==b);
-          s[threeDIndex(5,i,j,P,N,N)] = (i==a & i!=b & j!=a & j!=b);
-          s[threeDIndex(6,i,j,P,N,N)] = (i==a & i!=b & j!=a & j==b);
-
-          // Degree effects
-          if (a==i & b!=j) {
-            s[threeDIndex(7,i,j,P,N,N)] += 1;  // sender out degree
-          }
-          if (b==i & a!=j) {
-            s[threeDIndex(9,i,j,P,N,N)] += 1;  // sender in degree
-          }
-          if (a==j & b!=i) { 
-            s[threeDIndex(8,i,j,P,N,N)] += 1;  // receiver out degree
-          }
-          if (b==j & a!=i) {
-            s[threeDIndex(10,i,j,P,N,N)] += 1; // receiver in degree
-          }
-        }
-      }
-    }
-   s[threeDIndex(7,a,b,P,N,N)] += 1; // sender out degree
-   s[threeDIndex(8,b,a,P,N,N)] += 1; // 
-   s[threeDIndex(9,b,a,P,N,N)] += 1;
-   s[threeDIndex(10,a,b,P,N,N)] += 1;
-  return s;
-}
-
-// TEMP?
-vector< vector< vector<int> > > initializeStatistics2(int N, int P) {
-  vector< vector< vector<int> > > s;
-  for (int i = 0; i < N; i++) {
-    vector< vector<int> > s_i;
-    for (int j = 0; j < N; j++) {
-      //      int arr[P] = {0};
-      //      vector<int> s_ij (arr, arr + sizeof(arr) / sizeof(arr[0]) );
-      vector<int> s_ij(P);
-      s_i.push_back(s_ij);
-    }
-    s.push_back(s_i);
-  }
-  return s;
-}
-
-
-//
-double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::NumericVector beta, int N, int K, int P) {
-  double lam = beta[threeDIndex(0,zi,zj,P,K,K)];//s[threeDIndex(0,i,j,P,N,N)];
-  for (int p = 1; p < 7; p++) {
-    lam += s[threeDIndex(p,i,j,P,N,N)] * beta[threeDIndex(p,zi,zj,P,K,K)];
-  }
-  for (int p = 7; p < P; p++) {
-    lam += log(s[threeDIndex(p,i,j,P,N,N)]+1) * beta[threeDIndex(p,zi,zj,P,K,K)];
-  }
-  return lam;
-}
-
-// TEMP: Parallel attempt
-// Rcpp::NumericVector llkp(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M, int K, int P) {
-//   omp_set_num_threads(16);
-//   double lam = 0;
-//   int i,j,r,zi,zj;
-//   double llktotal = 0.0;
-//   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N);
-
-//   Rcpp::NumericVector s  = initializeStatistics(N,P);
-//   s = updateStatistics(s,sen[0],rec[0],N,P);
-//   updateStatistics2(s,sen[0],rec[0],0,0,N,P);
-//   Rcpp::NumericVector llk(M);
-//   Rcpp::NumericVector llks(N);
-  
-//   for (int m = 1; m < (M-1); m++) {
-//     i = sen[m];
-//     j = rec[m];
-//     zi = z[i];
-//     zj = z[j];
-//     //llk(m) += computeLambda2(i,j,zi,zj,s,beta,N,K,P);
-    
-//     double llkm = computeLambda2(i,j,zi,zj,s,beta,N,K,P);
-//     #pragma omp parallel reduction(-:llkm)
-//     {
-//     #pragma omp for
-//       for (r = 0; r < N; r++) {
-//         int zr = z[r];
-//         if (r != i) {
-//           lam  = computeLambda2(i,r,zi,zr,s,beta,N,K,P);
-//           llkm -= (times[m] - times[mp(i,r)]) * exp(lam);
-//           lam  = computeLambda2(r,i,zr,zi,s,beta,N,K,P);
-//           llkm -= (times[m] - times[mp(r,i)]) * exp(lam);
-//           mp(i,r) = m;
-//           mp(r,i) = m;
-//           updateStatistics2(s,sen[m],rec[m],i,r,N,P);
-//           updateStatistics2(s,sen[m],rec[m],r,i,N,P);
-//         }
-//         if (r != j) {
-//           lam  = computeLambda2(j,r,zj,zr,s,beta,N,K,P);
-//           llkm -= (times[m] - times[mp(j,r)]) * exp(lam);
-//           lam  = computeLambda2(r,j,zr,zj,s,beta,N,K,P);
-//           llkm -= (times[m] - times[mp(r,j)]) * exp(lam);
-//           mp(j,r) = m;  // update mp
-//           mp(r,j) = m;
-//           updateStatistics2(s,sen[m],rec[m],j,r,N,P);
-//           updateStatistics2(s,sen[m],rec[m],r,j,N,P);
-//         }
-//       }
-//     } // openmp
-//     //llk(m) = std::accumulate(llks.begin(),llks.end(), 0.0);
-//   }
-
-//   //llktotal = std::accumulate(llk.begin(),llk.end(), 0.0);
-//   return llk;
-// }
-  
-// Compute a data structure for finding tau_{ijm}.
-// Returns tau, where tau[i][j] is a vector of event indices m where lambda_{ij} changed (due to an event involving either i or j.
-
-
-Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M,int K, int P) {
-
-
-  double llk = 0.0; 
-  double lam = 0;
-  Rcpp::NumericVector llks(M);
-  llks[0] = llk;
-
-  int i,j,r;
-
-  Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N);
-  Rcpp::NumericVector s  = initializeStatistics(N,P);
-  s = updateStatistics(s,sen[0],rec[0],N,P);
-
-  for (int m = 1; m < (M-1); m++) {
-    i = sen[m];
-    j = rec[m];
-    int zi = z[i];
-    int zj = z[j];
-    llk = computeLambda(i,j,zi,zj,s,beta,N,K,P);
-
-    // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
-    for (int r = 0; r < N; r++) {
-      int zr = z[r];
-      if (r != i) {
-        lam  = computeLambda(i,r,zi,zr,s,beta,N,K,P);
-        llk -= (times[m] - times[mp(i,r)]) * exp(lam);
-        lam  = computeLambda(r,i,zr,zi,s,beta,N,K,P);
-        llk -= (times[m] - times[mp(r,i)]) * exp(lam);
-        mp(i,r) = m;
-        mp(r,i) = m;
-      }
-      if (r != j) {
-        lam  = computeLambda(j,r,zj,zr,s,beta,N,K,P);
-        llk -= (times[m] - times[mp(j,r)]) * exp(lam);
-        lam  = computeLambda(r,j,zr,zj,s,beta,N,K,P);
-        llk -= (times[m] - times[mp(r,j)]) * exp(lam);
-        mp(j,r) = m;  // update mp
-        mp(r,j) = m;
-      }
-    }
-    s = updateStatistics(s,sen[m],rec[m],N,P);
-    llks[m] = llk;
-  }
-  // All intensities assumed to change at the last event
-  llk = 0;
-  for (int i = 0; i < N; i++) {
-   for (int j = 0; j < N; j++) {
-     int zi = z[i];
-     int zj = z[j];
-     if (i != j) {
-       lam  = computeLambda(i,j,zi,zj,s,beta,N,K,P);
-       llk -= (times[M-1] - times[mp(i,j)]) * exp(lam);
-     }
-   }
-  }
-  llks[M-1] = llk;
-  return llks;
-}
-
-// Compute (M,N,N) array of log rates (see lrm()).  This one uses computeLambdaFast.
-Rcpp::NumericVector lrmfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
-  RemStat *s = XPtr<RemStat>(statptr_);
-  int N = s->N;
-  int P = s->P;
-  int M = s->M;
-  Rcpp::NumericVector lrmat = Rcpp::NumericVector(Dimension(M,N,N));
-  for (int m = 0; m < M; m++) {
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        int zi = z[i];
-        int zj = z[j];
-       double lam  = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
-       lrmat[threeDIndex(m,i,j,M,N,N)] = lam;
-      }
-    }
-  }
-  return lrmat;
-}
-
-// Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
-
-Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec,Rcpp::IntegerVector z, int N, int M,int K, int P){
-
-  Rcpp::NumericVector lrmat = Rcpp::NumericVector(Dimension(M,N,N));
-  Rcpp::NumericVector s = initializeStatistics(N,P);
-  //int a,b,u,v,i,j;
-  for (int m = 0; m < M; m++) {
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        int zi = z[i];
-        int zj = z[j];
-        lrmat[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,zi,zj,s,beta,N,K,P);
-      }
-    }
-    s = updateStatistics(s,sen[m],rec[m],N,P);
-  }
-  return lrmat;
-}
-// Use lrm to compute the likelihood in the naive way
-double llk2(Rcpp::NumericVector lrm,
-            Rcpp::NumericVector times,
-            Rcpp::IntegerVector sen, 
-            Rcpp::IntegerVector rec, 
-            int N, int M){
-  double llk = 0;
-  double den;
-  double delta = 0;
-  int i,j;
-  llk = lrm[threeDIndex(0,sen[0],rec[0],M,N,N)];
-  for (int m = 1; m < M; m++) {
-    den = 0.0;
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        if (i != j) {
-          den += exp(lrm[threeDIndex(m,i,j,M,N,N)]);
-        }
-      }
-    }
-    llk += lrm[threeDIndex(m,sen[m],rec[m],M,N,N)];
-    delta = times[m] - times[m-1];
-    llk -= delta * den;
-  }
-  return llk;
-}
 
 RCPP_MODULE(brem){
   
@@ -872,15 +639,8 @@ RCPP_MODULE(brem){
              "")
     ;
   function( "gibbs", &gibbs ) ;
+  function( "gibbs_with_init", &gibbs_with_init ) ;
   function( "loglikelihood_fast", &llkfast ) ;
-  function( "loglikelihood", &llk ) ;
-  function( "loglikelihood_from_lrm", &llk2 ) ;
-  function( "log_intensity_array", &lrm ) ;
-  function( "log_intensity_array_fast", &lrmfast ) ;
-  function( "update_statistics", &updateStatistics);
-  function( "compute_lambda", &computeLambda);
-  function( "initialize_statistics", &initializeStatistics);
-  function( "test_last", &test_last);
   function( "compute_lambda_fast", &computeLambdaFast);
   function( "rcategorical", &rcategorical);
 }

@@ -51,13 +51,16 @@ test_that("gibbs runs with K>2",{
 
 library(brem)
 load("data/synthetic.rdata")
+set.seed(2)
 s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,M,P)
 s$precompute()
 
-K <- 10
+K <- 5
 load("results/synthetic/full.10.rdata")
 b <- loglikelihood_fast(res$beta,res$z-1,s$ptr(),K)
 b <- gibbs(res$beta,res$z-1,s$ptr(),K)
+
+
 
 # 
 # # TODO: Test gibbs probabilities

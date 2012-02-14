@@ -32,6 +32,6 @@ seq 3 | parallel --sshlogin 8/d10,8/d11 './tmp.Rscript'
 ./dashboard.r -d "synthetic"
 
 cd ~/Documents/blockrem/
-rsync -auvz . duboisc@d1:/extra/duboisc0/blockrem/
+rsync -auvz pkg duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results .
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/figs .
