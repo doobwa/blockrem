@@ -17,7 +17,7 @@ simulate.brem <- function(M,N,z,beta) {
     i <- A[m-1,2]
     j <- A[m-1,3]
     
-    s <- update_statistics(s,i-1,j-1,N,P)
+    s <- update_statistics(s,m-1,i-1,j-1,N,P)
     # Compute changes to lambda
     for (r in 1:N) {
       lambda[r,j] <- compute_lambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
@@ -70,7 +70,7 @@ brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
 brem.mle <- function(A,N,K,P,z,beta=NULL) {
   fn <- function(par) {
     beta <- array(par,c(P,K,K))
-    beta[7:11,,] <- 0
+    beta[7:13,,] <- 0
     -brem.llk(A,N,z,beta)
   }
   if (is.null(beta)) beta <- array(0,c(P,K,K))

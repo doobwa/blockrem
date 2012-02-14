@@ -37,6 +37,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [X] Include degree effects (transform: sqrt? log?)
 - [X] Get test suite to display results on all test scripts.
 - [X] Make into a package.
+* TODO Week 4:
 - Try eckmann-small and synthetic dataset with degree effects.  Tinker with simulating with degree effects.  Perhaps come up with other parameterization that is less sensitive to explosion.
 - Work on better proposal dist. and better mixing of group assignments.
   - Try split moves where we select a subset and offer them a new
@@ -56,6 +57,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Log likelihood baseline that only knows timing effects.
 - Write abstract.
 - Add Enron.
+- Add UC Irvine dataset
 - Add px feature to define which parameters to fit.
 - [X] See if we can learn groups on synthetic data.
 - Derive/implement EM for baseline model.

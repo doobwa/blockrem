@@ -16,6 +16,16 @@ lrmfast
 gibbs
 computeLambdaFast
 
+Currently implemented statistics for a particular (t,i,j):
+- Pshifts: ab-ba, ab-by, ab-ay, ab-xa, ab-xb, ab-ab
+- Degree effects: 
+  - sender out degree
+  - sender in degree
+  - receiver out degree
+  - receiver in degree
+  - number of times this dyad has occurred
+  - number of changepoints fo this dyad
+
 rcategorical is a helper function for gibbs.  It draws from a categorical distribution when the log probabilities are given.
  */
 
@@ -97,7 +107,7 @@ public:
 
   // Update the statistics for dyad (i,j) with the information that dyad (a,b) just occurred.  s_1{(i,j)} (the statistic for an abba effect)  will now be 1 if b==i and a==j.
 
-  void update(int a, int b, int i, int j) {
+  void update(int m, int a, int b, int i, int j) {
     s[i][j][0] = 1;
     if (i != j) { 
       // P-shifts
@@ -121,6 +131,10 @@ public:
       if (b==j) {// && a!=i) {
         s[i][j][10] += 1; // receiver in degree
       }
+      if (a==i && b==j) {
+        s[i][j][11] += 1; // dyad count
+      }
+      s[i][j][12] = m;   // changepoint count
     }
   }
 
@@ -140,14 +154,14 @@ public:
      // Update statistics for those affected by previous event
       for (int r = 0; r < N; r++) {
         if (r!=j && r!=i) {
-          update(i,j,i,r);
-          update(i,j,r,i);
-          update(i,j,j,r);
-          update(i,j,r,j);
+          update(m,i,j,i,r);
+          update(m,i,j,r,i);
+          update(m,i,j,j,r);
+          update(m,i,j,r,j);
         }
       }
-      update(i,j,i,j);
-      update(i,j,j,i);
+      update(m,i,j,i,j);
+      update(m,i,j,j,i);
 
 
       // Update statistics and changepoints for all dyads affected by (i,j)@m
@@ -190,15 +204,13 @@ public:
       u[i].push_back(m);
       for (int j = 0; j < N; j++) {
         if (i != j) {
-          update(a,b,i,j);
+          update(m,a,b,i,j);
           x[i][j].push_back(s[i][j]);  // should go unused.
           v[i][j].push_back(m);
           w[i][j][m] = v[i][j].size() - 1;
         }
       }
     }
-      
-    Rprintf("\n");
   }
 
   // Get the statistic vector s_(i,j) that is used before event m.
@@ -288,8 +300,9 @@ double computeLambdaFast(int i, int j, int zi, int zj, vector<int> s, Rcpp::Nume
   for (int p = 1; p < 7; p++) {
     lam += s[p] * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
-  for (int p = 7; p < P; p++) {
-    lam += log(s[p]+1) * beta[threeDIndex(p,zi,zj,P,K,K)];
+  double numEvents = double(s[12]);
+  for (int p = 7; p < 12; p++) {
+    lam += s[p]/(numEvents + 1) * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
   return lam;
 }
@@ -343,43 +356,6 @@ double llki(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, RemStat *s, 
 }
 
 
-// int rcategorical(Rcpp::NumericVector lp) {
-  // int max;
-  // for (int i = 0; i < lp.size(); i++) {
-  //   if (lp[i] > lp[max]) max = i;
-  // }
-//   // for (int i = 0; i < lp.size(); i++) {
-//   //   lp[i] = exp(lp[i] - lp[max]);
-//   // }
-//   //  lp = exp(lp - lp[max]);
-//   for (int i = 0; i < lp.size(); i++) {
-//     lp[i] = exp(lp[i]);
-//   }
-//   for (int i = 1; i < lp.size(); i++) {
-//     lp[i] = lp[i-1];
-//   }
-//   Rprintf("%f %f\n",lp[0],lp[1]);
-//   int i;
-//   double lpm = lp[lp.size()-1];
-//   double u = as<double>(Rcpp::runif(1));
-//   for (i = 0; i < lp.size(); i++) {
-//     if (u < lp[i]/lpm) {
-//       return i;
-//     }
-//   }
-// int rcategorical2 (Rcpp::NumericVector lp) {
-//   RInside R(argc, argv);                      // create an embedded R instance
-//   R["lp"] = lp;
-//   std::string evalstr = "\
-// p <- exp(lp - max(lp)) \
-// sample(1,1:length(lp),prob=p) - 1
-// ";                     // returns Z
-
-//   ans = R.parseEval(evalstr);    // eval the init string -- Z is now in ans
-
-//   Rcpp::IntegerVector k(ans);
-//   return as<int>(k);
-// }
  bool IsFiniteNumber(double x) 
     {
         return (x <= DBL_MAX && x >= -DBL_MAX); 
@@ -593,7 +569,7 @@ Rcpp::NumericVector initializeStatistics(int N, int P) {
 }
 
 
-Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N, int P) {
+Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int m, int a, int b, int N, int P) {
   // Create vector of indicators for each pshift.
   // i.e. If I[(i,j) is ab-ba from last event (a,b)]
     // Iterate through dyads having either a or b as a sender or receiver
@@ -616,18 +592,22 @@ Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N,
           s[threeDIndex(6,i,j,P,N,N)] = (i==a & i!=b & j!=a & j==b);
 
           // Degree effects
-          if (a==i & b!=j) {
+          if (a==i && b!=j) {
             s[threeDIndex(7,i,j,P,N,N)] += 1;  // sender out degree
           }
-          if (b==i & a!=j) {
+          if (b==i && a!=j) {
             s[threeDIndex(9,i,j,P,N,N)] += 1;  // sender in degree
           }
-          if (a==j & b!=i) { 
+          if (a==j && b!=i) { 
             s[threeDIndex(8,i,j,P,N,N)] += 1;  // receiver out degree
           }
-          if (b==j & a!=i) {
+          if (b==j && a!=i) {
             s[threeDIndex(10,i,j,P,N,N)] += 1; // receiver in degree
           }
+          if (a==i && b==j) {
+            s[threeDIndex(11,i,j,P,N,N)] += 1; // dyad count
+          }
+          s[threeDIndex(12,i,j,P,N,N)] = m; // changepoint count
         }
       }
     }
@@ -635,6 +615,8 @@ Rcpp::NumericVector updateStatistics(Rcpp::NumericVector s, int a, int b, int N,
    s[threeDIndex(8,b,a,P,N,N)] += 1; // 
    s[threeDIndex(9,b,a,P,N,N)] += 1;
    s[threeDIndex(10,a,b,P,N,N)] += 1;
+   s[threeDIndex(11,a,b,P,N,N)] += 1;
+   s[threeDIndex(12,a,b,P,N,N)] = m;
   return s;
 }
 
@@ -644,8 +626,6 @@ vector< vector< vector<int> > > initializeStatistics2(int N, int P) {
   for (int i = 0; i < N; i++) {
     vector< vector<int> > s_i;
     for (int j = 0; j < N; j++) {
-      //      int arr[P] = {0};
-      //      vector<int> s_ij (arr, arr + sizeof(arr) / sizeof(arr[0]) );
       vector<int> s_ij(P);
       s_i.push_back(s_ij);
     }
@@ -658,68 +638,17 @@ vector< vector< vector<int> > > initializeStatistics2(int N, int P) {
 //
 double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::NumericVector beta, int N, int K, int P) {
   double lam = beta[threeDIndex(0,zi,zj,P,K,K)];//s[threeDIndex(0,i,j,P,N,N)];
-  for (int p = 1; p < P; p++) {
+  for (int p = 1; p < 7; p++) {
     lam += s[threeDIndex(p,i,j,P,N,N)] * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
+  double numEvents = double(s[threeDIndex(12,i,j,P,N,N)]);//s[12];
+  for (int p = 7; p < 12; p++) {
+    lam += s[threeDIndex(p,i,j,P,N,N)]/(numEvents+1) * beta[threeDIndex(p,zi,zj,P,K,K)];
+  }
+
   return lam;
 }
 
-// TEMP: Parallel attempt
-// Rcpp::NumericVector llkp(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec, Rcpp::IntegerVector z, int N, int M, int K, int P) {
-//   omp_set_num_threads(16);
-//   double lam = 0;
-//   int i,j,r,zi,zj;
-//   double llktotal = 0.0;
-//   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N);
-
-//   Rcpp::NumericVector s  = initializeStatistics(N,P);
-//   s = updateStatistics(s,sen[0],rec[0],N,P);
-//   updateStatistics2(s,sen[0],rec[0],0,0,N,P);
-//   Rcpp::NumericVector llk(M);
-//   Rcpp::NumericVector llks(N);
-  
-//   for (int m = 1; m < (M-1); m++) {
-//     i = sen[m];
-//     j = rec[m];
-//     zi = z[i];
-//     zj = z[j];
-//     //llk(m) += computeLambda2(i,j,zi,zj,s,beta,N,K,P);
-    
-//     double llkm = computeLambda2(i,j,zi,zj,s,beta,N,K,P);
-//     #pragma omp parallel reduction(-:llkm)
-//     {
-//     #pragma omp for
-//       for (r = 0; r < N; r++) {
-//         int zr = z[r];
-//         if (r != i) {
-//           lam  = computeLambda2(i,r,zi,zr,s,beta,N,K,P);
-//           llkm -= (times[m] - times[mp(i,r)]) * exp(lam);
-//           lam  = computeLambda2(r,i,zr,zi,s,beta,N,K,P);
-//           llkm -= (times[m] - times[mp(r,i)]) * exp(lam);
-//           mp(i,r) = m;
-//           mp(r,i) = m;
-//           updateStatistics2(s,sen[m],rec[m],i,r,N,P);
-//           updateStatistics2(s,sen[m],rec[m],r,i,N,P);
-//         }
-//         if (r != j) {
-//           lam  = computeLambda2(j,r,zj,zr,s,beta,N,K,P);
-//           llkm -= (times[m] - times[mp(j,r)]) * exp(lam);
-//           lam  = computeLambda2(r,j,zr,zj,s,beta,N,K,P);
-//           llkm -= (times[m] - times[mp(r,j)]) * exp(lam);
-//           mp(j,r) = m;  // update mp
-//           mp(r,j) = m;
-//           updateStatistics2(s,sen[m],rec[m],j,r,N,P);
-//           updateStatistics2(s,sen[m],rec[m],r,j,N,P);
-//         }
-//       }
-//     } // openmp
-//     //llk(m) = std::accumulate(llks.begin(),llks.end(), 0.0);
-//   }
-
-//   //llktotal = std::accumulate(llk.begin(),llk.end(), 0.0);
-//   return llk;
-// }
-  
 // Compute a data structure for finding tau_{ijm}.
 // Returns tau, where tau[i][j] is a vector of event indices m where lambda_{ij} changed (due to an event involving either i or j.
 
@@ -736,7 +665,7 @@ Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
 
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N);
   Rcpp::NumericVector s  = initializeStatistics(N,P);
-  s = updateStatistics(s,sen[0],rec[0],N,P);
+  s = updateStatistics(s,0,sen[0],rec[0],N,P);
 
   for (int m = 1; m < (M-1); m++) {
     i = sen[m];
@@ -765,7 +694,7 @@ Rcpp::NumericVector llk(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
         mp(r,j) = m;
       }
     }
-    s = updateStatistics(s,sen[m],rec[m],N,P);
+    s = updateStatistics(s,m,sen[m],rec[m],N,P);
     llks[m] = llk;
   }
   // All intensities assumed to change at the last event
@@ -819,7 +748,7 @@ Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcp
         lrmat[threeDIndex(m,i,j,M,N,N)] = computeLambda(i,j,zi,zj,s,beta,N,K,P);
       }
     }
-    s = updateStatistics(s,sen[m],rec[m],N,P);
+    s = updateStatistics(s,m,sen[m],rec[m],N,P);
   }
   return lrmat;
 }
