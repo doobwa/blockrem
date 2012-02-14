@@ -98,12 +98,12 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   
   llks <- rep(0,niter)
   M <- nrow(A)
-  P <- 11
+  P <- 12
   param <- array(0,c(niter,K,K,P))
   zs <- NULL
 
   current <- array(rnorm(P*K^2,priors$beta$mu,priors$beta$sigma),c(P,K,K))
-  current[7:11,,] <- 0
+  #current[7:12,,] <- 0
   
   if (!is.null(beta)) current <- beta
   if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
@@ -112,23 +112,23 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   
   for (iter in 1:niter) {
     
-    if (K > 1) {
-      
-      z.new <- sample(1:K,N,replace=TRUE)
-      cand <- current
-      clp <- olp
-      for (i in 1:5) {
-        res <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd,olp=clp)
-        cand <- res$current
-        clp <- res$olp
-      }
-      if (clp - olp > log(runif(1))) {
-        z <- z.new
-        current <- cand
-        olp <- clp
-        cat("Node ordering accepted:",z,"\n")
-      }
-    }
+#     if (K > 1) {
+#       
+#       z.new <- sample(1:K,N,replace=TRUE)
+#       cand <- current
+#       clp <- olp
+#       for (i in 1:5) {
+#         res <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd,olp=clp)
+#         cand <- res$current
+#         clp <- res$olp
+#       }
+#       if (clp - olp > log(runif(1))) {
+#         z <- z.new
+#         current <- cand
+#         olp <- clp
+#         cat("Node ordering accepted:",z,"\n")
+#       }
+#     }
     # For each effect sample via MH
     for (i in 1:2) {
       res <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd,olp)
@@ -174,7 +174,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   return(res)
 }
 brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1,olp=NULL) {
-  px <- c(1,1,1,1,1,1,1,0,0,0,0)  # TODO: Eventually allow MH updates on degree effects
+  px <- c(1,1,1,1,1,1,1,1,1,1,1,1)  # TODO: Eventually allow MH updates on degree effects
   if (is.null(olp)) {
     olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
   }

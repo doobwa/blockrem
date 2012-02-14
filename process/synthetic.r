@@ -13,8 +13,10 @@ beta <- list("intercept"=matrix(c(0,-1,-1,0),K,K),
              "abab"=matrix(c(0,-1,-1,0),K,K),
              "sod"=matrix(0,K,K),
              "rod"=matrix(0,K,K),
-             "sid"=matrix(c(0,0,0,0),K,K),
-             "rid"=matrix(0,K,K))
+             "sid"=matrix(c(2,0,0,0),K,K),
+             "rid"=matrix(0,K,K),
+             "dc" =matrix(c(1,0,0,2),K,K),
+             "cc" =matrix(0,K,K))
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
 

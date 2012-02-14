@@ -24,7 +24,7 @@ library(brem)
 # Precompute data structures
 N <- max(c(A[,2],A[,3]))
 M <- nrow(A)
-P <- 11
+P <- 12
 s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,M,P)
 s$precompute()
 
