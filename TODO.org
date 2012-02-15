@@ -37,12 +37,11 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [X] Include degree effects (transform: sqrt? log?)
 - [X] Get test suite to display results on all test scripts.
 - [X] Make into a package.
-- Fix bug where K=5 z vector has none of one of the clusters (or something)
-- Try eckmann-small and synthetic dataset with degree effects.  Tinker
-  with simulating with degree effects.  Perhaps come up with other
-  parameterization that is less sensitive to explosion.  
-  - fit via ML with fixed cluster assignments.
-  - Ans: ML performs quite poorly on synthetic data.
+* TODO Week 4:
+- Try eckmann-small and synthetic dataset with degree effects.  
+  - Tinker with simulating with degree effects.  Perhaps come up with
+    other parameterization that is less sensitive to explosion.
+  - 
 - Work on better proposal dist. and better mixing of group assignments.
   - Try split moves where we select a subset and offer them a new
     cluster with the same parameters as the previous cluster.  Try an
@@ -74,7 +73,8 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Write up other possibilities for layering additional types of data, DP, or other extensions.
 - Try random groups and see if REM still picks out (significantly) different parameters
 - Consider MIT dataset or classroom dataset.
-- Clean up interfaces to Rcpp code.
+- Clean up interfaces to Rcpp code.  
+  - Put all constants in RemStat.  Take out of ComputeLambdaFast, etc.
 - Document Rcpp code better.
 - Add other statistics other than pshifts
 - Initialize with guess at z's, rather than guess at beta.

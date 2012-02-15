@@ -2,7 +2,7 @@ context("using precomputed statistics")
 
 M <- 7
 N <- 5
-P <- 11
+P <- 13
 times <- seq(0,.6,by=.1)
 sen <- c(1,3,3,1,2,5,2)
 rec <- c(3,1,1,3,5,1,4)
@@ -16,6 +16,7 @@ test_that("Can use precomputed data structures",{
   
   sij <- x[[3]][[1]]
   expect_that(length(sij),equals(7))
+  expect_that(length(sij[[1]]),equals(13))
   
   v <- s$get_all_v()
   
@@ -25,12 +26,13 @@ test_that("Can use precomputed data structures",{
 test_that("a few statistics vectors are correct",{
 
   sij <- x[[3]][[1]]
-  expect_that(sij[[1]],equals(rep(0,11)))
+  expect_that(sij[[1]],equals(rep(0,13)))
   ans <- rep(0,P)
   ans[1] <- 1 # intercept
   ans[2]  <- 1 # abba
   ans[9]  <- 1 # receiver out-degree
   ans[10] <- 1 # sender in-degree
+  ans[13] <- 0 # event index of the starting changepoint
   expect_that(sij[[2]],equals(ans))
   ans <- rep(0,P)
   ans[1] <- 1 #intercept
@@ -38,8 +40,17 @@ test_that("a few statistics vectors are correct",{
   ans[8]  <- 1
   ans[9]  <- 1 # receiver out-degree
   ans[10] <- 1 # sender in-degree
-  ans[11] <- 1
+  ans[11] <- 1 # receiver in degree
+  ans[12] <- 1 # dyad count
+  ans[13] <- 1 # event count
   expect_that(sij[[3]],equals(ans))
+  sij <- x[[4]][[2]]
+  ans <- rep(0,P)
+  ans[1] <- 1 #intercept
+  ans[4] <- 1 # ab-xa
+  ans[9]  <- 1 # receiver out-degree
+  ans[13] <- 4 # event count
+  expect_that(sij[[2]],equals(ans))
 })
 test_that("get_v gets vectors as expected",{
   a <- x[[3]][[1]]
@@ -83,7 +94,9 @@ test_that("taus from get_tau match with R version",{
                "sod"=matrix(0,K,K),
                "rod"=matrix(0,K,K),
                "sid"=matrix(0,K,K),
-               "rid"=matrix(0,K,K))
+               "rid"=matrix(0,K,K),
+               "dc"=matrix(0,K,K),
+               "cc"=matrix(0,K,K))
   z <- c(rep(1,N/2),rep(2,N/2))
   P <- length(beta)
   beta <- abind(beta,rev.along=3)
@@ -93,7 +106,7 @@ test_that("taus from get_tau match with R version",{
   s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   
-  lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
+  #lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
   
   taus <- test_taus(lrm,times,sen-1,rec-1,M,N)
   taus2 <- test_taus_from_s(times,sen-1,rec-1,N,M,P)
@@ -161,20 +174,25 @@ test_that("computeLambdaFast uses degree effects properly",{
                "sod"=matrix(0,K,K),
                "rod"=matrix(0,K,K),
                "sid"=matrix(0,K,K),
-               "rid"=matrix(0,K,K))
-  P <-11
+               "rid"=matrix(0,K,K),
+               "dc"=matrix(0,K,K),
+               "cc"=matrix(0,K,K))
+  P <-13
   beta <- abind(beta,rev.along=3)
   # Add in some degree effects
   beta[8,1,1] <- 4
   beta[9,1,1] <- 3
   beta[10,1,1] <- 2
   beta[11,1,1] <- 1
+  beta[12,1,1] <- .5
   
   sij <- s$get_s(3,i-1,j-1)
   lam <- compute_lambda_fast(i-1,j-1,zi-1,zj-1,sij,beta,N,K,P)
   
-  sij[8:11] <- log(sij[8:11] + 1)
-  ans <- as.numeric(beta[,zi,zj] %*% sij)
+  sij[8:12] <- sij[8:12]/(sij[13] + 1)
+  sij <- sij[-13]
+  b <- beta[-13,zi,zj]
+  ans <- as.numeric(b %*% sij)
   expect_that(lam,equals(ans))
   
 })

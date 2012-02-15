@@ -13,14 +13,17 @@ s <- list("intercept" = matrix(1,N,N),
           "sod" = matrix(0,N,N),
           "rod" = matrix(0,N,N),
           "sid" = matrix(0,N,N),
-          "rid" = matrix(0,N,N))
+          "rid" = matrix(0,N,N),
+          "dc"=matrix(0,N,N),
+          "cc"=matrix(0,N,N))
 P <- length(s)
 s <- abind(s,rev.along=3)
 i <- 1
 j <- 2
 a <- 2
 b <- 1
-s <- update_statistics(s,a-1,b-1,N,P)
+m <- 1
+s <- update_statistics(s,1,a-1,b-1,N,P)
 
 test_that("statistics creation works",{
   i <- 1
@@ -52,7 +55,9 @@ test_that("computeLambda correct for small example",{
                "sod"=matrix(0,1,1),
                "rod"=matrix(0,1,1),
                "sid"=matrix(0,1,1),
-               "rid"=matrix(1,1,1))
+               "rid"=matrix(1,1,1),
+               "dc"=matrix(0,1,1),
+               "cc"=matrix(0,1,1))
   P <- length(beta)
   beta <- abind(beta,rev.along=3)
   
@@ -63,7 +68,7 @@ test_that("computeLambda correct for small example",{
     }
   }
   ans <- matrix(beta[1,1,1],N,N)
-  ans[-b,b] <- ans[-b,b] + beta[11,1,1]  # rec. indegree effect
+  ans[-b,b] <- ans[-b,b] + beta[11,1,1]/2  # rec. indegree effect
   ans[b,a] <- ans[b,a] + beta[2,1,1]
   expect_that(ans,equals(tmp))
 })
@@ -88,14 +93,16 @@ test_that("lrm and llk functions work on small example for K=1",{
                "sod"=matrix(0,1,1),
                "rod"=matrix(0,1,1),
                "sid"=matrix(0,1,1),
-               "rid"=matrix(0,1,1))
+               "rid"=matrix(0,1,1),
+               "dc"=matrix(0,1,1),
+               "cc"=matrix(0,1,1))
   P <- length(beta)
   beta <- abind(beta,rev.along=3)
-  
+  m <- 2
   a <- 1
   b <- 3
   s <- array(0,c(P,N,N))
-  s <- update_statistics(s,a-1,b-1,N,P)
+  s <- update_statistics(s,m,a-1,b-1,N,P)
   compute_lambda(1,0,0,0,s,beta,N,K,P)  # 
   
   # Constract log rate matrix by hand and compare to drem$lrm
@@ -152,7 +159,9 @@ test_that("lrm and llk functions work on small example for K=2",{
                "sod"=matrix(0,K,K),
                "rod"=matrix(0,K,K),
                "sid"=matrix(0,K,K),
-               "rid"=matrix(0,K,K))
+               "rid"=matrix(0,K,K),
+               "dc"=matrix(0,K,K),
+               "cc"=matrix(0,K,K))
   z <- c(rep(1,N/2),rep(2,N/2))
   P <- length(beta)
   beta <- abind(beta,rev.along=3)

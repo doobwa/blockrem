@@ -17,7 +17,7 @@ simulate.brem <- function(M,N,z,beta) {
     i <- A[m-1,2]
     j <- A[m-1,3]
     
-    s <- update_statistics(s,i-1,j-1,N,P)
+    s <- update_statistics(s,m-1,i-1,j-1,N,P)
     # Compute changes to lambda
     for (r in 1:N) {
       lambda[r,j] <- compute_lambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
@@ -70,7 +70,8 @@ brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
 brem.mle <- function(A,N,K,P,z,beta=NULL) {
   fn <- function(par) {
     beta <- array(par,c(P,K,K))
-    - sum(brem.llk(A,N,z,beta))
+    beta[7:13,,] <- 0
+    -brem.llk(A,N,z,beta)
   }
   if (is.null(beta)) beta <- array(0,c(P,K,K))
   beta.hat <- optim(as.vector(beta),fn)$par
@@ -97,12 +98,12 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   
   llks <- rep(0,niter)
   M <- nrow(A)
-  P <- 11
+  P <- 12
   param <- array(0,c(niter,K,K,P))
   zs <- NULL
 
   current <- array(rnorm(P*K^2,priors$beta$mu,priors$beta$sigma),c(P,K,K))
-  current[7:11,,] <- 0
+  #current[7:12,,] <- 0
   
   if (!is.null(beta)) current <- beta
   if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
@@ -111,26 +112,25 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   
   for (iter in 1:niter) {
     
-    if (K > 1) {
-      if (verbose) cat("Node reorder:")
-      z.new <- sample(1:K,N,replace=TRUE)
-      cand <- current
-      clp <- brem.lpost.fast(A,N,K,z.new,s,cand,priors)
-      for (i in 1:5) {
-        res  <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd,olp=clp)
-        cand <- res$current
-        clp  <- res$olp
-      }
-      if (clp - olp > log(runif(1))) {
-        cat("Node ordering accepted:",z.new,olp,clp,"\n")
-        z <- z.new
-        current <- cand
-        olp <- clp
-      }
-    }
+#     if (K > 1) {
+#       
+#       z.new <- sample(1:K,N,replace=TRUE)
+#       cand <- current
+#       clp <- olp
+#       for (i in 1:5) {
+#         res <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd,olp=clp)
+#         cand <- res$current
+#         clp <- res$olp
+#       }
+#       if (clp - olp > log(runif(1))) {
+#         z <- z.new
+#         current <- cand
+#         olp <- clp
+#         cat("Node ordering accepted:",z,"\n")
+#       }
+#     }
     # For each effect sample via MH
     for (i in 1:2) {
-      if (verbose) cat("\nMH")
       res <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd,olp)
       current <- res$current
       olp <- res$olp
@@ -157,21 +157,12 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
         z[i] <- sample(1:K,size=1,prob=ps)
       }
     }
-    
-     # TEMP:
-    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter)
-    outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
-    save(res,file=outfile)
-    
-    
     if (gibbs=="fast") {
-      if (verbose) cat("\nGibbs")
       z <- gibbs(current,z-1,s$ptr(),K)$z + 1
     }
     
     zs[[iter]] <- z
     param[iter,,,] <- current
-    if (verbose) cat("\nLlk")
     llks[iter] <- brem.lpost.fast(A,N,K,z,s,current,priors)
     
     cat("iter",iter,":",llks[iter],"z:",z,"\n")
@@ -183,7 +174,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   return(res)
 }
 brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1,olp=NULL) {
-  px <- c(1,1,1,1,1,1,1,0,0,0,0)  # TODO: Eventually allow MH updates on degree effects
+  px <- c(1,1,1,1,1,1,1,1,1,1,1,1)  # TODO: Eventually allow MH updates on degree effects
   if (is.null(olp)) {
     olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
   }
