@@ -24,10 +24,11 @@ library(brem)
 # Precompute data structures
 N <- max(c(A[,2],A[,3]))
 M <- nrow(A)
-P <- 12
+P <- 13
 s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,M,P)
 s$precompute()
 
 fit <- brem.mcmc(A,N,opts$numclusters,s,model.type=opts$model.type,
-		             niter=opts$numiterations,outdir=opts$outdir,gibbs=opts$gibbs)
+		 niter=opts$numiterations,outdir=opts$outdir,gibbs=opts$gibbs)
 
+fit <- brem.mcmc(A,N,5,s,model.type="full",niter=10,outdir="results/eckmann-small")

@@ -67,7 +67,8 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Write up other possibilities for layering additional types of data, DP, or other extensions.
 - Try random groups and see if REM still picks out (significantly) different parameters
 - Consider MIT dataset or classroom dataset.
-- Clean up interfaces to Rcpp code.
+- Clean up interfaces to Rcpp code.  
+  - Put all constants in RemStat.  Take out of ComputeLambdaFast, etc.
 - Document Rcpp code better.
 - Add other statistics other than pshifts
 - Initialize with guess at z's, rather than guess at beta.
