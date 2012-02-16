@@ -10,7 +10,9 @@
 ./brem.r -f "data/eckmann-small.rdata" -k 2 -n 500 -m "full" -d "results/eckmann-small" -g "fast"
 ./brem.r -f "data/eckmann-small.rdata" -k 1 -n 500 -m "full" -d "results/eckmann-small" -g "fast"
 
-./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./brem.r -d {} -k 1 -n 500 -m "full"' ::: "synthetic" "eckmann-small"
+opts=list(dataset="synthetic",numclusters=5,model.type="full",niter=10,gibbs=TRUE,numiterations=10)
+
+./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./brem.r -d {} -k 1 -n 500 -m "full"' ::: "synthetic" "eckmann-small" "twitter"
 
 ./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./brem.r - "data/synthetic.rdata" -k 2 -n 500 -m {} -d "results/synthetic"' ::: "baserates" "shared" "full"
 

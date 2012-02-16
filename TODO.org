@@ -39,15 +39,15 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [X] Make into a package.
 * TODO Week 4:
 - Try eckmann-small and synthetic dataset with degree effects.  
-  - Tinker with simulating with degree effects.  Perhaps come up with
+  - [x] Tinker with simulating with degree effects.  Perhaps come up with
     other parameterization that is less sensitive to explosion.
-  - 
 - Work on better proposal dist. and better mixing of group assignments.
   - Try split moves where we select a subset and offer them a new
     cluster with the same parameters as the previous cluster.  Try an
     experiment with this method where we have 2 true clusters and
     initialize everyone in one cluster.
   - Or just use tons of chains with few iterations?
+- Understand why we outperform true model in synthetic example
 - Add tests for Gibbs equations.  For example, start with true data
   and learn z's.
 - Add tests for synthetic fitting?
