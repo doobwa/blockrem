@@ -98,12 +98,12 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   
   llks <- rep(0,niter)
   M <- nrow(A)
-  P <- 12
+  P <- 13
   param <- array(0,c(niter,K,K,P))
   zs <- NULL
 
   current <- array(rnorm(P*K^2,priors$beta$mu,priors$beta$sigma),c(P,K,K))
-  #current[7:12,,] <- 0
+  #current[7:13,,] <- 0
   
   if (!is.null(beta)) current <- beta
   if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
