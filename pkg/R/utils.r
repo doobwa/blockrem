@@ -223,6 +223,9 @@ get.indices <- function(A,N) {
   return(xs)
 }
 
+#' Compute the rank of the each event in the observed edgelist given an array of intensities
+#' @edgelist Mx3 matrix of event times, senders and recipients
+#' @ratemats MxNxN array of intensities.  
 ranks <- function(edgelist,ratemats,...) {
   M <- nrow(edgelist)
   n <- dim(ratemats)[2]
@@ -235,6 +238,10 @@ ranks <- function(edgelist,ratemats,...) {
   }
   return(r)
 }
+
+#' Compute the recall metric using a vector of ranks
+#' @rs vector of observed ranks
+#' @top vector of cutpoints to compute
 recall <- function(rs,top=c(1:20)) {
   data.frame(k=top,recall=sapply(top,function(k) mean(rs <= k)))
 }
@@ -374,4 +381,56 @@ ratemat.from.marginals <- function(train,test,N) {
   lrm <- array(0,c(M,N,N))
   for (i in 1:M) lrm[i,,] <- r
   return(lrm)
+}
+
+#' Compute likelihood using the log intensity array.
+#' @lrm log intensity array
+#' @times 
+#' @sen
+#' @rec
+#' @z
+#' @N
+#' @M
+brem.llk.slow <- function(lrm,times,sen,rec,z,N,M) {
+  mp <- matrix(1,N,N)
+  llk <- 0
+  llks <- rep(0,4)
+  for (m in 2:(M-1)) {
+    i = sen[m];
+    j = rec[m];
+    zi = z[i];
+    zj = z[j];
+    llk = llk + lrm[m,i,j]
+    
+    for (r in 1:N) {
+      zr = z[r];
+      if (r != i) {
+        lam  = lrm[m,i,r]
+        llk  = llk - (times[m] - times[mp[i,r]]) * exp(lam);
+        lam  = lrm[m,r,i]
+        llk  = llk - (times[m] - times[mp[r,i]]) * exp(lam);
+        mp[i,r] = m;
+        mp[r,i] = m;
+      }
+      if (r != j) {
+        lam  = lrm[m,j,r]
+        llk  = llk - (times[m] - times[mp[j,r]]) * exp(lam);
+        lam  = lrm[m,r,j]
+        llk  = llk - (times[m] - times[mp[r,j]]) * exp(lam);
+        mp[j,r] = m;
+        mp[r,j] = m;
+      }
+    }
+    llks[m] <- llk
+  }
+  for (i in 1:N) {
+    for (j in 1:N) {
+      if (i != j) {
+        lam  = lrm[M,i,j]
+        llk  = llk - (times[M] - times[mp[i,j]]) * exp(lam);
+      }
+    }
+  }
+  llks[M] <- llk
+  return(llks)
 }

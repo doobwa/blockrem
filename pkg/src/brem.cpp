@@ -447,8 +447,13 @@ Rcpp::List gibbs(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::Integer
 }
 
 
-// Use the precomputed statistics s to compute the likelihood
-Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
+
+/*
+ Use the precomputed statistics s to compute the likelihood
+ mx: vector of events to compute by default be a vector of 1 to M-2 (inclusive)
+ */
+
+Rcpp::NumericVector llkfast_subset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector mx) {
   RemStat *s = XPtr<RemStat>(statptr_);
   int N = s->N;
   int P = s->P;
@@ -470,8 +475,10 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
   zi = z[i];
   zj = z[j];
   llks[0] = computeLambdaFast(i,j,zi,zj,s->get_s(0,i,j),beta,N,K,P);
-
-  for (int m = 1; m < (M-1); m++) {
+  
+  for (int v = 0; v < mx.size(); v++) {
+    int m = mx[v];
+  //for (int m = 1; m < (M-1); m++) {
     i = sen[m];
     j = rec[m];
     zi = z[i];
@@ -510,7 +517,7 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
     llks[m] = llk;
   }
 
-  //All intensities assumed to change at the last event
+  // All intensities assumed to change at the last event
   int m = M-1;
   llk = 0;
   for (int i = 0; i < N; i++) {
@@ -525,6 +532,12 @@ Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
   }
   llks[M-1] = llk;
   return llks;
+}
+Rcpp::NumericVector llkfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
+  RemStat *s = XPtr<RemStat>(statptr_);
+  int M = s->M;
+  Rcpp::IntegerVector mx = Rcpp::seq(1,M-2);
+  return llkfast_subset(beta,z,statptr_,K,mx);
 }
 // TEMP
 Rcpp::List test_last(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
@@ -809,6 +822,7 @@ RCPP_MODULE(brem){
     ;
   function( "gibbs", &gibbs ) ;
   function( "loglikelihood_fast", &llkfast ) ;
+  function( "loglikelihood_fast_subset", &llkfast_subset ) ;
   function( "loglikelihood", &llk ) ;
   function( "loglikelihood_from_lrm", &llk2 ) ;
   function( "log_intensity_array", &lrm ) ;

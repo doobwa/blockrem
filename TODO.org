@@ -41,6 +41,8 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Try eckmann-small and synthetic dataset with degree effects.  
   - [x] Tinker with simulating with degree effects.  Perhaps come up with
     other parameterization that is less sensitive to explosion.
+  - Improve parameterization of dyad count (so that we beat online baseline)
+- Use slice sampling to improve mixing of parameters
 - Work on better proposal dist. and better mixing of group assignments.
   - Try split moves where we select a subset and offer them a new
     cluster with the same parameters as the previous cluster.  Try an

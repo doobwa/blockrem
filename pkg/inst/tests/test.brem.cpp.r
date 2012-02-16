@@ -177,6 +177,10 @@ test_that("lrm and llk functions work on small example for K=2",{
   s$precompute()
   llk3 <- loglikelihood_fast(beta,z-1,s$ptr(),K)
   
+  # Use new likelihood function that can work with a subset of the events
+  llk5 <- loglikelihood_fast_subset(beta,z-1,s$ptr(),K,1:(M-2))
+  expect_that(sum(llk5),equals(sum(llk3)))
+  
   llk4 <- llk_fast(lrm,times,sen-1,rec-1,M,N)
   expect_that(sum(llk3),equals(sum(llk4)))
   

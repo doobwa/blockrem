@@ -118,11 +118,16 @@ lposts <- lapply(fits,function(f) {
 # unlist(lposts)
 
 
+# trace plots
+library(coda)
+r <- melt(res$param)
+q7 <- qplot(X1,value,data=r, colour=factor(X4),geom="line") + labs(colour="parameters for\n 1x1 block",x="iteration") + theme_bw() + facet_grid(X2~X3)
+
 cat("Creating dashboard.\n")
 library(gridExtra)
 pdf(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=20,height=10)
 blankPanel <- grid.rect(gp=gpar(col="white"))
-grid.arrange(q1, q2, q3, q4, q5, q6, ncol=3)
+grid.arrange(q1, q2, q3, q4, q5, q6, q7, ncol=4)
 dev.off()
 
 #ggsave(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=20,height=10)

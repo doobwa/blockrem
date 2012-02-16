@@ -83,19 +83,12 @@ brem.lpost <- function(A,N,K,z,beta,priors) {
   sum(llks)+lprior
 }
 brem.lpost.fast <- function(A,N,K,z,s,beta,priors=list(beta=list(mu=0,sigma=1))) {   
-  sum(loglikelihood_fast(beta,z-1,s$ptr(),K))+
+  sum(loglikelihood_fast(beta,z-1,s$ptr(),K)) +
   sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + 
   N * log(1/K)
 }
 
 brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE,outdir=getwd(),priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE) {
-  
-#   if (model.type=="baserates") {
-#     res <- sbm.mcmc(A,N,K,niter=niter,z=NULL,mcmc.sd=.1,gibbs=TRUE)
-#     outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
-#     save(res,file=outfile)
-#   }
-  
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 13
@@ -103,7 +96,6 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   zs <- NULL
 
   current <- array(rnorm(P*K^2,priors$beta$mu,priors$beta$sigma),c(P,K,K))
-  #current[7:13,,] <- 0
   
   if (!is.null(beta)) current <- beta
   if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
@@ -112,38 +104,18 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   
   for (iter in 1:niter) {
     
-#     if (K > 1) {
-#       
-#       z.new <- sample(1:K,N,replace=TRUE)
-#       cand <- current
-#       clp <- olp
-#       for (i in 1:5) {
-#         res <- brem.mh(A,N,K,P,z.new,s,cand,model.type,priors,mcmc.sd,olp=clp)
-#         cand <- res$current
-#         clp <- res$olp
-#       }
-#       if (clp - olp > log(runif(1))) {
-#         z <- z.new
-#         current <- cand
-#         olp <- clp
-#         cat("Node ordering accepted:",z,"\n")
-#       }
-#     }
     # For each effect sample via MH
-    for (i in 1:2) {
-      res <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd,olp)
+    if (mh) {
+      for (i in 1:2) {
+        res <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd,olp)
+        current <- res$current
+        olp <- res$olp
+      }
+    } else {
+      res <- brem.slice(A,N,K,P,z,s,current,model.type,priors,mcmc.sd,olp)
       current <- res$current
       olp <- res$olp
     }
-    
-    # Sample empty cluster parameters from prior.  Only sample baserates.
-#     for (k in 1:K) {
-#       if (length(which(z==k))==0) {
-#         current[,k,] <- current[,,k] <- 0
-#         current[1,k,] <- current[1,,k] <- rnorm(K,priors$beta$mu,priors$beta$sigma)
-#         cat("sampling empty cluster params\n",current[1,,],"\n")
-#       }
-#     }
     
     if (gibbs=="slow") {
       # Gibbs sample assignments
@@ -234,46 +206,66 @@ brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1
   }
   return(list(current=current,olp=olp))
 }
-brem.llk.slow <- function(lrm,times,sen,rec,z,N,M) {
-  mp <- matrix(1,N,N)
-  llk <- 0
-  llks <- rep(0,4)
-  for (m in 2:(M-1)) {
-    i = sen[m];
-    j = rec[m];
-    zi = z[i];
-    zj = z[j];
-    llk = llk + lrm[m,i,j]
-    
-    for (r in 1:N) {
-      zr = z[r];
-      if (r != i) {
-        lam  = lrm[m,i,r]
-        llk  = llk - (times[m] - times[mp[i,r]]) * exp(lam);
-        lam  = lrm[m,r,i]
-        llk  = llk - (times[m] - times[mp[r,i]]) * exp(lam);
-        mp[i,r] = m;
-        mp[r,i] = m;
-      }
-      if (r != j) {
-        lam  = lrm[m,j,r]
-        llk  = llk - (times[m] - times[mp[j,r]]) * exp(lam);
-        lam  = lrm[m,r,j]
-        llk  = llk - (times[m] - times[mp[r,j]]) * exp(lam);
-        mp[j,r] = m;
-        mp[r,j] = m;
+
+brem.slice <- function(A,N,K,P,z,s,beta,model.type="baserates",priors,olp=NULL) {
+  
+  #' Needs p,k1,k2,A,N,K,z,s,beta,priors,model.type
+  slicellk <- function(x) {
+    beta[p,k1,k2] <- x
+    if (model.type=="shared") {
+      for (j1 in 1:K) {
+        for (j2 in 1:K) {
+          if (k1==k2 & j1==j2) {
+            beta[p,j1,j2] <- x
+          } 
+          if (k1!=k2 & j1!=j2) {
+            beta[p,j1,j2] <- x
+          }
+        } 
       }
     }
-    llks[m] <- llk
+    brem.lpost.fast(A,N,K,z,s,beta,priors)
   }
-  for (i in 1:N) {
-    for (j in 1:N) {
-      if (i != j) {
-        lam  = lrm[M,i,j]
-        llk  = llk - (times[M] - times[mp[i,j]]) * exp(lam);
+  
+  px <- rep(1,P-1)
+  if (is.null(olp)) {
+    olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
+  }
+  
+  if (model.type=="baserates") {
+    beta[-1,,] <- 0
+    beta[1,1,1] <- 0
+    jx <- which(beta != 0)
+  } else if (model.type=="full") {
+    tmp <- array(1,c(P,K,K))
+    tmp[-P,,] <- 1
+    jx <- which(tmp==1)[-1]
+  }
+  
+  px <- 1:12
+  kx1 <- 1:K
+  kx2 <- 1:K
+  model.type <- "shared"
+  olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
+  for (p in px) {
+    cat(".")
+    for (k1 in kx1) {
+      for (k2 in kx2) {
+        newval <- uni.slice(beta[p,k1,k2],slicellk)#,gx0=olp)
+        beta[p,k1,k2] <- newval
+        olp <- attr(newval,"log.density")
       }
     }
   }
-  llks[M] <- llk
-  return(llks)
+  
+  return(list(current=current,olp=olp))
 }
+
+# Sample empty cluster parameters from prior.  Only sample baserates.
+#     for (k in 1:K) {
+#       if (length(which(z==k))==0) {
+#         current[,k,] <- current[,,k] <- 0
+#         current[1,k,] <- current[1,,k] <- rnorm(K,priors$beta$mu,priors$beta$sigma)
+#         cat("sampling empty cluster params\n",current[1,,],"\n")
+#       }
+#     }
