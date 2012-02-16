@@ -31,4 +31,13 @@ s$precompute()
 fit <- brem.mcmc(A,N,opts$numclusters,s,model.type=opts$model.type,
 		 niter=opts$numiterations,outdir=opts$outdir,gibbs=opts$gibbs)
 
-fit <- brem.mcmc(A,N,5,s,model.type="full",niter=10,outdir="results/eckmann-small")
+load("data/synthetic.rdata")
+N <- max(c(A[,2],A[,3]))
+M <- nrow(A)
+P <- 13
+K <- 5
+s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,M,P)
+s$precompute()
+current <- array(rnorm(P * K^2,0,1),  c(P, K, K))
+brem.lpost.fast(A,N,K,z,s,current)
+fit <- brem.mcmc(A,N,K,s,model.type="shared",niter=10,outdir="results/synthetic")

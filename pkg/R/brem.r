@@ -174,7 +174,8 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   return(res)
 }
 brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1,olp=NULL) {
-  px <- c(1,1,1,1,1,1,1,1,1,1,1,1)  # TODO: Eventually allow MH updates on degree effects
+  #px <- c(1,1,1,1,1,1,1,1,1,1,1,1)  # TODO: Eventually allow MH updates on degree effects
+  px <- rep(1,P)
   if (is.null(olp)) {
     olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
   }
@@ -182,7 +183,7 @@ brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1
   cand <- current
   if (model.type=="baserates") {
     cand[1,,] <- cand[1,,] + rnorm(K^2,0,mcmc.sd)
-    cand[-1,,] <- 0
+    cand[-1,,] <- 0   # 
     cand[1,1,1] <- 0  # identifiability?
     clp <- brem.lpost.fast(A,N,K,z,s,cand)
     if (clp - olp > log(runif(1))) {
