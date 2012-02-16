@@ -14,7 +14,7 @@ opts=list(dataset="synthetic",numclusters=5,model.type="full",niter=10,gibbs=TRU
 
 ./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./brem.r -d {} -k 1 -n 500 -m "full"' ::: "synthetic" "eckmann-small" "twitter"
 
-./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./brem.r - "data/synthetic.rdata" -k 2 -n 500 -m {} -d "results/synthetic"' ::: "baserates" "shared" "full"
+./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./brem.r -d {} -k 2 -n 500 -m "full"' ::: "synthetic" "eckmann-small" 
 
 ./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./brem.r -f "data/eckmann-small.rdata" -k 2 -n 500 -m {} -d "results/eckmann-small"' ::: "baserates" "shared" "full"
 
