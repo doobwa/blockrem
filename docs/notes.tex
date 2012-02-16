@@ -22,6 +22,8 @@
 \centerline{\bf Christopher DuBois}
  \bigskip
 
+\abstract{TODO}
+
 \section{Introduction}
 
 Statistical methods for analyzing network data have become increasingly useful for studying  phenomenon ranging from people communicating online to protein interactions \cite{Goldenberg2009}. One class of statistical models for network data uses latent variables to help model unobserved heterogeneity.  For example, the stochastic blockmodel \cite{Nowicki2001, Kemp} assumes each node in the network belongs to some block (or cluster) and parametrizes the probability of edges between nodes of each block.  % Such approaches are especially useful for large-scale network data where higher-order dependencies can cause models such as exponential random graph models to be too complex to fit.
@@ -46,11 +48,13 @@ Consider a nonhomogeneous Poisson process with  intensity $\lambda(t)$ that is p
 % &= \prod_{m=1}^M \lambda_{i_m}(t_m|\cdot) \prod_{i \in \mathcal{R}} \prod_{v \in D_{i}} \exp\left\{ - (b_v - a_v) \lambda_{i}(b_v | \cdot ) \right\}
 % \end{align}
 
-One can extend the above to marked point processes where each event contains additional information.  In the context of relational events occurring among $N$ nodes, for example, we let the \emph{risk set} $\mathcal{R}$ of possible events include all allowed dyads.  Let each dyad $(i,j) \in \mathcal{R}$ have an intensity function $\lambda_{ij}(t)$ that is piecewise constant.  Assume each node belongs to a cluster $z_i$. Let $\tau_{i,j,m}$ be the time  of the changepoint for $\lambda_{i,j}$ prior to the $m$th event and let $\mathcal{R}_{i,j}$ be the set of dyads involving either $i$ or $j$. \footnote{We further assume 1) all intensity functions change at times $t=0$ and $t=t_M$, and 2) the first event is drawn uniformly from the risk set.}
+One can extend the above to marked point processes where each event contains additional information.  In the context of relational events occurring among $N$ nodes, for example, we let the \emph{risk set} $\mathcal{R}$ of possible events include all allowed dyads.  Let each dyad $(i,j) \in \mathcal{R}$ have an intensity function $\lambda_{ij}(t)$ that is piecewise constant.  We can then write the likelihood as  
 
 \begin{align}
 \mathcal{L}(\mathcal{A}|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}_{i_m,j_m}}\exp\{ - (t_m - \tau_{i,j,m}) \lambda_{ij}(t_m | z_i,z_j) \}
 \end{align}
+\noindent where event $m$ is $(i_m,j_m)$, $\tau_{i,j,m}$ is the time  of the changepoint for $\lambda_{i,j}$ prior to the $m$th event, and $\mathcal{R}_{i,j}$ is the set of dyads who have a changepoint in their intensity when $(i_m,j_m)$ occurs. \footnote{We further assume 1) all intensity functions change at times $t=0$ and $t=t_M$, and 2) the first event is drawn uniformly from the risk set.}
+
 
 \begin{figure}
  \def\svgwidth{6in}
@@ -60,16 +64,19 @@ One can extend the above to marked point processes where each event contains add
 %\includegraphics[width=6in]{example}
 \end{figure}
 
-For a given dyad $(i,j)$ and time $t$ we may also have a vector of statistics $\mathbf{s}(t,i,j|\mathcal{A}_t,\mathbf{z})$ that is a function of the previous event history  $\mathcal{A}_t = \{(t_m,i_m,j_m): t_m \in [0,t)\}$  and the latent cluster assignments $\mathbf{z}$.   As shown in Figure \ref{fig:example}, we assume each intensity function $\lambda_{ij}(t)$ may only change following an event involving either $i$ or $j$.  Note the statistics $\mathbf{s}(t,i,j)$ also do not change until an event involving either $i$ or $j$ occurs.  We model the intensity functions via a log linear model
+For a given dyad $(i,j)$ and time $t$ we may also have a vector of statistics $\mathbf{s}(t,i,j|\mathcal{A}_t,\mathbf{z})$ that is a function of the previous event history  $\mathcal{A}_t = \{(t_m,i_m,j_m): t_m \in [0,t)\}$.   Though this will be useful, we will constrain the types of dependencies so that an interaction between one dyad does not affect the rate of an entirely separate dyad.  As shown in Figure \ref{fig:example}, we do this by assuming each intensity function $\lambda_{ij}(t)$ may only change following an event involving either $i$ or $j$.  This implies that  $\mathcal{R}_{i,j}$ is the set of dyads involving either $i$ or $j$ and that we will only use  statistics $\mathbf{s}(t,i,j)$ that do not change until an event involving either $i$ or $j$ occurs.  
+
+We hope to learn about the dynamics between subsets of nodes while allowing for variety among disjoint subsets.   To facilitate this, we assume each node belongs to a cluster $z_i \sim \mbox{Categorical}(\alpha)$ where $\sum_k \alpha_k = 1$ and  model the intensity functions via a log linear model
 \begin{align}
 \log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{z}) = \boldsymbol{\beta}_{z_i,z_j} \mathbf{s}(t,i,j|\mathcal{A}_t,\mathbf{z}).
 \end{align}
-where for each pair of clusters $(z_i,z_j)$ we have a vector of parameters $\boldsymbol{\beta}_{z_i,z_j}$ that corresponds to the covariate vector $\mathbf{s}_{ij}(t|\cdot)$.  
+where for each pair of clusters $(z_i,z_j)$ we have a vector of parameters $\boldsymbol{\beta}_{z_i,z_j}$ that corresponds to the covariate vector $\mathbf{s}_{ij}(t|\cdot)$.   Thus, the model of dynamics for the dyad $(i,j)$ has the same parameters as for other dyads occurring between group $z_i$ and $z_j$. 
 
 \subsection{Model specification}
 
 We construct $\mathbf{s}(t,i,j)$ using a similar set of statistics as used in \cite{Butts2008,Vu2011}. Let $v_{ijm} \in [0,M]$ be the index of the last event where $(i,j)$ occurred (n.b. $t_{v_{ijm}} = \tau_{ijm}$). If $(i,j)$ has never occurred, we set $v_{ijm}=0$.  
 \begin{enumerate}
+\item Intercept: $s_{0}(t,i,j) = 1$
 \item Dyad count: $s_{1}(t,i,j) = \sum_{m:t_m<t} I(i_m=i) / m$
 \item Sender out-degree: $s_{1}(t,i,j) = \sum_{m:t_m<t} I(i_m=i) / m$
 \item Sender in-degree: $s_{2}(t,i,j) = \sum_{m:t_m<t} I(j_m=i) / m$
@@ -86,16 +93,17 @@ We construct $\mathbf{s}(t,i,j)$ using a similar set of statistics as used in \c
 % \item Shared contacts (since last occurrence): $s_{ij12}(t,i,j) = \sum_{r=1}^N I(i_m=i,j_m=j,i_{v_{ijm}}=r,j_{v_{ijm}}=r)$
 \end{enumerate}
 
-We include degree effects to model possible rich-get-richer phenomenon.  The next set of statistics are \emph{participation shift} effects inspired by research in conversational norms \cite{Gibson2003}.  For example, an AB-BA effect indicates an increased propensity for reciprocity.  The final set of effects allow one to model phenomenon such as triadic closure.  Though we only use the above statistics in our experiments, one may use any quantity or set of covariates about a given dyad that is computed using the previous history of events.  The only restriction is that the statistic may not change in value between each observed event.\footnote{This prevents one from using the number of events occurring in some previous time window, as in \cite{Gunawardana2011}.}
+We include degree effects to model possible rich-get-richer phenomenon.  For example, a particular node sending often may indicate they will continue to be a sender in the future.  We normalize these counts by the number of events up until a dyad's prior changepoint.\footnote{This seems to avoid ``explosion'' when simulating from the model.  TODO: Develop some theory about these sorts of statistics.}
+
+The next set of statistics are \emph{participation shift} effects inspired by research in conversational norms \cite{Gibson2003}.  For example, an AB-BA effect indicates an increased propensity for reciprocity.  The final set of effects allow one to model phenomenon such as triadic closure.  Though we use only the above statistics in our experiments, one may use any quantity or set of covariates about a given dyad that is computed using the previous history of events.  The only restriction is that the statistic may not change in value between each observed event.\footnote{This prevents one from using the number of events occurring in some previous time window, as in \cite{Gunawardana2011}.}
 
 \subsection{Relation to other models}
 
-This is reminiscent of the stochastic blockmodel \cite{Nowicki2001,Kemp} which models the probability of a dyad as $p(y_{ij}) =\mbox{logit}^{-1}( \eta_{z_i,z_j})$ where $\eta_{z_i,z_j}$ is essentially a mixing rate between group $z_i$ and group $z_j$.  Here, however, the blockmodel structure facilitates the study of intra-group and inter-group dynamics via a continuous-time network model.
+Our formulation is reminiscent of the stochastic blockmodel \cite{Nowicki2001,Kemp} which models the probability of a dyad as $p(y_{ij}) =\mbox{logit}^{-1}( \eta_{z_i,z_j})$ where $\eta_{z_i,z_j}$ is essentially a mixing rate between group $z_i$ and group $z_j$.  Here, however, the blockmodel structure facilitates the study of intra-group and inter-group dynamics via a continuous-time network model.
 
 The above framework generalizes several important special cases.  The first is one where events within each block share the rate at which they occur.  This can be implemented by only having an intercept statistic, $s_0(t,i,j) = 1$.  As these intensities do not change under this specification, the likelihood simplifies to 
 $$\mathcal{L}(\mathcal{A}|\beta) = \prod_{m=1}^M \lambda_{i_m,j_m} \prod_{(i,j) \in \mathcal{R}} \exp\{-t_M \lambda_{i,j}\}$$
 where $ \lambda_{ij} = \exp\{\boldsymbol{\beta}_{z_i,z_j}\}$.  Analogous to the stochastic block model for static networks, this model posits each dyad is a homogeneous Poisson process and all dyads within block $(z_i,z_j)$ have the intensity $\exp\{\boldsymbol{\beta}_{z_i,z_j}\}$.
-
 
 \section{Inference}
 
@@ -103,12 +111,14 @@ We use Markov chain Monte Carlo to get samples from the posterior distribution o
 
 \begin{enumerate}
 \item For $i \in [1,N]$: Sample $z_i$ via Gibbs sampling: 
-$z_i | A, z_{-i} \propto p(A|z,\beta) p(z_i)$
+$z_i | A, z_{-i} \propto p(A|z,\beta) p(z_i)$.  (See Appendix.)
 \item For each pair $(k,k')$: Sample $\beta_{k,k'}$ via MH or HMC.
 \end{enumerate}
 
-To perform Gibbs sampling for a given cluster assignment $z_i$, we need to compute the likelihood for each possible assignment of $z_i$. 
-This operation can be done in parallel, and only the portion of the likelihood involving the newly assigned cluster  need to be recomputed.  Computing the likelihood is then $O(T \cdot P \cdot 4N)$ (though this computation is split into $K^2$ pieces) and must computed $N \cdot K$ times per Gibbs iteration.  The most straightforward implementation has space complexity $O(N^2)$ since we must keep track of $\tau_{i,j,m}$ for each $(i,j)$ at a given $m$.
+% TODO: Update the following discussion about sampling.
+
+ To perform Gibbs sampling for a given cluster assignment $z_i$, we need to compute the likelihood for each possible assignment of $z_i$.   By limiting the changepoints to times when either node is involved, computing the likelihood is $O(T \cdot P \cdot 4N)$ where 4 comes from considering all dyads where either $i$ or $j$ is involved.  We precompute $\tau_{m,i,j}$ and $\mathbf{s}(t_m,i,j)$ for all $m,i,j$.  Note that 
+% This operation can be done in parallel, and only the portion of the likelihood involving the newly assigned cluster  need to be recomputed.  Computing the likelihood is then $O(T \cdot P \cdot 4N)$ (though this computation is split into $K^2$ pieces) and must computed $N \cdot K$ times per Gibbs iteration.  The most straightforward implementation has space complexity $O(N^2)$ since we must keep track of $\tau_{i,j,m}$ for each $(i,j)$ at a given $m$.
 
 % \subsection{Approximate likelihood methods}
 
@@ -125,7 +135,7 @@ This operation can be done in parallel, and only the portion of the likelihood i
 \label{fig:syncounts}
 \end{figure}
 
-We check our model fitting procedure using a small synthetic data set involving 10 nodes from 2 clusters where 1) the first cluster has an increased tendency for reciprocity, 2) members of the second cluster have an increased tendency to continue speaking, and 3) interactions between groups are more likely to be repeated.  The specification of $\textbf{s}$ is therefore $s(t,i,j) = [s_0, s_{5}(t,i,j), s_{9}(t,i,j), s_{11}(t,i,j)]$.  For the synthetic data set we use parameter vectors $\boldsymbol{\beta}_{1,1} = (2,3,0,0)$,  $\boldsymbol{\beta}_{1,2} = \boldsymbol{\beta}_{2,1} = (1,0,0,1)$, and $\boldsymbol{\beta}_{2,2} = (2,0,2,0)$.  See Appendix for details on simulating from the model.  In Figure \ref{fig:syncounts} we illustrate the simulated data and show the loglikelihood during the first iterations of MCMC [after being initialized with $\beta \sim N(\beta_{true},.5^2)$].
+We check our model fitting procedure using a small synthetic data set involving 10 nodes from 2 clusters where 1) the first cluster has an increased tendency for reciprocity, 2) members of the second cluster have an increased tendency to continue speaking, and 3) interactions between groups are more likely to be repeated.  The specification of $\textbf{s}$ is therefore $s(t,i,j) = [s_0, s_{5}(t,i,j), s_{9}(t,i,j), s_{11}(t,i,j)]$.  For the synthetic data set we use parameter vectors $\boldsymbol{\beta}_{1,1} = (2,3,0,0)$,  $\boldsymbol{\beta}_{1,2} = \boldsymbol{\beta}_{2,1} = (1,0,0,1)$, and $\boldsymbol{\beta}_{2,2} = (2,0,2,0)$.  See Appendix for details on simulating from the model.  In Figure \ref{fig:syncounts} we illustrate the simulated data and show the loglikelihood during the first iterations of MCMC [after being initialized with $\beta \sim N(\beta_{true},.5^2)$].  Note that we recover the same cluster assignments and the full model converges to the true loglikelihood.
 
 TODO: Show parameter bias as a function of iteration; perhaps also as a function of the number of events in the dataset.
 
@@ -139,7 +149,7 @@ Each of the following data sets are sequences of dyadic events, where each event
 %\item Classroom:  Perhaps within a couple of the classrooms we can infer subgroups who tend to obey different relational event dynamics.
 \item Email: In small organizations there may be groups of people who tend to have a similar style of interaction, and who also share a pattern of interaction with those outside the group or in another group.
 %\item Citation networks: Perhaps some groups of papers obey some types of rich-get-richer effects more than others.
-\item We collected tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{#rstats}.  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.  Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.  We use the subset of 487 users who participated in more than one event.
+\item We collected tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.  Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.  We use the subset of 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
 \end{itemize}
 
 \subsection*{Prediction experiment}
@@ -151,33 +161,40 @@ Each of the following data sets are sequences of dyadic events, where each event
 \caption{Results from fitting models to synthetic data. Left: Log posterior of 1000 simulated events vs. iteration during MCMC.  Right: Recall on 3000 test events.}
 \label{fig:synresults}
 \end{figure}
-We evaluate the predictive ability of the learned models by comparing models based on the loglikelihood of held-out data and recall on held out data.  Each data set is first split into a training set and a test set, and the loglikelihood of the test set is computed using Equation \ref{eqn:llk} where $\beta$ is set to be the posterior mean given the training data.  Recall at a given cutoff $k$ is found by first sorting the predicted intensity functions at each time, then computing the mean rank of the observed events in that list.
+We evaluate the predictive ability of the learned models by comparing models based on the loglikelihood of held-out data and recall on held out data.  Each data set is first split into a training set and a test set, and the loglikelihood of the test set is computed using Equation \ref{eqn:llk} where $\beta$ is set to be the mean from posterior samples given the training data.  
 
-TODO: Compare to fitting the relational event model without the blockmodel structure.  Compare to relational event blockmodel without covariates: $p(y_{ij}) = \exp\{\beta_{z_i,z_j}\} / \sum_{(a,b) \in \mathcal{R}}\exp\{\beta_{z_{a},z_{b}}\} $
-Or more simply, just use $s_{ij}(t) = 1$.
+In addition, we compute recall to evaluate whether the next observed event is among the most likely according to the model.  At each event $m$ we sort the predicted intensities of all possible events in decreasing order, find the rank of the observed event in the list of predicted intensities, and compute the mean rank across the $M$ events.  
+
+Several baselines are included for comparison: \texttt{uniform} places uniform probability on all possible dyads, \texttt{online} ranks events at time $t$ by the number of times the dyad has occurred previously $\sum_{m:t_m < t} I(i_m=i,j_m=j)$, and \texttt{marginal} uses the product of the observed marginal frequencies $\sum_{m:t_m < t} I(i_m=i) \sum_{m:t_m < t} I(j_m=j)$.  Note for processes that are homogeneous over time, \texttt{online} should do well with large amounts of data while \texttt{marginal} should roughly model heterogeneity in activity among individuals.
+
+We consider several variations of our model to investigate its properties. The \texttt{baserates} model only is an intercept only model (and mimics the behavior of a stochastic block model).   The \texttt{full} model uses all the statistics discussed in Section \ref{sec:modeladditional}.  For the \texttt{shared} model we force all diagonal blocks to use the same vector ($\boldsymbol{\beta}_{k_1,k_2} = \boldsymbol{\gamma}_1$ where $k_1=k_2$) and all non-diagonal blocks to use the same vector to be the same  ($\boldsymbol{\beta}_{k_1,k_2} = \boldsymbol{\gamma}_2$ where $k_1 \ne k_2$).  For each of these we may vary the number of clusters $K$. The \texttt{single} model uses all statistics but assumes a single cluster $K=1$. 
+
+TODO: In Figure \ref{fig:} we show the recall for each dataset.
+
+TODO: In Table \ref{tab:} we show the likelihood on the test dataset.
 
 TODO: Need to see how well the time-portion of the model is specified.
 
 \section{Discussion}
+
+TODO: Discuss experimental results.  Describe qualitative behavior of each model's recall line.
+
+TODO: Discuss any interpretation of the parameters and clusters for both datasets.
+
 Relational event models \cite{Butts2008} require a knot at each observed event, while other approaches \cite{Gunawardana2011} aim to learn the regions where an intensity is constant and allow for a nonlinear relationship between statistics and the intensity function.  
 
-Possible future work could extend the present framework to a mixed-membership model where for each effect there is a latent cluster assignment.  This way a group of nodes might contact high in-degree nodes at a similar rate, though they vary in the degree to which they adhere to reciprocity.
-
-
-TODO: Discuss possible variations on the prior structure of $\beta$: 1. Enforce $\beta_{k,l} = \beta_{l,k}$. 2. Assume $\beta_{k,l,p} \sim \mbox{Normal}(\beta_p,\sigma_p^2)$. 3. Place other priors that provide different kinds of regularization. 
-
-TODO: Discuss if the semiparametric partial likelihood approach can be used in this framework.
-
 \subsection{Extensions}
-TODO: Explain difficulties in doing a mixed membership model.  As in the mixed-membership stochastic blockmodel \cite{Airoldi2008,Shafiei2010}, one could assume that each node has vector of probabilities, $\boldsymbol{\pi}_i$, for being assigned to each of the latent clusters.  In that case $z_i \sim \mbox{Categorical}(\boldsymbol{\pi}_i)$ for each node $i$ and $j$, and the ties are modeled via a stochastic blockmodel $\mbox{logit} p(y_{ij}) = \eta_{z_i,z_j}$.  One could extend our current framework by assuming that after the $m$th event, $i_m$ and $j_m$ redraw their latent class.  
+Possible future work could extend the present framework to a mixed-membership model where for each effect there is a latent cluster assignment.  This way a group of nodes might contact high in-degree nodes at a similar rate, though they vary in the degree to which they adhere to reciprocity.  As in the mixed-membership stochastic blockmodel \cite{Airoldi2008,Shafiei2010}, one could assume that each node has vector of probabilities, $\boldsymbol{\pi}_i$, for being assigned to each of the latent clusters.  In that case $z_i \sim \mbox{Categorical}(\boldsymbol{\pi}_i)$ for each node $i$ and $j$, and the ties are modeled via a stochastic blockmodel $\mbox{logit} p(y_{ij}) = \eta_{z_i,z_j}$.  One could extend our current framework by assuming that for each event $m$, any node  $i,j \in \mathcal{R}_{i_m,j_m}$ redraws their latent class.  
 
-Another idea: $\log \lambda_{ij} = (\pi_i \cdot \pi_j) \eta s(t,i,j)$
-
-TODO: Discuss other variants, e.g. HMM that guides which latent class over time?  Or a DP instead of fixed K?
-
-TODO: What about different clusters for senders and receivers (cite our KDD paper)?
-
-TODO: What about doing a similar thing with topic model statistics in s(t,i,j)?
+Possible variants:
+\begin{itemize}
+\item Discuss possible variations on the prior structure of $\beta$: 1. Enforce $\beta_{k,l} = \beta_{l,k}$. 2. Assume $\beta_{k,l,p} \sim \mbox{Normal}(\beta_p,\sigma_p^2)$. 3. Place other priors that provide different kinds of regularization. 
+\item $\log \lambda_{ij} = (\pi_i \cdot \pi_j) \eta s(t,i,j)$
+\item  HMM that guides which latent class over time?
+\item  HDP instead of fixed K: Hierarchical, nonparametric model that allows parameters to be shared across blocks.
+\item different clusters for senders and receivers (cite our KDD paper)?
+\item More statistics, e.g. topic model similarity
+\end{itemize}
 
 \section{Conclusion}
  We propose a hierarchical approach for modeling event-based network data that is analogous to recent hierarchical extensions for latent position models \cite{Handcock2007} and exponential random graph models \cite{Schweinberger2011}.  The method combines a latent variable framework (stochastic blockmodels) with a local dependence model for event sequences (relational event models) to provide detailed models of event dynamics among subsets of nodes while simultaneously allowing for heterogeneity in dynamics of the network as a whole.
@@ -210,7 +227,7 @@ Simulation from the model follows the typical racing exponentials idea with a fe
 Let $\mathcal{U}_a = \{a: a \in (i_m,j_m), m \in [1,M]\}$ be the set of events where actor is involved:
 
 $$p(A|z,\beta,a \ \mbox{involved}) = \prod_{a \in \mathcal{U}_a} \lambda_{i_a,j_a}(t_a|\cdot)
-\prod_{(i,j) \in \mathcal{R}_{i_a,j_a}} \exp \{ -(t_a - \tau_{ija}) \lambda_{ij}(t_a|cdot)\}$$
+\prod_{(i,j) \in \mathcal{R}_{i_a,j_a}} \exp \{ -(t_a - \tau_{ija}) \lambda_{ij}(t_a|\cdot)\}$$
 
 \section{EM for baseline}
 

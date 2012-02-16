@@ -70,7 +70,8 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Clean up interfaces to Rcpp code.  
   - Put all constants in RemStat.  Take out of ComputeLambdaFast, etc.
 - Document Rcpp code better.
-- Add other statistics other than pshifts
+- [X] Add other statistics other than pshifts
+  - Implement shared partners.
 - Initialize with guess at z's, rather than guess at beta.
 - Research maximization of beta rather than sampling.
 
