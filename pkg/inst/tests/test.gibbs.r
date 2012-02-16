@@ -31,13 +31,13 @@ s$precompute()
 
 test_that("gibbs runs on small example",{
   b <- loglikelihood_fast(beta,z-1,s$ptr(),K)
-  b <- gibbs(beta,z-1,s$ptr(),K)
+  b <- gibbs(1:N-1,beta,z-1,s$ptr(),K)
 })
 
 test_that("no -Inf in loglikelihoods",{
   beta <- matrix(rnorm(P*K*K),c(P,K,K))
-  b <- gibbs(beta,z-1,s$ptr(),K)
-  brem.lpost.fast(A,N,K,z,s,beta)
+  b <- gibbs(1:N-1,beta,z-1,s$ptr(),K)
+  expect_that(brem.lpost.fast(A,N,K,z,s,beta) > -Inf, is_true())
   
 #   load("../../../data/synthetic.rdata")
 #   s <- new(RemStat,train[,1],train[,2]-1,train[,3]-1,N,M,P)

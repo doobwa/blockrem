@@ -158,7 +158,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
       }
     }
     if (gibbs=="fast") {
-      z <- gibbs(current,z-1,s$ptr(),K)$z + 1
+      z <- gibbs(1:N-1,current,z-1,s$ptr(),K)$z + 1
     }
     
     zs[[iter]] <- z

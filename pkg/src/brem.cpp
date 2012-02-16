@@ -414,10 +414,11 @@ int rcategorical (Rcpp::NumericVector lp) {
 
 
 // TODO: sample z
-Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
+Rcpp::List gibbs(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
   Rcpp::List llks;
   RemStat *s = XPtr<RemStat>(statptr_);
   int N = s->N;
+  int a;
   Rcpp::IntegerVector counts(N);
   double alpha = 1.0;
 
@@ -426,7 +427,8 @@ Rcpp::List gibbs(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_,
     counts[z[i]] += 1;
   }
 
-  for (int a = 0; a < N; a++) {
+  for (int i = 0; i < ix.size(); i++) {
+    a = ix[i];
 
     counts[z[a]] -= 1;
     Rcpp::NumericVector y(K);
