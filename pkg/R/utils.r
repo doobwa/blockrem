@@ -363,6 +363,7 @@ ratemat.online <- function(edgelist,n) {
   rms <- array(0,c(M,n,n))
   for (i in 2:M) {
     rms[i:M,edgelist[i-1,2],edgelist[i-1,3]] <- rms[i:M,edgelist[i-1,2],edgelist[i-1,3]] + 1
+    diag(rms[i,,]) <- -Inf
   }
   return(rms)
 }
@@ -377,6 +378,7 @@ ratemat.from.marginals <- function(train,test,N) {
   colrates <- colSums(x)
   r <- rowrates %*% t(colrates)
   r <- r/sum(r)
+  diag(r) <- -Inf
   M <- nrow(test)
   lrm <- array(0,c(M,N,N))
   for (i in 1:M) lrm[i,,] <- r

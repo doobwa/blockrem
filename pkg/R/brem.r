@@ -87,8 +87,25 @@ brem.lpost.fast <- function(A,N,K,z,s,beta,priors=list(beta=list(mu=0,sigma=1)))
   sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + 
   N * log(1/K)
 }
+#' @A event history matrix
+#' @z cluster assignments (1-based)
+brem.lpost.fast.block <- function(A,N,K,z,s,beta,k1,k2,priors=list(beta=list(mu=0,sigma=1))) {   
+  M <- nrow(A)
+  zs <- z[A[,2]]
+  zr <- z[A[,3]]
+  ix <- which(zs==k1 | zr==k2) - 1  # 0 based indexing for c++
+  if (length(ix) > 0) {
+    ix <- setdiff(ix,c(0,M-1))
+  }
+  llk <- sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + N * log(1/K)
+  if (length(ix)==0) {
+    return(llk)
+  } else {
+    return(llk + sum(loglikelihood_fast_subset(beta,z-1,s$ptr(),K,ix))) 
+  }    
+}
 
-brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=TRUE,outdir=getwd(),priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE) {
+brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=FALSE,outdir=getwd(),priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE,px=NULL) {
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 13
@@ -98,7 +115,8 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   current <- array(rnorm(P*K^2,priors$beta$mu,priors$beta$sigma),c(P,K,K))
   
   if (!is.null(beta)) current <- beta
-  if (is.null(z))    z <- sample(1:K,N,replace=TRUE)
+  if (is.null(z))     z <- sample(1:K,N,replace=TRUE)
+  if (is.null(px))    px <- rep(1,P-1)  # last feature is event index m
   
   olp <- brem.lpost.fast(A,N,K,z,s,current)
   
@@ -107,12 +125,12 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
     # For each effect sample via MH
     if (mh) {
       for (i in 1:2) {
-        res <- brem.mh(A,N,K,P,z,s,current,model.type,priors,mcmc.sd,olp)
+        res <- brem.mh(A,N,K,P,z,s,current,px,model.type,priors,mcmc.sd,olp)
         current <- res$current
         olp <- res$olp
       }
     } else {
-      res <- brem.slice(A,N,K,P,z,s,current,model.type,priors,mcmc.sd,olp)
+      res <- brem.slice(A,N,K,P,z,s,current,px,model.type,priors,olp)
       current <- res$current
       olp <- res$olp
     }
@@ -145,9 +163,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   }
   return(res)
 }
-brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1,olp=NULL) {
-  #px <- c(1,1,1,1,1,1,1,1,1,1,1,1)  # TODO: Eventually allow MH updates on degree effects
-  px <- rep(1,P-1)
+brem.mh <- function(A,N,K,P,z,s,current,px,model.type="baserates",priors,mcmc.sd=.1,olp=NULL) {
   if (is.null(olp)) {
     olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
   }
@@ -207,58 +223,61 @@ brem.mh <- function(A,N,K,P,z,s,current,model.type="baserates",priors,mcmc.sd=.1
   return(list(current=current,olp=olp))
 }
 
-brem.slice <- function(A,N,K,P,z,s,beta,model.type="baserates",priors,olp=NULL) {
+brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NULL) {
   
   #' Needs p,k1,k2,A,N,K,z,s,beta,priors,model.type
   slicellk <- function(x) {
     beta[p,k1,k2] <- x
     if (model.type=="shared") {
-      for (j1 in 1:K) {
-        for (j2 in 1:K) {
-          if (k1==k2 & j1==j2) {
-            beta[p,j1,j2] <- x
-          } 
-          if (k1!=k2 & j1!=j2) {
-            beta[p,j1,j2] <- x
-          }
-        } 
-      }
+      beta <- use.first.blocks(beta)
     }
-    brem.lpost.fast(A,N,K,z,s,beta,priors)
+    brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
+    #brem.lpost.fast(A,N,K,z,s,beta,priors)
   }
   
-  px <- rep(1,P-1)
+  use.first.blocks <- function(beta) {
+    for (j1 in 1:K) {
+      for (j2 in 1:K) {
+        if (j1==j2) {
+          beta[p,j1,j2] <- beta[p,1,1]
+        } 
+        if (j1!=j2) {
+          beta[p,j1,j2] <- beta[p,1,2]
+        }
+      } 
+    }
+    return(beta)
+  }
+  
   if (is.null(olp)) {
     olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
   }
   
-  if (model.type=="baserates") {
-    beta[-1,,] <- 0
-    beta[1,1,1] <- 0
-    jx <- which(beta != 0)
-  } else if (model.type=="full") {
-    tmp <- array(1,c(P,K,K))
-    tmp[-P,,] <- 1
-    jx <- which(tmp==1)[-1]
-  }
-  
-  px <- 1:12
   kx1 <- 1:K
   kx2 <- 1:K
-  model.type <- "shared"
+  beta[1,1,1] <- 0
+  if (model.type=="baserates") {
+    beta[-1,,] <- 0
+  } else if (model.type=="full") {
+  } else if (model.type=="shared") {
+    kx1 <- 1
+    kx2 <- 1:2
+  }
+  
   olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
-  for (p in px) {
+  for (p in which(px==1)) {
     cat(".")
     for (k1 in kx1) {
       for (k2 in kx2) {
         newval <- uni.slice(beta[p,k1,k2],slicellk)#,gx0=olp)
         beta[p,k1,k2] <- newval
+        beta <- use.first.blocks(beta)
         olp <- attr(newval,"log.density")
       }
     }
   }
   
-  return(list(current=current,olp=olp))
+  return(list(current=beta,olp=olp))
 }
 
 # Sample empty cluster parameters from prior.  Only sample baserates.

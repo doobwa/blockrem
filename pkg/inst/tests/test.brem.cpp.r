@@ -190,3 +190,20 @@ test_that("lrm and llk functions work on small example for K=2",{
 #   y <- brem$test_last(beta,z-1,s$ptr(),K)
 #   expect_that(all.equal(x$taus,y$taus),is_true())
 })
+
+set.seed(1)
+load("data/eckmann-small.rdata")
+M <- 100
+A <- A[1:M,]
+z <- rep(1,N)
+K <- 1
+P <- 13
+beta <- array(0,c(P,K,K))
+beta[12] <- 1
+lrm <- log_intensity_array(beta,A[,1],A[,2]-1,A[,3]-1,z-1,N,M,K,P)
+
+lrmo <- ratemat.online(A,N)
+
+
+
+compute_lambda(1,0,0,0,s,beta,N,K,P)  #

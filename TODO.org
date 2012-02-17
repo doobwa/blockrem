@@ -42,7 +42,8 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - [x] Tinker with simulating with degree effects.  Perhaps come up with
     other parameterization that is less sensitive to explosion.
   - Improve parameterization of dyad count (so that we beat online baseline)
-- Use slice sampling to improve mixing of parameters
+- [x] Implement slice sampling (to hopefully improve mixing of parameters)
+- Understand why baseline beats a model that only has dyad count effects
 - Work on better proposal dist. and better mixing of group assignments.
   - Try split moves where we select a subset and offer them a new
     cluster with the same parameters as the previous cluster.  Try an

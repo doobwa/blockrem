@@ -82,10 +82,16 @@ if (opts$dataset == "synthetic") {
   load("data/synthetic.rdata")
   lrms$true <- brem.lrm(test,N,z,beta)
 }
+# TEMP:
+P <- 13
+K <- 1
+tmp <- array(0,c(P,K,K))
+tmp[12,,] <- 1
+lrms$counts.only <-  brem.lrm(test,N,rep(1,N),tmp)
+r1 <- ranks(test,-lrms$counts.only,ties.method="random")
+r2 <- ranks(test,-lrms$online,ties.method="random")
 
-# TODO: add SBM baseline
-# TODO: add 
-
+cat("Computing ranks.\n")
 ps <- lapply(lrms,function(lrm) {
   recall(ranks(test,-lrm,ties.method="random"),top=1:100)
 })
@@ -103,7 +109,7 @@ cat("Plotting parameter estimates.\n")
 betas <- lapply(fits,function(f) f$beta)
 names(betas) <- fnames
 b <- melt(betas)
-q6 <- qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) + theme_bw() + labs(colour="model")
+q6 <- qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
 
 
 # # Compute out of sample log posterior
