@@ -11,7 +11,9 @@ option_list <- list(
   make_option(c("-m","--model.type"), default="full",
               help="Type of model to fit.  Options: \"baserate\", \"shared\", \"full\"."),
   make_option(c("-g","--gibbs"), default="fast",
-              help="Slow or fast version of gibbs.")
+              help="Slow or fast version of gibbs."),
+  make_option(c("-s","--slice"), default=TRUE,
+              help="Slice sample instead of MH.")
   )
 parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
@@ -37,6 +39,7 @@ if (K > 1 & file.exists(f)) {
   beta <- NULL
 }
 
-fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,
+source("pkg/R/brem.r")
+fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
 		 niter=opts$numiterations,gibbs=opts$gibbs,beta=beta,
                  outdir=paste("results/",opts$dataset,"/",sep=""))

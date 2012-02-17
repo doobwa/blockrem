@@ -42,6 +42,7 @@ llks <- lapply(fits,function(f) f$llks)#cbind(llk=f$llks,iter=1:f$niter))
 names(llks) <- fnames
 llks <- melt(llks)
 llks$iter <- 1:niter
+llks <- subset(llks,value > mean(value))
 
 if (opts$dataset == "synthetic") {
   q1 <- qplot(iter,value,data=subset(llks,iter>10),geom="line",colour=factor(L1)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + geom_abline(intercept=true.lpost,slope=0)
@@ -70,8 +71,6 @@ if (length(fx) > 0) {
   q3 <- qplot(0,0,label="not available",geom="text")
 }
 
-
-
 cat("Recall experiment on training data.\n")
 lrms <- lapply(fits,function(f) {
   brem.lrm(train,N,f$z,f$beta)
@@ -90,27 +89,23 @@ K <- 1
 tmp <- array(0,c(P,K,K))
 tmp[12,,] <- 1
 lrms$counts.only <-  brem.lrm(train,N,rep(1,N),tmp)
-lrms$counts.only.sqrt <-  brem.lrm(train,N,rep(1,N),tmp)
-table(lrms$counts.only[3,,])
-table(lrms$counts.only.sqrt[3,,])
-ps[[9]] <- recall(ranks(train,-lrms$counts.only.sqrt,ties.method="random"),top=seq(1,100,by=5))#1:100)
 
 cat("Computing ranks.\n")
-ps <- lapply(lrms,function(lrm) {
+ps.train.some <- lapply(lrms,function(lrm) {
   cat(".")
   recall(ranks(train,-lrm,ties.method="random"),top=seq(1,100,by=5))#1:100)
 })
-res <- melt(ps,id.vars=c("k"),measure.vars="recall")
+res <- melt(ps.train.some,id.vars=c("k"),measure.vars="recall")
 q4a <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 q4a
 
-save(lrms,ps,file="tmp.rdata")
+#save(lrms,ps,file="tmp.rdata")
 
 chosen <- seq(1,N^2,length.out=100)
-ps <- lapply(lrms,function(lrm) {
+ps.train.all <- lapply(lrms,function(lrm) {
   recall(ranks(train,-lrm,ties.method="random"),top=chosen)
 })
-res <- melt(ps,id.vars=c("k"),measure.vars="recall")
+res <- melt(ps.train.all,id.vars=c("k"),measure.vars="recall")
 q5a <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 
 
@@ -132,21 +127,21 @@ K <- 1
 tmp <- array(0,c(P,K,K))
 tmp[12,,] <- 1
 lrms$counts.only <-  brem.lrm(test,N,rep(1,N),tmp)
-r1 <- ranks(test,-lrms$counts.only,ties.method="random")
-r2 <- ranks(test,-lrms$online,ties.method="random")
+#r1 <- ranks(test,-lrms$counts.only,ties.method="random")
+#r2 <- ranks(test,-lrms$online,ties.method="random")
 
 cat("Computing ranks.\n")
-ps <- lapply(lrms,function(lrm) {
+ps.test.some <- lapply(lrms,function(lrm) {
   recall(ranks(test,-lrm,ties.method="random"),top=1:100)
 })
-res <- melt(ps,id.vars=c("k"),measure.vars="recall")
+res <- melt(ps.test.some,id.vars=c("k"),measure.vars="recall")
 q4 <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 
 chosen <- seq(1,N^2,length.out=100)
-ps <- lapply(lrms,function(lrm) {
+ps.test.all <- lapply(lrms,function(lrm) {
   recall(ranks(test,-lrm,ties.method="random"),top=chosen)
 })
-res <- melt(ps,id.vars=c("k"),measure.vars="recall")
+res <- melt(ps.test.all,id.vars=c("k"),measure.vars="recall")
 q5 <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 
 cat("Plotting parameter estimates.\n")
@@ -170,17 +165,18 @@ lposts <- lapply(fits,function(f) {
 
 # trace plots
 library(coda)
+load(paste("results/",opts$dataset,"/full.1.rdata",sep=""))
 r <- melt(res$param)
 q7 <- qplot(X1,value,data=r, colour=factor(X4),geom="line") + labs(colour="parameters for\n 1x1 block",x="iteration") + theme_bw() + facet_grid(X2~X3)
 
 cat("Creating dashboard.\n")
 library(gridExtra)
-pdf(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=20,height=10)
+pdf(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=25,height=10)
 blankPanel <- grid.rect(gp=gpar(col="white"))
-grid.arrange(q1, q2, q3, q4, q5, q4a,q5a,q6, q7, ncol=4)
+grid.arrange(q1, q2, q3, q6,q7,q4, q5, q4a,q5a,q6, ncol=5)
 dev.off()
 
-#ggsave(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=20,height=10)
+save.image(paste("figs/",opts$dataset,"/dashboard.rdata",sep=""))
 
 cat("Complete.\n")
 

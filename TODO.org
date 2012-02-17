@@ -38,7 +38,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [X] Get test suite to display results on all test scripts.
 - [X] Make into a package.
 * TODO Week 4:
-- Try eckmann-small and synthetic dataset with degree effects.  
+- [x] Try eckmann-small and synthetic dataset with degree effects.  
   - [x] Tinker with simulating with degree effects.  Perhaps come up with
     other parameterization that is less sensitive to explosion.
 - [x] Implement slice sampling (to hopefully improve mixing of parameters)
@@ -46,19 +46,32 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   effects.  [ans: dyad counts in stats vector are "stale"]
 - [x] Change parameterization of dyad count (so that we beat online
   baseline).  [tried sqrt in the denominator and it did not improve.]
-- add prediction on training data to dashboard
-- Get twitter training and test set up
+- [x] add prediction on training data to dashboard
+- [x] Get twitter training and test set up
+- [X] Add UC Irvine dataset
+- [X] See if we can learn groups on synthetic data.
+- Why is synthetic fit making the dyad count effect so large? [wrong
+  synthetic dataset?]
+- Rerun synthetic data without degree effects?  
+  - fix bug in synthetic fitting?
+  - slice sampling seems to work better when K=1, but worse when K>1
+- Run all datasets with K=1
 - Work on better proposal dist. and better mixing of group assignments.
-  - Try split moves where we select a subset and offer them a new
+  - Split/merge moves: Try split moves where we select a subset and offer them a new
     cluster with the same parameters as the previous cluster.  Try an
     experiment with this method where we have 2 true clusters and
     initialize everyone in one cluster.
   - Or just use tons of chains with few iterations?
+- [X] Add other statistics other than pshifts
+  - Implement shared partners in statistics.
 - Understand why we outperform true model in synthetic example
+  (i.e. this is a bug and wasn't there before) (see if it's still present)
 - Add tests for Gibbs equations.  For example, start with true data
   and learn z's.
 - Add tests for synthetic fitting?
 - Derive/check identifiability
+- Implement baseline that ranks by number of shared partners.
+- Create prediction task for events that have not occurred yet.
 - [X] Type up Gibbs sampling equations.
 - Include random effect options.  Compute_lambda just needs to know
   where to look in beta vector.  Proposal needs to not suggest that
@@ -67,9 +80,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Log likelihood baseline that only knows timing effects.
 - Write abstract.
 - Add Enron.
-- Add UC Irvine dataset
 - Add px feature to define which parameters to fit.
-- [X] See if we can learn groups on synthetic data.
 - Derive/implement EM for baseline model.
 - Write up other possibilities for layering additional types of data, DP, or other extensions.
 - Try random groups and see if REM still picks out (significantly) different parameters
@@ -77,8 +88,6 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Clean up interfaces to Rcpp code.  
   - Put all constants in RemStat.  Take out of ComputeLambdaFast, etc.
 - Document Rcpp code better.
-- [X] Add other statistics other than pshifts
-  - Implement shared partners.
 - Initialize with guess at z's, rather than guess at beta.
 - Research maximization of beta rather than sampling.
 
