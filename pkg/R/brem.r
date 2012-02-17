@@ -113,6 +113,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   zs <- NULL
 
   current <- array(rnorm(P*K^2,priors$beta$mu,priors$beta$sigma),c(P,K,K))
+  current[P,,] <- 0
   
   if (!is.null(beta)) current <- beta
   if (is.null(z))     z <- sample(1:K,N,replace=TRUE)
@@ -155,7 +156,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
     param[iter,,,] <- current
     llks[iter] <- brem.lpost.fast(A,N,K,z,s,current,priors)
     
-    cat("iter",iter,":",llks[iter],"z:",z,"\n")
+    cat("\niter",iter,":",llks[iter],"z:",z,"\n")
     
     res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter)
     outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
