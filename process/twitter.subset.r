@@ -31,11 +31,14 @@ M <- nrow(A)
 # Rescale time to be in (0,1)
 A[,1] <- as.numeric(A[,1])
 A[,1] <- A[,1] - A[1,1]
-times <- A[,1]/A[nrow(B),1]
+times <- A[,1]/A[nrow(A),1]
 
 nmap <- sort(chosen)
 sen <- match(A[,2],nmap)
 rec <- match(A[,3],nmap)
 
 A <- cbind(times,sen,rec)
-save(A,N,M,nmap,file="data/twitter.subset.rdata")
+train <- A[1:2000,]
+test  <- A[2001:nrow(A),]
+
+save(A,train,test,N,M,nmap,file="data/twitter.subset.rdata")

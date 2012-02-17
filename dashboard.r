@@ -3,7 +3,8 @@ suppressPackageStartupMessages(library("optparse"))
 
 option_list <- list(
   make_option(c("-d", "--dataset"), 
-              help="Name of dataset with data at /data/[dataset].rdata and results at /results/[dataset]/."),
+              help="Name of dataset with data at /data/[dataset].rdata 
+                    and results at /results/[dataset]/."),
   make_option(c("-s", "--save.figs"),default=FALSE,
               help="Save each individual figure to figs/[dataset]/ [default %default]."))
 parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
@@ -70,6 +71,49 @@ if (length(fx) > 0) {
 }
 
 
+
+cat("Recall experiment on training data.\n")
+lrms <- lapply(fits,function(f) {
+  brem.lrm(train,N,f$z,f$beta)
+})
+names(lrms) <- fnames
+lrms$unif   <- array(1,c(nrow(train),N,N))
+lrms$online <- ratemat.online(train,N)
+lrms$marg   <- ratemat.from.marginals(train,train,N)
+if (opts$dataset == "synthetic") {
+  load("data/synthetic.rdata")
+  lrms$true <- brem.lrm(train,N,z,beta)
+}
+# TEMP:
+P <- 13
+K <- 1
+tmp <- array(0,c(P,K,K))
+tmp[12,,] <- 1
+lrms$counts.only <-  brem.lrm(train,N,rep(1,N),tmp)
+lrms$counts.only.sqrt <-  brem.lrm(train,N,rep(1,N),tmp)
+table(lrms$counts.only[3,,])
+table(lrms$counts.only.sqrt[3,,])
+ps[[9]] <- recall(ranks(train,-lrms$counts.only.sqrt,ties.method="random"),top=seq(1,100,by=5))#1:100)
+
+cat("Computing ranks.\n")
+ps <- lapply(lrms,function(lrm) {
+  cat(".")
+  recall(ranks(train,-lrm,ties.method="random"),top=seq(1,100,by=5))#1:100)
+})
+res <- melt(ps,id.vars=c("k"),measure.vars="recall")
+q4a <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+q4a
+
+save(lrms,ps,file="tmp.rdata")
+
+chosen <- seq(1,N^2,length.out=100)
+ps <- lapply(lrms,function(lrm) {
+  recall(ranks(train,-lrm,ties.method="random"),top=chosen)
+})
+res <- melt(ps,id.vars=c("k"),measure.vars="recall")
+q5a <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+
+
 cat("Recall experiment on test data.\n")
 lrms <- lapply(fits,function(f) {
   brem.lrm(test,N,f$z,f$beta)
@@ -133,7 +177,7 @@ cat("Creating dashboard.\n")
 library(gridExtra)
 pdf(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=20,height=10)
 blankPanel <- grid.rect(gp=gpar(col="white"))
-grid.arrange(q1, q2, q3, q4, q5, q6, q7, ncol=4)
+grid.arrange(q1, q2, q3, q4, q5, q4a,q5a,q6, q7, ncol=4)
 dev.off()
 
 #ggsave(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=20,height=10)
@@ -148,6 +192,16 @@ if (opts$save.figs) {
   print(q3)
   ggsave(paste("figs/",opts$dataset,"/counts.pdf",sep=""),width=6,height=4)
   print(q4)
+  ggsave(paste("figs/",opts$dataset,"/test-recall-zoom.pdf",sep=""),width=5,height=4)
+  print(q5)
   ggsave(paste("figs/",opts$dataset,"/test-recall.pdf",sep=""),width=5,height=4)
+  print(q4a)
+  ggsave(paste("figs/",opts$dataset,"/train-recall-zoom.pdf",sep=""),width=5,height=4)
+  print(q5a)
+  ggsave(paste("figs/",opts$dataset,"/train-recall.pdf",sep=""),width=5,height=4)
+  print(q6)
+  ggsave(paste("figs/",opts$dataset,"/parameters.pdf",sep=""),width=5,height=4)
+  print(q7)
+  ggsave(paste("figs/",opts$dataset,"/traceplots.pdf",sep=""),width=5,height=4)
 }
 
