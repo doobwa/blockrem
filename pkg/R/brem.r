@@ -109,11 +109,14 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 13
-  param <- array(0,c(niter,K,K,P))
+  param <- array(0,c(niter,P,K,K))
   zs <- NULL
 
   current <- array(rnorm(P*K^2,priors$beta$mu,priors$beta$sigma),c(P,K,K))
-  current[P,,] <- 0
+  for (p in which(px==0)) {
+    current[p,,] <- 0
+  }
+  current[1,1,1] <- 0  # identifiability?
   
   if (!is.null(beta)) current <- beta
   if (is.null(z))     z <- sample(1:K,N,replace=TRUE)
@@ -156,11 +159,13 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
     param[iter,,,] <- current
     llks[iter] <- brem.lpost.fast(A,N,K,z,s,current,priors)
     
-    cat("\niter",iter,":",llks[iter],"z:",z,"\n")
+    cat("\niter",iter,":",llks[iter],"z:",z,"beta:",current[,1,1],"\n")
     
     res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter)
-    outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
-    save(res,file=outfile)
+    if (!is.null(outdir)) {
+      outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
+      save(res,file=outfile)
+    }
   }
   return(res)
 }
@@ -232,8 +237,8 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
     if (model.type=="shared") {
       beta <- use.first.blocks(beta)
     }
-    brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
-    #brem.lpost.fast(A,N,K,z,s,beta,priors)
+    #brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
+    brem.lpost.fast(A,N,K,z,s,beta,priors)
   }
   
   use.first.blocks <- function(beta) {
@@ -266,14 +271,16 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
   }
   
   olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
+  olps <- olp
   for (p in which(px==1)) {
     cat(".")
     for (k1 in kx1) {
       for (k2 in kx2) {
         newval <- uni.slice(beta[p,k1,k2],slicellk)#,gx0=olp)
         beta[p,k1,k2] <- newval
-        beta <- use.first.blocks(beta)
+        if (model.type=="shared") beta <- use.first.blocks(beta)
         olp <- attr(newval,"log.density")
+        olps <- c(olps,olp)
       }
     }
   }

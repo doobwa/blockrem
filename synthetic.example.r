@@ -1,10 +1,8 @@
-opts=list(dataset="eckmann-small",numclusters=1,model.type="full",gibbs=TRUE,numiterations=500)
-px <- rep(0,13)
-px[12] <- 1
-
-library(brem)
+opts <- list(dataset="synthetic",numclusters=1,model.type="full",gibbs="fast",numiterations=20,slice=TRUE)
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
+
+library(brem)
 
 # Precompute data structures
 N <- max(c(train[,2],train[,3]))
@@ -13,19 +11,74 @@ P <- 13
 K <- opts$numclusters
 s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
 s$precompute()
-priors <- list(beta=list(mu=0,sigma=1))
 
-# Initialize with K=1 solution, if available
-f <- paste("results/",opts$dataset,"/full.1.rdata",sep="")
-if (K > 1 & file.exists(f)) {
-  load(f)
-  beta <- array(res$beta,c(P,K,K))
-} else {
-  beta <- array(0,c(P,K,K))
-}
-
-px <- rep(0,13)
-px[8:12] <- 1
-fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,px=px,mh=FALSE,
-                 niter=opts$numiterations,gibbs=opts$gibbs,beta=beta,
+# Degree vs. no degree effects, slice sampling, K=1 full
+px <- rep(1,13)
+px[8:13] <- 0
+fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
+                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,
                  outdir=paste("results/",opts$dataset,"/",sep=""))
+fit1 <- fit
+
+px <- rep(1,13)
+px[13] <- 0
+#px[8]  <- 0
+fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
+                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,
+                 outdir=paste("results/",opts$dataset,"/",sep=""))
+fit2 <- fit
+
+# look at mixing for both
+library(coda)
+plot(mcmc(fit1$param[,,1,1]))
+plot(mcmc(fit2$param[,,1,1]))
+
+
+# Use larger K, learn z, learn beta.  Initialize with K=1 fit.
+K <- 2
+opts$gibbs <- "fast"
+opts$slice <- TRUE
+px <- rep(1,13)
+px[8:13] <- 0
+fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
+                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,
+                 outdir=paste("results/",opts$dataset,"/",sep=""))
+fit1 <- fit
+
+px <- rep(1,13)
+px[13] <- 0
+fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
+                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,
+                 outdir=paste("results/",opts$dataset,"/",sep=""))
+fit2 <- fit
+
+# Use shared model
+opts$model.type <- "shared"
+px <- rep(1,13)
+px[13] <- 0
+fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
+                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,
+                 outdir=paste("results/",opts$dataset,"/",sep=""))
+fit3 <- fit
+
+
+# Examine trace plot for block (1,1)
+plot(mcmc(fit1$param[,,1,1]))
+plot(mcmc(fit2$param[,,1,1]))
+plot(mcmc(fit3$param[,,1,1]))
+
+# compare estimated rates for both at a given timepoint
+load(paste("data/",opts$dataset,".rdata",sep=""))
+lrm <- brem.lrm(train,N,z,beta)
+lrm1 <- brem.lrm(train,N,fit1$z,fit1$beta)
+lrm2 <- brem.lrm(train,N,fit2$z,fit2$beta)
+m <- 50
+plot(c(lrm1[m,,]),c(lrm2[m,,]),xlab="without degree effects",ylab="with degree effects")
+abline(0,1)
+plot(fit1$beta,fit2$beta)
+for (i in 1:2000) {
+  #lrm1[i,,] <- exp(lrm1[i,,])
+  #lrm2[i,,] <- exp(lrm2[i,,])
+  diag(lrm[i,,]) <- diag(lrm2[i,,]) <- diag(lrm1[i,,]) <- -5
+}
+plotmat(melt(exp(lrm[30,,])))

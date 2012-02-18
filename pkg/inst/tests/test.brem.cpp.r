@@ -204,6 +204,14 @@ lrm <- log_intensity_array(beta,A[,1],A[,2]-1,A[,3]-1,z-1,N,M,K,P)
 
 lrmo <- ratemat.online(A,N)
 
-
+for (i in 1:M) {
+  diag(lrm[i,,]) <- 0
+  diag(lrmo[i,,]) <- 0
+  o1 <- order(lrm[i,,])
+  o2 <- order(lrmo[i,,])
+  if (any(o1!=o2)) browser()
+}
+lam <- lrm[i,,]
+ix <- (order(lrm[i,,]) != order(lrmo[i,,]))
 
 compute_lambda(1,0,0,0,s,beta,N,K,P)  #

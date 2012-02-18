@@ -50,11 +50,20 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [x] Get twitter training and test set up
 - [X] Add UC Irvine dataset
 - [X] See if we can learn groups on synthetic data.
-- Why is synthetic fit making the dyad count effect so large? [wrong
-  synthetic dataset?]
+- [x] Why is synthetic fit making the dyad count effect so large? [wrong
+  synthetic dataset?] [ans: with K=1 the model needs to make dyad
+  count effect large and make the other degree effects small.  with
+  K>1 this should not happen...]
 - Rerun synthetic data without degree effects?  
-  - fix bug in synthetic fitting?
-  - slice sampling seems to work better when K=1, but worse when K>1
+  - [x] fix bug in synthetic fitting? [bug in slice sampling always used
+    shared model.]
+  - [x] nonidentifiability with degree effects and dyad counts? [Don't
+    believe so, ubt still seem to have some interactions between
+    degree effects and intercept, for example.  perhaps this only
+    occurs when we have small amounts of data (e.g. off diagonal
+    blocks in synthetic example)]
+  - [x, but still occasionally shoots to negative values] slice sampling seems to work better when K=1, but worse when K>1.
+    Seems to break occasionally and go to extreme negative values.
 - Run all datasets with K=1
 - Work on better proposal dist. and better mixing of group assignments.
   - Split/merge moves: Try split moves where we select a subset and offer them a new

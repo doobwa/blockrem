@@ -39,7 +39,6 @@ if (K > 1 & file.exists(f)) {
   beta <- NULL
 }
 
-source("pkg/R/brem.r")
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
-		 niter=opts$numiterations,gibbs=opts$gibbs,beta=beta,
+		             niter=opts$numiterations,gibbs=opts$gibbs,beta=beta,px=px,
                  outdir=paste("results/",opts$dataset,"/",sep=""))
