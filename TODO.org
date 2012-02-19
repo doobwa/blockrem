@@ -62,8 +62,13 @@ Debug issues with whether to include intercept term or not. (Understand collinea
     degree effects and intercept, for example.  perhaps this only
     occurs when we have small amounts of data (e.g. off diagonal
     blocks in synthetic example)]
-  - [x, but still occasionally shoots to negative values] slice sampling seems to work better when K=1, but worse when K>1.
+  - [x, but still occasionally shoots to negative values.  I now think
+    this is due to nonidentifiability... e.g. when I leave an
+    intercept term in with K=1 and just pshifts] slice sampling seems to work better when K=1, but worse when K>1.
     Seems to break occasionally and go to extreme negative values.
+  - MH seems to work better than slice sampling on shared model with K=2 and large P.  This might be because of highly correlated variables. Needs longer burn in though.  Not using (1,1,1) variable (intercept for block 1,1) seems to help.
+  - Bug in slice sampling since it requires global variables
+- Fix prediction code so that it doesn't take as much memory and is fasters.
 - Run all datasets with K=1
 - Work on better proposal dist. and better mixing of group assignments.
   - Split/merge moves: Try split moves where we select a subset and offer them a new
@@ -100,6 +105,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Initialize with guess at z's, rather than guess at beta.
 - Research maximization of beta rather than sampling.
 
+* 
 * Low priority:
 - Port simulator over to Rcpp.
 

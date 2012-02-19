@@ -52,6 +52,7 @@ brem.lrm <- function(A,N,z,beta) {
   for (i in 1:M) diag(lrm[i,,]) <- -Inf
   return(lrm)
 }
+
 brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
   M <- nrow(A)
   P <- dim(beta)[1]
@@ -237,11 +238,12 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
     if (model.type=="shared") {
       beta <- use.first.blocks(beta)
     }
-    #brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
-    brem.lpost.fast(A,N,K,z,s,beta,priors)
+    brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
+    #brem.lpost.fast(A,N,K,z,s,beta,priors)
   }
   
   use.first.blocks <- function(beta) {
+    for (p in 1:P) {
     for (j1 in 1:K) {
       for (j2 in 1:K) {
         if (j1==j2) {
@@ -251,6 +253,7 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
           beta[p,j1,j2] <- beta[p,1,2]
         }
       } 
+    }
     }
     return(beta)
   }
@@ -272,23 +275,24 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
   }
   
   olps <- olp
-  for (p in which(px==1)) {
-    for (k1 in kx1) {
-      for (k2 in kx2) {
-        cat(k1,k2,".")
-        newval <- uni.slice(beta[p,k1,k2],slicellk,gx0=olp)
-        if (olp!=brem.lpost.fast(A,N,K,z,s,beta,priors)) 
-          stop("uni.slice returned weird log posterior")
-        cat("|\n")
-        beta[p,k1,k2] <- newval
-        if (model.type=="shared") beta <- use.first.blocks(beta)
-        olp <- attr(newval,"log.density")
-        olps <- c(olps,olp)
+  #olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
+  for (k1 in kx1) {
+    for (k2 in kx2) {
+      olp <- brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
+      for (p in which(px==1)) {
+        cat(".")
+        if (!(k1==1 & k2==1 & p==1)) {
+          newval <- uni.slice(beta[p,k1,k2],slicellk,gx0=olp)
+          beta[p,k1,k2] <- newval
+          if (model.type=="shared") beta <- use.first.blocks(beta)
+          olp <- attr(newval,"log.density")
+          olps <- c(olps,olp)
+        }
       }
     }
   }
-  
-  return(list(current=beta,olp=olp))
+
+  return(list(current=beta,olp=olp,olps=olps))
 }
 
 # Sample empty cluster parameters from prior.  Only sample baserates.

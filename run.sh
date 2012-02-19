@@ -18,13 +18,15 @@ opts=list(dataset="eckmann-small",numclusters=1,model.type="full",niter=10,gibbs
 
 # Fit models
 cd /extra/duboisc0/blockrem;./brem.r -d "twitter-small" -k 1 -n 500 -m "full" 
-./parallel --sshlogin 8/d5 'cd /extra/duboisc0/blockrem;./brem.r -d "synthetic" -k 2 -n 500 -m {}' ::: "baserates" "shared" "full"
+./parallel --sshlogin 8/d5 'cd /extra/duboisc0/blockrem;./brem.r -d "synthetic" -k 2 -n 500 -m {} -s FALSE' ::: "baserates" "shared" "full"
 
 ./parallel --sshlogin 8/d5 'cd /extra/duboisc0/blockrem;./brem.r -d "eckmann-small" -k 2 -n 500 -m {}' ::: "baserates" "shared" "full"
 
 ./parallel --sshlogin 8/d5 'cd /extra/duboisc0/blockrem;./brem.r -d "twitter-small" -k 2 -n 500 -m {}' ::: "baserates" "shared" "full"
 
 # Run dashboard
+rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
+./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE' ::: "synthetic" 
 ./parallel --sshlogin 8/d6 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE' ::: "synthetic" "eckmann-small" "twitter-small"
 
 

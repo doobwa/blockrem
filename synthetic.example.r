@@ -12,21 +12,22 @@ s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P
 s$precompute()
 
 # Degree vs. no degree effects, slice sampling, K=1 full
-source("pkg/R/brem.r")
-source("pkg/R/slice.r")
+
 px <- rep(1,13)
 px[8:13] <- 0
+px[7] <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
                  niter=opts$numiterations,gibbs=opts$gibbs,px=px,
-                 outdir=paste("results/",opts$dataset,"/",sep=""))
+                 outdir=NULL)
 fit1 <- fit
 
 px <- rep(1,13)
 px[13] <- 0
+px[7] <- 0
 #px[8]  <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
                  niter=opts$numiterations,gibbs=opts$gibbs,px=px,
-                 outdir=paste("results/",opts$dataset,"/",sep=""))
+                 outdir=NULL)
 fit2 <- fit
 
 # look at mixing for both
@@ -41,25 +42,28 @@ opts$gibbs <- "fast"
 opts$slice <- TRUE
 px <- rep(1,13)
 px[8:13] <- 0
+px[7] <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
                  niter=opts$numiterations,gibbs=opts$gibbs,px=px,
-                 outdir=paste("results/",opts$dataset,"/",sep=""))
+                 outdir=NULL)
 fit1 <- fit
 
 px <- rep(1,13)
 px[13] <- 0
+px[7] <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
-                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,
-                 outdir=paste("results/",opts$dataset,"/",sep=""))
+                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,#beta=beta,
+                 outdir=NULL)
 fit2 <- fit
 
 # Use shared model
 opts$model.type <- "shared"
 px <- rep(1,13)
 px[13] <- 0
+px[7] <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
-                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,
-                 outdir=paste("results/",opts$dataset,"/",sep=""))
+                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,z=z,
+                 outdir=NULL)
 fit3 <- fit
 
 

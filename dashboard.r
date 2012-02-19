@@ -34,20 +34,21 @@ fits <- lapply(dir(results.dir,full.names=TRUE),function(f) {
   return(res)
 })
 fnames <- unlist(strsplit(dir(results.dir),".rdata"))
-
+names(fits) <- fnames
 
 cat("Plotting log posterior during MCMC.\n")
 llks <- lapply(1:length(fits),function(i) {
   data.frame(model=fnames[i],llk=fits[[i]]$llks,iter=1:fits[[i]]$niter)
 })
 llks <- do.call(rbind,llks)
+llks <- subset(llks,iter>10)
 
 if (opts$dataset == "synthetic") {
-  q1 <- qplot(iter,value,data=subset(llks,iter>10),geom="line",colour=factor(L1)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + geom_abline(intercept=true.lpost,slope=0)
+  load("data/synthetic.rdata")
+  q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model))+ geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + limits(c(min(llks$llk),0),"y")
 } else {
-  q1 <- qplot(iter,value,data=subset(llks,iter>10),geom="line",colour=factor(L1)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
+  q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 }
-
 
 cat("Plotting progress of z at each MCMC iteration.\n")
 zs <- lapply(fits,function(f) do.call(rbind,f$zs))
@@ -70,77 +71,42 @@ if (length(fx) > 0) {
 }
 
 cat("Recall experiment on training data.\n")
-lrms <- lapply(fits,function(f) {
-  brem.lrm(train,N,f$z,f$beta)
-})
-names(lrms) <- fnames
-lrms$unif   <- array(1,c(nrow(train),N,N))
-lrms$online <- ratemat.online(train,N)
-lrms$marg   <- ratemat.from.marginals(train,train,N)
 if (opts$dataset == "synthetic") {
   load("data/synthetic.rdata")
-  lrms$true <- brem.lrm(train,N,z,beta)
+  fits$truth <- list(z=z,beta=beta)
 }
-# TEMP:
+
+# Temp
 P <- 13
 K <- 1
 tmp <- array(0,c(P,K,K))
 tmp[12,,] <- 1
-lrms$counts.only <-  brem.lrm(train,N,rep(1,N),tmp)
+fits$counts.only <- list(z=rep(1,N),beta=tmp)
 
-cat("Computing ranks.\n")
-ps.train.some <- lapply(lrms,function(lrm) {
-  cat(".")
-  recall(ranks(train,-lrm,ties.method="random"),top=seq(1,100,by=5))#1:100)
+rks <- lapply(i in 1:length(fits),function(i) {
+  
+  lrm <- brem.lrm(train,N,f$z,f$beta)
+  rk1 <- ranks(train,-lrm,ties.method="random")
+  lrm <- brem.lrm(test,N,f$z,f$beta)
+  rk2 <- ranks(test,-lrm,ties.method="random")
+  d <- list(train=list(rank.100 = recall(rk1,top=1:100),
+                       rank.all = recall(rk1,top=seq(1,N^2,length.out=100))),
+            test =list(rank.100 = recall(rk2,top=1:100),
+                       rank.all = recall(rk2,top=seq(1,N^2,length.out=100))))
+  d <- melt(d,id.vars="k",measure.vars="recall")
+  rm(lrm)
+  gc()
+  return(d)
 })
-res <- melt(ps.train.some,id.vars=c("k"),measure.vars="recall")
-q4a <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
-q4a
-
-#save(lrms,ps,file="tmp.rdata")
-
-chosen <- seq(1,N^2,length.out=100)
-ps.train.all <- lapply(lrms,function(lrm) {
-  recall(ranks(train,-lrm,ties.method="random"),top=chosen)
-})
-res <- melt(ps.train.all,id.vars=c("k"),measure.vars="recall")
-q5a <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
-
-
-cat("Recall experiment on test data.\n")
-lrms <- lapply(fits,function(f) {
-  brem.lrm(test,N,f$z,f$beta)
-})
-names(lrms) <- fnames
-lrms$unif   <- array(1,c(nrow(test),N,N))
-lrms$online <- ratemat.online(test,N)
-lrms$marg   <- ratemat.from.marginals(train,test,N)
-if (opts$dataset == "synthetic") {
-  load("data/synthetic.rdata")
-  lrms$true <- brem.lrm(test,N,z,beta)
+for (i in 1:length(fits)) {
+  rks[[i]]$model <- names(fits)[i]
 }
-# TEMP:
-P <- 13
-K <- 1
-tmp <- array(0,c(P,K,K))
-tmp[12,,] <- 1
-lrms$counts.only <-  brem.lrm(test,N,rep(1,N),tmp)
-#r1 <- ranks(test,-lrms$counts.only,ties.method="random")
-#r2 <- ranks(test,-lrms$online,ties.method="random")
+rks <- do.call(rbind,rks)
+rownames(rks) <- c()
 
-cat("Computing ranks.\n")
-ps.test.some <- lapply(lrms,function(lrm) {
-  recall(ranks(test,-lrm,ties.method="random"),top=1:100)
-})
-res <- melt(ps.test.some,id.vars=c("k"),measure.vars="recall")
-q4 <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
-
-chosen <- seq(1,N^2,length.out=100)
-ps.test.all <- lapply(lrms,function(lrm) {
-  recall(ranks(test,-lrm,ties.method="random"),top=chosen)
-})
-res <- melt(ps.test.all,id.vars=c("k"),measure.vars="recall")
-q5 <- qplot(k,value,data=res,geom="line",colour=factor(L1),group=factor(L1))+theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+q4 <- qplot(k,value,data=rks,geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2) +theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+print(q4)
+ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=10,height=8)
 
 cat("Plotting parameter estimates.\n")
 betas <- lapply(fits,function(f) f$beta)
@@ -171,7 +137,7 @@ cat("Creating dashboard.\n")
 library(gridExtra)
 pdf(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=25,height=10)
 blankPanel <- grid.rect(gp=gpar(col="white"))
-grid.arrange(q1, q2, q3, q6,q7,q4, q5, q4a,q5a,q6, ncol=5)
+grid.arrange(q1, q2, q3, q6,q7,q4,q6, ncol=5)
 dev.off()
 
 save.image(paste("figs/",opts$dataset,"/dashboard.rdata",sep=""))
@@ -186,13 +152,13 @@ if (opts$save.figs) {
   print(q3)
   ggsave(paste("figs/",opts$dataset,"/counts.pdf",sep=""),width=6,height=4)
   print(q4)
-  ggsave(paste("figs/",opts$dataset,"/test-recall-zoom.pdf",sep=""),width=5,height=4)
-  print(q5)
-  ggsave(paste("figs/",opts$dataset,"/test-recall.pdf",sep=""),width=5,height=4)
-  print(q4a)
-  ggsave(paste("figs/",opts$dataset,"/train-recall-zoom.pdf",sep=""),width=5,height=4)
-  print(q5a)
-  ggsave(paste("figs/",opts$dataset,"/train-recall.pdf",sep=""),width=5,height=4)
+  ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=5,height=4)
+#   print(q5)
+#   ggsave(paste("figs/",opts$dataset,"/test-recall.pdf",sep=""),width=5,height=4)
+#   print(q4a)
+#   ggsave(paste("figs/",opts$dataset,"/train-recall-zoom.pdf",sep=""),width=5,height=4)
+#   print(q5a)
+#   ggsave(paste("figs/",opts$dataset,"/train-recall.pdf",sep=""),width=5,height=4)
   print(q6)
   ggsave(paste("figs/",opts$dataset,"/parameters.pdf",sep=""),width=5,height=4)
   print(q7)
