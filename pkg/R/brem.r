@@ -255,6 +255,7 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
     return(beta)
   }
   
+  olp <- NULL
   if (is.null(olp)) {
     olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
   }
@@ -270,13 +271,15 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
     kx2 <- 1:2
   }
   
-  olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
   olps <- olp
   for (p in which(px==1)) {
-    cat(".")
     for (k1 in kx1) {
       for (k2 in kx2) {
-        newval <- uni.slice(beta[p,k1,k2],slicellk)#,gx0=olp)
+        cat(k1,k2,".")
+        newval <- uni.slice(beta[p,k1,k2],slicellk,gx0=olp)
+        if (olp!=brem.lpost.fast(A,N,K,z,s,beta,priors)) 
+          stop("uni.slice returned weird log posterior")
+        cat("|\n")
         beta[p,k1,k2] <- newval
         if (model.type=="shared") beta <- use.first.blocks(beta)
         olp <- attr(newval,"log.density")

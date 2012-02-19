@@ -184,7 +184,7 @@ TODO: Discuss any interpretation of the parameters and clusters for both dataset
 Relational event models \cite{Butts2008} require a knot at each observed event, while other approaches \cite{Gunawardana2011} aim to learn the regions where an intensity is constant and allow for a nonlinear relationship between statistics and the intensity function.  
 
 \subsection{Extensions}
-Possible future work could extend the present framework to a mixed-membership model where for each effect there is a latent cluster assignment.  This way a group of nodes might contact high in-degree nodes at a similar rate, though they vary in the degree to which they adhere to reciprocity.  As in the mixed-membership stochastic blockmodel \cite{Airoldi2008,Shafiei2010}, one could assume that each node has vector of probabilities, $\boldsymbol{\pi}_i$, for being assigned to each of the latent clusters.  In that case $z_i \sim \mbox{Categorical}(\boldsymbol{\pi}_i)$ for each node $i$ and $j$, and the ties are modeled via a stochastic blockmodel $\mbox{logit} p(y_{ij}) = \eta_{z_i,z_j}$.  One could extend our current framework by assuming that for each event $m$, any node  $i,j \in \mathcal{R}_{i_m,j_m}$ redraws their latent class.  
+Possible future work could extend the present framework to a mixed-membership model where for each effect there is a latent cluster assignment.  This way a group of nodes might contact high in-degree nodes at a similar rate, though they vary in the degree to which they adhere to reciprocity.  As in the mixed-membership stochastic blockmodel \cite{Airoldi2008,Shafiei2010}, one could assume that each node has vector of probabilities, $\boldsymbol{\pi}_i$, for being assigned to each of the latent clusters.  In that case $z_i \sim \mbox{Categorical}(\boldsymbol{\pi}_i)$ for each node $i$ and $j$, and the ties are modeled via a stochastic blockmodel $\mbox{logit} p(y_{ij}) = \eta_{z_i,z_j}$.  One could extend our current framework by assuming that for each event $m$, any node  $i,j \in \mathcal{R}_{i_m,j_m}$ redraws their latent class.  TODO: Discuss why we *didn't* do this.
 
 Possible variants:
 \begin{itemize}
@@ -195,6 +195,9 @@ Possible variants:
 \item different clusters for senders and receivers (cite our KDD paper)?
 \item More statistics, e.g. topic model similarity
 \end{itemize}
+
+\section{Related work}
+\cite{Tillman2011} explores the idea of having nonpoisson processes at each edge and solves the master equation for the dynamical system.
 
 \section{Conclusion}
  We propose a hierarchical approach for modeling event-based network data that is analogous to recent hierarchical extensions for latent position models \cite{Handcock2007} and exponential random graph models \cite{Schweinberger2011}.  The method combines a latent variable framework (stochastic blockmodels) with a local dependence model for event sequences (relational event models) to provide detailed models of event dynamics among subsets of nodes while simultaneously allowing for heterogeneity in dynamics of the network as a whole.

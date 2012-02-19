@@ -37,12 +37,10 @@ fnames <- unlist(strsplit(dir(results.dir),".rdata"))
 
 
 cat("Plotting log posterior during MCMC.\n")
-niter <- 500
-llks <- lapply(fits,function(f) f$llks)#cbind(llk=f$llks,iter=1:f$niter))
-names(llks) <- fnames
-llks <- melt(llks)
-llks$iter <- 1:niter
-llks <- subset(llks,value > mean(value))
+llks <- lapply(1:length(fits),function(i) {
+  data.frame(model=fnames[i],llk=fits[[i]]$llks,iter=1:fits[[i]]$niter)
+})
+llks <- do.call(rbind,llks)
 
 if (opts$dataset == "synthetic") {
   q1 <- qplot(iter,value,data=subset(llks,iter>10),geom="line",colour=factor(L1)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + geom_abline(intercept=true.lpost,slope=0)

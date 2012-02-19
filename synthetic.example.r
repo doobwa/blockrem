@@ -1,7 +1,6 @@
 opts <- list(dataset="synthetic",numclusters=1,model.type="full",gibbs="fast",numiterations=20,slice=TRUE)
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
-
 library(brem)
 
 # Precompute data structures
@@ -13,6 +12,8 @@ s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P
 s$precompute()
 
 # Degree vs. no degree effects, slice sampling, K=1 full
+source("pkg/R/brem.r")
+source("pkg/R/slice.r")
 px <- rep(1,13)
 px[8:13] <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,

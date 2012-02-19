@@ -52,8 +52,8 @@ uni.slice.evals <- 0	# Number of density evaluations done in these calls
 
 uni.slice <- function (x0, g, w=1, m=Inf, lower=-Inf, upper=+Inf, gx0=NULL)
 {
-  uni.slice.calls <- 0  # Number of calls of the slice sampling function
-  uni.slice.evals <- 0
+  uni.slice.calls <<- 0  # Number of calls of the slice sampling function
+  uni.slice.evals <<- 0
   # Check the validity of the arguments.
   
   if (!is.numeric(x0) || length(x0)!=1
@@ -70,14 +70,17 @@ uni.slice <- function (x0, g, w=1, m=Inf, lower=-Inf, upper=+Inf, gx0=NULL)
   
   # Keep track of the number of calls made to this function.
   
-  uni.slice.calls <- uni.slice.calls + 1
+  uni.slice.calls <<- uni.slice.calls + 1
   
   # Find the log density at the initial point, if not already known.
   
   if (is.null(gx0)) 
-  { uni.slice.evals <- uni.slice.evals + 1
+  { uni.slice.evals <<- uni.slice.evals + 1
     gx0 <- g(x0)
   }
+
+  # TEMP: Debugging
+  if (gx0 != g(x0)) stop("incorrect gx0 supplied")
   
   # Determine the slice level, in log terms.
   
@@ -96,14 +99,16 @@ uni.slice <- function (x0, g, w=1, m=Inf, lower=-Inf, upper=+Inf, gx0=NULL)
   { 
     repeat
     { if (L<=lower) break
-      uni.slice.evals <- uni.slice.evals + 1
+      uni.slice.evals <<- uni.slice.evals + 1
+      if (uni.slice.evals > 50) browser()
       if (g(L)<=logy) break
       L <- L - w
     }
     
     repeat
     { if (R>=upper) break
-      uni.slice.evals <- uni.slice.evals + 1
+      uni.slice.evals <<- uni.slice.evals + 1
+      if (uni.slice.evals > 50) browser()
       if (g(R)<=logy) break
       R <- R + w
     }
@@ -116,7 +121,9 @@ uni.slice <- function (x0, g, w=1, m=Inf, lower=-Inf, upper=+Inf, gx0=NULL)
     
     while (J>0)
     { if (L<=lower) break
-      uni.slice.evals <- uni.slice.evals + 1
+      uni.slice.evals <<- uni.slice.evals + 1
+      if (uni.slice.evals > 50) browser()
+      print(uni.slice.evals)
       if (g(L)<=logy) break
       L <- L - w
       J <- J - 1
@@ -124,7 +131,9 @@ uni.slice <- function (x0, g, w=1, m=Inf, lower=-Inf, upper=+Inf, gx0=NULL)
     
     while (K>0)
     { if (R>=upper) break
-      uni.slice.evals <- uni.slice.evals + 1
+      uni.slice.evals <<- uni.slice.evals + 1
+      if (uni.slice.evals > 50) browser()
+      print(uni.slice.evals)
       if (g(R)<=logy) break
       R <- R + w
       K <- K - 1
@@ -146,7 +155,9 @@ uni.slice <- function (x0, g, w=1, m=Inf, lower=-Inf, upper=+Inf, gx0=NULL)
   { 
     x1 <- runif(1,L,R)
     
-    uni.slice.evals <- uni.slice.evals + 1
+    uni.slice.evals <<- uni.slice.evals + 1
+    if (uni.slice.evals > 50) browser()
+    print(uni.slice.evals)
     gx1 <- g(x1)
     
     if (gx1>=logy) break

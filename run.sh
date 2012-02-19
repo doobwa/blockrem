@@ -10,16 +10,14 @@
 ./brem.r -f "data/eckmann-small.rdata" -k 2 -n 500 -m "full" -d "results/eckmann-small" -g "fast"
 ./brem.r -f "data/eckmann-small.rdata" -k 1 -n 500 -m "full" -d "results/eckmann-small" -g "fast"
 
-opts=list(dataset="synthetic",numclusters=1,model.type="full",niter=10,gibbs="fast",numiterations=10,slice=TRUE)
+opts=list(dataset="eckmann-small",numclusters=1,model.type="full",niter=10,gibbs="fast",numiterations=100,slice=TRUE)
 
 ./parallel --sshlogin 8/d6 'cd /extra/duboisc0/blockrem;./brem.r -d {} -k 1 -n 500 -m "full"' ::: "synthetic" "eckmann-small" "twitter-small"
 
 ./parallel --sshlogin 8/d5 'cd /extra/duboisc0/blockrem;./brem.r -d {} -k 2 -n 500 -m "shared"' ::: "synthetic" "eckmann-small" 
 
 # Fit models
-
-./parallel --sshlogin 8/d5 'cd /extra/duboisc0/blockrem;./brem.r -d {} -k 1 -n 500 -m "full"' ::: "synthetic" "eckmann-small"
-
+cd /extra/duboisc0/blockrem;./brem.r -d "twitter-small" -k 1 -n 500 -m "full" 
 ./parallel --sshlogin 8/d5 'cd /extra/duboisc0/blockrem;./brem.r -d "synthetic" -k 2 -n 500 -m {}' ::: "baserates" "shared" "full"
 
 ./parallel --sshlogin 8/d5 'cd /extra/duboisc0/blockrem;./brem.r -d "eckmann-small" -k 2 -n 500 -m {}' ::: "baserates" "shared" "full"

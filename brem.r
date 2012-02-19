@@ -39,6 +39,10 @@ if (K > 1 & file.exists(f)) {
   beta <- NULL
 }
 
+px <- rep(1,13)
+px[13] <- 0
+if (K==1) px[1] <- 0 # identifiability
+
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
-		             niter=opts$numiterations,gibbs=opts$gibbs,beta=beta,px=px,
+                 niter=opts$numiterations,gibbs=opts$gibbs,beta=beta,px=px,
                  outdir=paste("results/",opts$dataset,"/",sep=""))
