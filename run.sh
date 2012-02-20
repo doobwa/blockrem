@@ -27,14 +27,28 @@ cd /extra/duboisc0/blockrem;./brem.r -d "twitter-small" -k 1 -n 500 -m "full"
 # Run dashboard
 rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
 ./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE' ::: "synthetic" 
+./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE' ::: "twitter-small" 
 ./parallel --sshlogin 8/d6 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE' ::: "synthetic" "eckmann-small" "twitter-small"
 
+./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./predict.r -d "synthetic" -m {}' ::: "full.1" "full.2" "shared.2"
+./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./predict.r -d "synthetic" -b {}' ::: "uniform" "online" "marg"
+
+./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./predict.r -d "eckmann-small" -m {}' ::: "full.1"
+./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./predict.r -d "eckmann-small" -b {}' ::: "uniform" "online" "marg"
+
+./parallel --sshlogin 8/d8 'cd /extra/duboisc0/blockrem;./predict.r -d "twitter-small" -m {}' ::: "full.1"
+./parallel --sshlogin 8/d7 'cd /extra/duboisc0/blockrem;./predict.r -d "twitter-small" -b {}' ::: "uniform" 
+
+cd /extra/duboisc0/blockrem;./predict.r -d "twitter-small" -b "uniform"
+cd /extra/duboisc0/blockrem;./predict.r -d "twitter-small" -b "online"
+cd /extra/duboisc0/blockrem;./predict.r -d "twitter-small" -b "marg"
 
 rsync -auvz . duboisc@d1:/extra/duboisc0/blockrem/
 
 cd ~/Documents/blockrem/
 rsync -auvz pkg duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz brem.r duboisc@d1:/extra/duboisc0/blockrem/
+rsync -auvz predict.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz data duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results .
