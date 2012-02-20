@@ -83,30 +83,56 @@ tmp <- array(0,c(P,K,K))
 tmp[12,,] <- 1
 fits$counts.only <- list(z=rep(1,N),beta=tmp)
 
-rks <- lapply(i in 1:length(fits),function(i) {
+cat("precomputing\n")
+strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
+strain$precompute()
+stest <- new(RemStat,test[,1],as.integer(test[,2])-1,as.integer(test[,3])-1,N,nrow(test),P)
+stest$precompute()
+
+options(cores=5)
+fnames <- c(names(fits),c("uniform","online","margins"))
+rks <- list()
+for (i in 1:length(fnames)) {
+  get.lrm <- switch(fnames[i],
+                    "uniform" = function(x) array(1,c(nrow(x),N,N)),
+                    "online"  = function(x) ratemat.online(x,N),
+                    "margins" = function(x) ratemat.from.marginals(train,x,N),
+                    function(x) brem.lrm.fast(nrow(x),s,fits[[i]]$z,fits[[i]]$beta))
+                    #function(x) brem.lrm(x,N,fits[[i]]$z,fits[[i]]$beta)),
   
-  lrm <- brem.lrm(train,N,f$z,f$beta)
+  cat("train:",fnames[i])
+  s <- strain
+  lrm <- get.lrm(train)
+  cat("ranking\n")
   rk1 <- ranks(train,-lrm,ties.method="random")
-  lrm <- brem.lrm(test,N,f$z,f$beta)
+  cat("test:",fnames[i])
+  s <- stest
+  lrm <- get.lrm(test)
+  cat("ranking\n")
   rk2 <- ranks(test,-lrm,ties.method="random")
-  d <- list(train=list(rank.100 = recall(rk1,top=1:100),
-                       rank.all = recall(rk1,top=seq(1,N^2,length.out=100))),
-            test =list(rank.100 = recall(rk2,top=1:100),
-                       rank.all = recall(rk2,top=seq(1,N^2,length.out=100))))
-  d <- melt(d,id.vars="k",measure.vars="recall")
   rm(lrm)
   gc()
-  return(d)
-})
-for (i in 1:length(fits)) {
-  rks[[i]]$model <- names(fits)[i]
+  rks[[i]] <- list(model=fnames[i],train=rk1,test=rk2)
 }
-rks <- do.call(rbind,rks)
+for (i in 1:length(fnames)) {
+  rank.k[[i]]$model <- fnames[i]
+}
+d <- list(train=list(rank.100 = recall(rk1,top=1:100),
+                     rank.all = recall(rk1,top=seq(1,N^2,length.out=100))),
+          test =list(rank.100 = recall(rk2,top=1:100),
+                     rank.all = recall(rk2,top=seq(1,N^2,length.out=100))))
+rank.k[[i]] <- melt(d,id.vars="k",measure.vars="recall")
+rank.dyad <- data.frame(model=fnames[i],train=mea)
+
+rank.k <- do.call(rbind,rank.k)
 rownames(rks) <- c()
 
+# Recall at k
 q4 <- qplot(k,value,data=rks,geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2) +theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 print(q4)
 ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=10,height=8)
+
+q5 <- qplot
 
 cat("Plotting parameter estimates.\n")
 betas <- lapply(fits,function(f) f$beta)

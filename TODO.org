@@ -69,7 +69,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - MH seems to work better than slice sampling on shared model with K=2 and large P.  This might be because of highly correlated variables. Needs longer burn in though.  Not using (1,1,1) variable (intercept for block 1,1) seems to help.
   - Bug in slice sampling since it requires global variables
 - Fix prediction code so that it doesn't take as much memory and is fasters.
-- Run all datasets with K=1
+- Run all datasets with K=1 and get dashboard
 - Work on better proposal dist. and better mixing of group assignments.
   - Split/merge moves: Try split moves where we select a subset and offer them a new
     cluster with the same parameters as the previous cluster.  Try an

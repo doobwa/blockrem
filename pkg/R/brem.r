@@ -52,6 +52,12 @@ brem.lrm <- function(A,N,z,beta) {
   for (i in 1:M) diag(lrm[i,,]) <- -Inf
   return(lrm)
 }
+brem.lrm.fast <- function(M,s,z,beta) {
+  K <- dim(beta)[2]
+  lrm <- log_intensity_array_fast(beta,z-1,s$ptr(),K)
+  for (i in 1:M) diag(lrm[i,,]) <- -Inf
+  return(lrm)
+}
 
 brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
   M <- nrow(A)

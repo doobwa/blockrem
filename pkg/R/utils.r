@@ -226,6 +226,19 @@ get.indices <- function(A,N) {
 #' Compute the rank of the each event in the observed edgelist given an array of intensities
 #' @edgelist Mx3 matrix of event times, senders and recipients
 #' @ratemats MxNxN array of intensities.  
+ranks.fast <- function(edgelist,ratemats,...) {
+  M <- nrow(edgelist)
+  N <- dim(ratemats)[2]
+  r <- rep(0,M)
+  for (m in 1:M) {
+    i <- edgelist[m,2]
+    j <- edgelist[m,3]
+    k <- N*(j-1) + i
+    r[m] <- rank(ratemats[i,,],...)[k]
+  }
+  return(r)
+}
+
 ranks <- function(edgelist,ratemats,...) {
   M <- nrow(edgelist)
   n <- dim(ratemats)[2]
