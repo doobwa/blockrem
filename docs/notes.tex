@@ -1,10 +1,16 @@
 \pagestyle{empty}
 \documentclass[11pt]{article}
-\usepackage{graphicx}
+\usepackage{tikz}
+\tikzstyle{vertex}=[auto=left,circle,fill=black!25,minimum size=20pt,inner sep=0pt]
+
+%\usepackage{tikz,fullpage}
+%\usetikzlibrary{arrows,petri,topaths}%
+%\usepackage{tkz-berge}
 \usepackage{verbatim}
 \usepackage{url}
 \usepackage{graphicx, color}
 \usepackage{amsmath}
+\usepackage{subfigure}
 %\usepackage[small,compact]{titlesec} 
 %\usepackage[small,it]{caption}
 
@@ -22,7 +28,17 @@
 \centerline{\bf Christopher DuBois}
  \bigskip
 
-\abstract{TODO}
+\abstract{
+
+\begin{itemize}
+\item Blockmodels and clustering algorithms often applied to static networks for exploratory data analysis
+\item continuous time methods allow one to predict future events given the previous history
+\item we combine these two ideas with a hierarchical model such that each pair of blocks has a set of parameters guiding the event dynamics for those dyads
+\item prediction experiments on real datasets
+\item show that the parameter estimates are interpretable
+\end{itemize}
+
+}
 
 \section{Introduction}
 
@@ -32,7 +48,7 @@ Network data, however, is often collected as a sequence of events occurring over
 
 The above continuous time network models have two major drawbacks: 1) the entire network is assumed to have identical dynamics, and 2) the occurrence of any event can affect the rate at which any other event occurs.  Both aspects may be unrealistic.  Consider email communication in a small organization comprised of several teams.  Each team may have a different pattern for collaborating via email, and in many cases emails between one pair of individuals will not affect emailing behavior between a separate pair of individuals.
 
-Borrowing from the intuition of stochastic blockmodels, we propose a hierarchical model of continuous time network data that learns latent clusters of nodes which share similar patterns of interaction.  [TODO: Explain how our experiments show that this helps.]   [TODO: perhaps use ``role'' terminology.] 
+Borrowing from the intuition of stochastic blockmodels, we propose a hierarchical model of continuous time network data that learns latent clusters of nodes which share similar patterns of interaction.  The behavior of the model is illustrated with data simulated from the model.  Using  data sets of dyadic communication among people, we demonstrate the ability to improve upon simple baselines for predicting the next event.  Finally we show that the parameter estimates provide an interpretable structure to the event dynamics among blocks of individuals, sometimes identifying particular \emph{roles} of communication that exist within the network.
   
 \section{Model}
 
@@ -55,14 +71,63 @@ One can extend the above to marked point processes where each event contains add
 \end{align}
 \noindent where event $m$ is $(i_m,j_m)$, $\tau_{i,j,m}$ is the time  of the changepoint for $\lambda_{i,j}$ prior to the $m$th event, and $\mathcal{R}_{i,j}$ is the set of dyads who have a changepoint in their intensity when $(i_m,j_m)$ occurs. \footnote{We further assume 1) all intensity functions change at times $t=0$ and $t=t_M$, and 2) the first event is drawn uniformly from the risk set.}
 
-
 \begin{figure}
- \def\svgwidth{6in}
-%  \input{example1.pdf_tex}
-\caption{Illustration of event data and the assumptions of the model.  Left: An sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Center: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  Note $\lambda_{34}$ can only change when events occur involving either node 3 or node 4.  Right: Illustration of the block model, where events in cluster 1 (circles) are governed by the vector $\beta_{1,1}$, events in cluster 2 (squares) are governed by $\beta_{2,2}$, and an circle-to-square event governed by $\beta_{1,2}$.}
+
+\centering 
+\subfigure[Dynamic network data]
+{
+\begin{tikzpicture}[scale=.8,transform shape,thick]
+  \node[vertex] (n1) at (0,0)  {1};
+  \node[vertex] (n2) at (2,2)  {2};
+  \node[vertex] (n3) at (4,0) {3};
+  \node[vertex] (n4) at (2,-2) {4};
+\draw[-stealth] (.4,.4) -- (1.6,1.6);
+\draw[-stealth] (2.4,1.6) -- (3.6,.4);
+\node at (.7,1.1) {$t_1$};
+\node at (3.3,1.1) {$t_2$};
+\end{tikzpicture}
+}
+\subfigure[Intensities for two dyads]
+{
+\begin{tikzpicture}[scale=1,transform shape,thick]
+\draw[-stealth] (0,0) -- (0,3);
+\draw[-stealth] (0,0) -- (5,0);
+
+% First timeline
+\draw (0,2) -- (1,2);
+\draw[fill=black] (1,2) circle (0.75mm);
+\draw (1,1.7) circle (0.75mm);
+\draw (1.08,1.7) -- (3,1.7);
+\draw[fill=black] (3,1.7) circle (0.75mm);
+\draw (3,1.7) circle (0.75mm);
+\draw[fill=black] (3,2.2) circle (0.75mm);
+\draw[-stealth] (3,2.2) -- (5,2.2);
+
+% second timeline
+\draw[dashed] (0,1) -- (3,1);
+\draw[fill=black] (3,1) circle (0.75mm);
+\draw (3,.75) circle (0.75mm);
+\draw[dashed, -stealth] (3.08,.75) -- (5,.75);
+
+% labels
+\node at (-.5,2) {$\lambda_{1,2}$};
+\node at (-.5,1) {$\lambda_{3,4}$};
+\node at (1,-.3) {$t_1$};
+\node at (3,-.3) {$t_2$};
+\end{tikzpicture}
+}
+\caption{Illustration of event data and the assumptions of the model.  Left: An sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Center: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  Note $\lambda_{34}$ can only change when events occur involving either node 3 or node 4. [TODO? Illustration of the block model, where events in cluster 1 (circles) are governed by the vector $\beta_{1,1}$, events in cluster 2 (squares) are governed by $\beta_{2,2}$, and an circle-to-square event governed by $\beta_{1,2}$.]}
 \label{fig:example}
-%\includegraphics[width=6in]{example}
 \end{figure}
+
+
+% \begin{figure}
+%  \def\svgwidth{6in}
+%   \input{example1.pdf_tex}
+% \caption{Illustration of event data and the assumptions of the model.  Left: An sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Center: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  Note $\lambda_{34}$ can only change when events occur involving either node 3 or node 4.  Right: Illustration of the block model, where events in cluster 1 (circles) are governed by the vector $\beta_{1,1}$, events in cluster 2 (squares) are governed by $\beta_{2,2}$, and an circle-to-square event governed by $\beta_{1,2}$.}
+% \label{fig:example}
+% %\includegraphics[width=6in]{example}
+% \end{figure}
 
 For a given dyad $(i,j)$ and time $t$ we may also have a vector of statistics $\mathbf{s}(t,i,j|\mathcal{A}_t,\mathbf{z})$ that is a function of the previous event history  $\mathcal{A}_t = \{(t_m,i_m,j_m): t_m \in [0,t)\}$.   Though this will be useful, we will constrain the types of dependencies so that an interaction between one dyad does not affect the rate of an entirely separate dyad.  As shown in Figure \ref{fig:example}, we do this by assuming each intensity function $\lambda_{ij}(t)$ may only change following an event involving either $i$ or $j$.  This implies that  $\mathcal{R}_{i,j}$ is the set of dyads involving either $i$ or $j$ and that we will only use  statistics $\mathbf{s}(t,i,j)$ that do not change until an event involving either $i$ or $j$ occurs.  
 
@@ -146,10 +211,9 @@ TODO: Show parameter bias as a function of iteration; perhaps also as a function
 Each of the following data sets are sequences of dyadic events, where each event has a time associated with it, a sender, and a recipient.
 
 \begin{itemize}
-%\item Classroom:  Perhaps within a couple of the classrooms we can infer subgroups who tend to obey different relational event dynamics.
-\item Email: In small organizations there may be groups of people who tend to have a similar style of interaction, and who also share a pattern of interaction with those outside the group or in another group.
-%\item Citation networks: Perhaps some groups of papers obey some types of rich-get-richer effects more than others.
-\item We collected tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.  Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.  We use the subset of 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
+%\item Email: In small organizations there may be groups of people who tend to have a similar style of interaction, and who also share a pattern of interaction with those outside the group or in another group.
+\item Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.\footnote{Will be made publicly available.}  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.  Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.  We use the subset of 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
+\item The Irvine data set
 \end{itemize}
 
 \subsection*{Prediction experiment}
@@ -165,7 +229,9 @@ We evaluate the predictive ability of the learned models by comparing models bas
 
 In addition, we compute recall to evaluate whether the next observed event is among the most likely according to the model.  At each event $m$ we sort the predicted intensities of all possible events in decreasing order, find the rank of the observed event in the list of predicted intensities, and compute the mean rank across the $M$ events.  
 
-Several baselines are included for comparison: \texttt{uniform} places uniform probability on all possible dyads, \texttt{online} ranks events at time $t$ by the number of times the dyad has occurred previously $\sum_{m:t_m < t} I(i_m=i,j_m=j)$, and \texttt{marginal} uses the product of the observed marginal frequencies $\sum_{m:t_m < t} I(i_m=i) \sum_{m:t_m < t} I(j_m=j)$.  Note for processes that are homogeneous over time, \texttt{online} should do well with large amounts of data while \texttt{marginal} should roughly model heterogeneity in activity among individuals.
+Several baselines are included for comparison: \texttt{uniform} places uniform probability on all possible dyads, \texttt{online} ranks events at time $t$ by the number of times the dyad has occurred previously $r_{online}(i,j) = \sum_{m:t_m < t} I(i_m=i,j_m=j)$, and \texttt{marginal} uses the product of the observed marginal frequencies $r_{marg} = \sum_{m:t_m < t} I(i_m=i) \sum_{m:t_m < t} I(j_m=j)$.  Note for processes that are homogeneous over time, \texttt{online} should do well with large amounts of data while \texttt{marginal} should roughly model heterogeneity in activity among individuals.  
+
+Our method jointly models both which dyads occur and when they occur.  To compare the above baselines to our model using the likelihood of observed data, we assume each dyad is a Poisson process with estimated  rate $\hat{\lambda}_{i,j} = \frac{M}{t_M} \frac{r_{b}(i,j) + \xi}{\sum_{ij} r_{b}(i,j) + \xi}$, where $r_b(i,j)$ is the statistic a baseline (described above) and $\xi=1$ is a smoothing parameter.
 
 We consider several variations of our model to investigate its properties. The \texttt{baserates} model only is an intercept only model (and mimics the behavior of a stochastic block model).   The \texttt{full} model uses all the statistics discussed in Section \ref{sec:modeladditional}.  For the \texttt{shared} model we force all diagonal blocks to use the same vector ($\boldsymbol{\beta}_{k_1,k_2} = \boldsymbol{\gamma}_1$ where $k_1=k_2$) and all non-diagonal blocks to use the same vector to be the same  ($\boldsymbol{\beta}_{k_1,k_2} = \boldsymbol{\gamma}_2$ where $k_1 \ne k_2$).  For each of these we may vary the number of clusters $K$. The \texttt{single} model uses all statistics but assumes a single cluster $K=1$. 
 
@@ -180,6 +246,9 @@ TODO: Need to see how well the time-portion of the model is specified.
 TODO: Discuss experimental results.  Describe qualitative behavior of each model's recall line.
 
 TODO: Discuss any interpretation of the parameters and clusters for both datasets.
+
+TODO: discuss non-specification of rate and just predicting next
+event, could still use our approach?
 
 Relational event models \cite{Butts2008} require a knot at each observed event, while other approaches \cite{Gunawardana2011} aim to learn the regions where an intensity is constant and allow for a nonlinear relationship between statistics and the intensity function.  
 
