@@ -56,19 +56,6 @@ llk_indiv <- function(a,lrm,times,sen,rec) {
   return(llks)
 }
 
-llk_slow <- function(lrm,times,sen,rec) {
-  sen <- sen+1
-  rec <- rec+1
-  mp <- matrix(0,N,N)
-  llks <- rep(0,M)
-  for (m in 1:M) diag(lrm[m,,]) <- -Inf
-  llks[1] = lrm[1,sen[1],rec[1]]
-  for (m in 2:(M-1)) {
-    llks[m] <- lrm[m,sen[m],rec[m]] - (times[m]-times[m-1]) * sum(exp(lrm[m,,]))
-  }
-  return(llks)
-}
-
 
 
 test_taus_from_s <- function(times,sen,rec,N,M,P) {
@@ -141,6 +128,7 @@ llk_fast_last <- function(lrm,times,sen,rec) {
   }
   return(list(taus=taus,llks=llks,mp=mp))
 }
+
 
 # 0 based indexing on sen and rec
 llk_slow <- function(lrm,times,sen,rec,M,N) {

@@ -794,6 +794,35 @@ double llk2(Rcpp::NumericVector lrm,
   return llk;
 }
 
+Rcpp::NumericVector llk_vec_from_lrm(Rcpp::NumericVector lrm,
+            Rcpp::NumericVector times,
+            Rcpp::IntegerVector sen, 
+            Rcpp::IntegerVector rec, 
+            int N, int M){
+  double llk = 0;
+  double den;
+  double delta = 0;
+  int i,j;
+  llk = lrm[threeDIndex(0,sen[0],rec[0],M,N,N)];
+  Rcpp::NumericVector llks(M);
+  llks[0] = llk;
+  for (int m = 1; m < M; m++) {
+    den = 0.0;
+    for (int i = 0; i < N; i++) {
+      for (int j = 0; j < N; j++) {
+        if (i != j) {
+          den += exp(lrm[threeDIndex(m,i,j,M,N,N)]);
+        }
+      }
+    }
+    llk = lrm[threeDIndex(m,sen[m],rec[m],M,N,N)];
+    delta = times[m] - times[m-1];
+    llk -= delta * den;
+    llks[m] = llk;
+  }
+  return llks;
+}
+
 RCPP_MODULE(brem){
   
   class_<RemStat>( "RemStat" )
@@ -825,6 +854,7 @@ RCPP_MODULE(brem){
   function( "loglikelihood_fast_subset", &llkfast_subset ) ;
   function( "loglikelihood", &llk ) ;
   function( "loglikelihood_from_lrm", &llk2 ) ;
+  function( "loglikelihood_vec_from_lrm", &llk_vec_from_lrm ) ;
   function( "log_intensity_array", &lrm ) ;
   function( "log_intensity_array_fast", &lrmfast ) ;
   function( "update_statistics", &updateStatistics);
