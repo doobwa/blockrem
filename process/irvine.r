@@ -17,7 +17,8 @@ s <- as.numeric(factor(A[,2],chosen))
 r <- as.numeric(factor(A[,3],chosen))
 plot(s,r,pch=".")
 dim(A)
+A <- cbind(time=A[,1],s=s,r=r)
 
-train <- A[1:5000,]
-test  <- A[5001:nrow(A),]
+train <- as.matrix(A[1:5000,])
+test  <- as.matrix(A[5001:nrow(A),])
 save(A,train,test,N,file="data/irvine.rdata")
