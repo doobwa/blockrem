@@ -21,7 +21,6 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 #' @zs list of latent class assignment vectors at each MCMC iteration
 #' The synthetic dataset should also have true.lpost variable available as well as the true beta parameters.
 #' 
-
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
@@ -29,11 +28,14 @@ library(ggplot2)
 # Pull data from each saved file and grab the name of the fit
 results.dir <- paste("results/",opts$dataset,sep="")
 load(paste("data/",opts$dataset,".rdata",sep=""))
-fits <- lapply(dir(results.dir,full.names=TRUE),function(f) {
+fs <- list.files(results.dir,full.names=TRUE)
+fs <- fs[-grep("ranks",fs)]
+fs <- fs[-grep("llks",fs)]
+fits <- lapply(fs,function(f) {
   load(f)
   return(res)
 })
-fnames <- unlist(strsplit(dir(results.dir),".rdata"))
+fnames <- unlist(strsplit(fs,".rdata"))
 names(fits) <- fnames
 
 cat("Plotting log posterior during MCMC.\n")
@@ -41,7 +43,6 @@ llks <- lapply(1:length(fits),function(i) {
   data.frame(model=fnames[i],llk=fits[[i]]$llks,iter=1:fits[[i]]$niter)
 })
 llks <- do.call(rbind,llks)
-llks <- subset(llks,iter>10)
 
 if (opts$dataset == "synthetic") {
   load("data/synthetic.rdata")
@@ -49,6 +50,7 @@ if (opts$dataset == "synthetic") {
 } else {
   q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 }
+#qplot(iter,log(-llk + 1),data=subset(llks,iter < 20 & iter > 15),geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 
 cat("Plotting progress of z at each MCMC iteration.\n")
 zs <- lapply(fits,function(f) do.call(rbind,f$zs))
@@ -56,6 +58,12 @@ names(zs) <- fnames
 zs <- melt(zs)
 q2 <- qplot(X1,X2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1) + labs(x="iteration",y="node")
 
+cat("Compute distribution of activity using results from the full model.\n")
+tb <- table(factor(c(train[,2],train[,3]),1:N))
+fx <- grep("full.3",fnames)
+z <- fits[[fx]]$z
+df <- data.frame(group=z,count=tb)
+qplot(log(count.Freq),data=df,geom="histogram")+facet_grid(group~.,scales="free")+labs(y="number of users",x="log(number of events)") + theme_bw()
 
 cat("Compute dyad counts for each pshift using results from the full model.\n")
 fx <- grep("full.2",fnames)
@@ -71,93 +79,103 @@ if (length(fx) > 0) {
 }
 
 cat("Recall experiment on training data.\n")
-if (opts$dataset == "synthetic") {
-  load("data/synthetic.rdata")
-  fits$truth <- list(z=z,beta=beta)
-}
 
-# Temp
-P <- 13
-K <- 1
-tmp <- array(0,c(P,K,K))
-tmp[12,,] <- 1
-fits$counts.only <- list(z=rep(1,N),beta=tmp)
+load(paste("data/",opts$dataset,".rdata",sep=""))
+folder <- paste("results/",opts$dataset,"/ranks/",sep="")
+rks <- lapply(dir(folder,full.names=TRUE),function(f) {
+  load(f)
+  return(list(train=rk.train,test=rk.test))
+})
+fnames <- unlist(strsplit(dir(folder),".rdata"))
+names(rks) <- fnames
 
-cat("precomputing\n")
-strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
-strain$precompute()
-stest <- new(RemStat,test[,1],as.integer(test[,2])-1,as.integer(test[,3])-1,N,nrow(test),P)
-stest$precompute()
-
-options(cores=5)
-fnames <- c(names(fits),c("uniform","online","margins"))
-rks <- list()
-for (i in 1:length(fnames)) {
-  get.lrm <- switch(fnames[i],
-                    "uniform" = function(x) array(1,c(nrow(x),N,N)),
-                    "online"  = function(x) ratemat.online(x,N),
-                    "margins" = function(x) ratemat.from.marginals(train,x,N),
-                    function(x) brem.lrm.fast(nrow(x),s,fits[[i]]$z,fits[[i]]$beta))
-                    #function(x) brem.lrm(x,N,fits[[i]]$z,fits[[i]]$beta)),
-  
-  cat("train:",fnames[i])
-  s <- strain
-  lrm <- get.lrm(train)
-  cat("ranking\n")
-  rk1 <- ranks(train,-lrm,ties.method="random")
-  cat("test:",fnames[i])
-  s <- stest
-  lrm <- get.lrm(test)
-  cat("ranking\n")
-  rk2 <- ranks(test,-lrm,ties.method="random")
-  rm(lrm)
-  gc()
-  rks[[i]] <- list(model=fnames[i],train=rk1,test=rk2)
-}
-for (i in 1:length(fnames)) {
-  rank.k[[i]]$model <- fnames[i]
-}
-d <- list(train=list(rank.100 = recall(rk1,top=1:100),
-                     rank.all = recall(rk1,top=seq(1,N^2,length.out=100))),
-          test =list(rank.100 = recall(rk2,top=1:100),
-                     rank.all = recall(rk2,top=seq(1,N^2,length.out=100))))
-rank.k[[i]] <- melt(d,id.vars="k",measure.vars="recall")
-rank.dyad <- data.frame(model=fnames[i],train=mea)
-
-rank.k <- do.call(rbind,rank.k)
-rownames(rks) <- c()
+ds <- lapply(rks,function(r) {
+  d <- list(train=list(recall.200 = recall(r$train,top=1:200),
+                       recall.all = recall(r$train,top=seq(1,N^2,length.out=100))),
+            test =list(recall.200 = recall(r$test,top=1:200),
+                       recall.all = recall(r$test,top=seq(1,N^2,length.out=100))))
+  return(melt(d,id.vars="k",measure.vars="recall"))
+})
+for (i in 1:length(ds)) ds[[i]]$model <- fnames[i]
+ds <- do.call(rbind,ds)
+rownames(ds) <- c()
 
 # Recall at k
-q4 <- qplot(k,value,data=rks,geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2) +theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+q4 <- qplot(k,value,data=subset(ds,L2=="recall.200"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
 print(q4)
-ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=10,height=8)
+ggsave(paste("figs/",opts$dataset,"/recall.200.pdf",sep=""),width=10,height=8)
 
-q5 <- qplot
+q5 <- qplot(k,value,data=subset(ds,L2=="recall.all"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+print(q5)
+ggsave(paste("figs/",opts$dataset,"/recall.all.pdf",sep=""),width=10,height=8)
+
+tbtrain <- table(factor(c(train[,2],train[,3]),1:N))
+tbtest <- table(factor(c(test[,2],test[,3]),1:N))
+rks.all <- lapply(1:length(rks),function(i) 
+  rbind(
+  data.frame(model=fnames[i],
+             iter=1:length(rks[[i]]$train),
+             rk=rks[[i]]$train,type="train",
+             tc=tbtrain[train[,2]] + tbtrain[train[,3]]),
+  data.frame(model=fnames[i],
+             iter=1:length(rks[[i]]$test),
+             rk=rks[[i]]$test,type="test",
+             tc=tbtest[test[,2]] + tbtest[test[,3]])
+  )
+)
+rks.all <- do.call(rbind,rks.all)
+qplot(iter,rk,data=subset(rks.all,type=="train"),colour=factor(model),alpha=.2)+facet_grid(model~.)+theme_bw()
+ggsave(paste("figs/",opts$dataset,"/rank.train.pdf",sep=""),width=20,height=12)
+qplot(iter,rk,data=subset(rks.all,type=="test"),colour=factor(model),alpha=.2)+facet_grid(model~.)+theme_bw()
+ggsave(paste("figs/",opts$dataset,"/rank.test.pdf",sep=""),width=20,height=12)
+
+qplot(tc,rk,data=rks.all,colour=factor(model),alpha=.1)+facet_grid(type ~ model)+theme_bw() + labs(x="sum of sender and recipient degree",y="rank of observed event")
+ggsave(paste("figs/",opts$dataset,"/rank.v.count.pdf",sep=""),width=20,height=12)
 
 cat("Plotting parameter estimates.\n")
 betas <- lapply(fits,function(f) f$beta)
 names(betas) <- fnames
 b <- melt(betas)
 q6 <- qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
+q6 <- qplot(X1,value,data=b,geom="point") + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
 
+# b <- melt(fits[['results/twitter-small/full.3']]$beta)
+# b$block <- paste(b$X2,b$X3)
+# qplot(factor(X1),value,data=b,geom="point",colour=factor(block))+theme_bw()+labs(x="parameter")
 
 # # Compute out of sample log posterior
-lposts <- lapply(fits,function(f) {
-  brem.lpost(test,N,opts$K,f$z,f$beta,priors=list(beta=list(mu=0,sigma=1)))
+load(paste("data/",opts$dataset,".rdata",sep=""))
+folder <- paste("results/",opts$dataset,"/llks/",sep="")
+fs <- dir(folder,full.names=TRUE)
+llks.test <- lapply(fs,function(f) {
+  load(f)
+  return(llk.test)
 })
-# lposts <- list(true = brem.lpost(test$A,N,K,z,beta),
-#                base = sbm.lpost(test$A,N,K,fit0$z,fit0$beta),
-#                diag = brem.lpost(test$A,N,K,fit1$z,fit1$beta),
-#                full = brem.lpost(test$A,N,K,fit2$z,fit2$beta),
-#                sing = brem.lpost(test$A,N,K,fit3$z,fit3$beta))
-# unlist(lposts)
+llks.train <- lapply(fs,function(f) {
+  load(f)
+  return(llk.train)
+})
+names(llks.test) <- names(llks.train) <- strsplit(dir(folder),".rdata")
+
+llks.train <- melt(llks.train)
+llks.train$iter <- 1:nrow(train)
+llks.test <- melt(llks.test)
+llks.test$iter <- 1:nrow(test)
+
+# Examine log likelihood of observations
+qplot(iter,value,data=llks.train,geom="point",colour=factor(L1)) + ylim(c(-50,0))
+qplot(iter,value,data=llks.test,geom="point",colour=factor(L1)) + ylim(c(-50,0))
+
+ddply(llks.train,.(L1),summarise,llk=mean(value))
+ddply(llks.test,.(L1),summarise,llk=mean(value)))
+
 
 
 # trace plots
 library(coda)
 load(paste("results/",opts$dataset,"/full.1.rdata",sep=""))
 r <- melt(res$param)
-q7 <- qplot(X1,value,data=r, colour=factor(X4),geom="line") + labs(colour="parameters for\n 1x1 block",x="iteration") + theme_bw() + facet_grid(X2~X3)
+q7 <- qplot(X1,value,data=r, colour=factor(X4),geom="line") + labs(colour="parameters for\n 1x1 block",x="iteration") + theme_bw() + facet_grid(X2~X3,scales="free")
 
 cat("Creating dashboard.\n")
 library(gridExtra)

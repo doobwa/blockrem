@@ -12,7 +12,7 @@ option_list <- list(
               help="Type of model to fit.  Options: \"baserate\", \"shared\", \"full\"."),
   make_option(c("-g","--gibbs"), default="fast",
               help="Slow or fast version of gibbs."),
-  make_option(c("-s","--slice"), default=TRUE,
+  make_option(c("-s","--slice"), default=FALSE,
               help="Slice sample instead of MH.")
   )
 parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
@@ -23,7 +23,7 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 library(brem)
 
 # Precompute data structures
-N <- max(c(train[,2],train[,3]))
+# N should be loaded by dataset
 M <- nrow(train)
 P <- 13
 K <- opts$numclusters
@@ -31,13 +31,14 @@ s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P
 s$precompute()
 
 # Initialize with K=1 solution, if available
-f <- paste("results/",opts$dataset,"/full.1.rdata",sep="")
-if (K > 1 & file.exists(f)) {
-  load(f)
-  beta <- array(res$beta,c(P,K,K))
-} else {
-  beta <- NULL
-}
+#f <- paste("results/",opts$dataset,"/full.1.rdata",sep="")
+#if (K > 1 & file.exists(f)) {
+#  load(f)
+#  beta <- array(res$beta,c(P,K,K))
+#} else {
+#  beta <- NULL
+#}
+beta = NULL
 
 px <- rep(1,13)
 px[13] <- 0

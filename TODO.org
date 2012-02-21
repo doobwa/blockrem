@@ -68,8 +68,8 @@ Debug issues with whether to include intercept term or not. (Understand collinea
     Seems to break occasionally and go to extreme negative values.
   - MH seems to work better than slice sampling on shared model with K=2 and large P.  This might be because of highly correlated variables. Needs longer burn in though.  Not using (1,1,1) variable (intercept for block 1,1) seems to help.
   - Bug in slice sampling since it requires global variables
-- Fix prediction code so that it doesn't take as much memory and is fasters.
-- Run all datasets with K=1 and get dashboard
+- [x] Fix prediction code so that it doesn't take as much memory and is fasters.
+- [x] Run all datasets with K=1 and get dashboard
 - Work on better proposal dist. and better mixing of group assignments.
   - Split/merge moves: Try split moves where we select a subset and offer them a new
     cluster with the same parameters as the previous cluster.  Try an
@@ -78,8 +78,30 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - Or just use tons of chains with few iterations?
 - [X] Add other statistics other than pshifts
   - Implement shared partners in statistics.
-- Understand why we outperform true model in synthetic example
+- [x] Understand why we outperform true model in synthetic example
   (i.e. this is a bug and wasn't there before) (see if it's still present)
+* TODO Week 5
+- [x] Learn twitter z's with K=2.  Compare to fixed z's.  Do we learn to
+  put users into high activity group / low activity grou;?  [No.]
+- [x] Implement loglik. for baselines and compare to models' train/test
+  llk.
+  - debug why online's numbers are so weird.
+- [x] Examine where we obtain errors.  
+  - for new users on test set?  [doesn't seem to be the case]
+  - near beginning of test set or end? [not really.  see email to
+    padhraic on eckmann data]
+- Implement prediction task for those we haven't seen in dashbaord.
+- Add statistic indicating if something's been seen before (dc > 1)
+- Try and come up with heuristics that get us to good places in the posterior
+- Examine nonstationarity of dataset by looking at how snapshots
+  change over time
+- If I take one of the learned z's and fix them, do we learn more
+  distinct beta's? [doesn't seem to be the case]
+- Try prediction task where the test set is smaller
+- 
+
+
+* Other
 - Add tests for Gibbs equations.  For example, start with true data
   and learn z's.
 - Add tests for synthetic fitting?
