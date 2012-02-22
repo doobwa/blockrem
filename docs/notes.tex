@@ -100,8 +100,8 @@ One can extend the above to marked point processes where each event contains add
 \draw (1.08,1.7) -- (3,1.7);
 \draw[fill=black] (3,1.7) circle (0.75mm);
 \draw (3,1.7) circle (0.75mm);
-\draw[fill=black] (3,2.2) circle (0.75mm);
-\draw[-stealth] (3,2.2) -- (5,2.2);
+\draw (3,2.2) circle (0.75mm);
+\draw[-stealth] (3.05,2.2) -- (5,2.2);
 
 % second timeline
 \draw[dashed] (0,1) -- (3,1);
@@ -181,6 +181,8 @@ $z_i | A, z_{-i} \propto p(A|z,\beta) p(z_i)$.  (See Appendix.)
 \end{enumerate}
 
 % TODO: Update the following discussion about sampling.
+
+Slice sampling with $m=20$.
 
  To perform Gibbs sampling for a given cluster assignment $z_i$, we need to compute the likelihood for each possible assignment of $z_i$.   By limiting the changepoints to times when either node is involved, computing the likelihood is $O(T \cdot P \cdot 4N)$ where 4 comes from considering all dyads where either $i$ or $j$ is involved.  We precompute $\tau_{m,i,j}$ and $\mathbf{s}(t_m,i,j)$ for all $m,i,j$.  Note that 
 % This operation can be done in parallel, and only the portion of the likelihood involving the newly assigned cluster  need to be recomputed.  Computing the likelihood is then $O(T \cdot P \cdot 4N)$ (though this computation is split into $K^2$ pieces) and must computed $N \cdot K$ times per Gibbs iteration.  The most straightforward implementation has space complexity $O(N^2)$ since we must keep track of $\tau_{i,j,m}$ for each $(i,j)$ at a given $m$.

@@ -112,7 +112,7 @@ brem.lpost.fast.block <- function(A,N,K,z,s,beta,k1,k2,priors=list(beta=list(mu=
   }    
 }
 
-brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=NULL,gibbs="fast",mh=FALSE,outdir=getwd(),priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE,px=NULL) {
+brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NULL,z=NULL,gibbs="fast",mh=FALSE,outfile=NULL,priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE,px=NULL) {
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 13
@@ -131,8 +131,9 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
   
   olp <- brem.lpost.fast(A,N,K,z,s,current)
   
+  deltas <- matrix(0,niter,5)
   for (iter in 1:niter) {
-    
+    stime <- proc.time()
     # For each effect sample via MH
     if (mh) {
       for (i in 1:2) {
@@ -141,7 +142,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
         olp <- res$olp
       }
     } else {
-      res <- brem.slice(A,N,K,P,z,s,current,px,model.type,priors,olp)
+      res <- brem.slice(A,N,K,P,z,s,current,px,model.type,priors,olp,m=m)
       current <- res$current
       olp <- res$olp
     }
@@ -159,6 +160,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
       }
     }
     if (gibbs=="fast") {
+      cat("gibbs")
       z <- gibbs(1:N-1,current,z-1,s$ptr(),K)$z + 1
     }
     
@@ -166,11 +168,16 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,beta=NULL,z=N
     param[iter,,,] <- current
     llks[iter] <- brem.lpost.fast(A,N,K,z,s,current,priors)
     
-    cat("\niter",iter,":",llks[iter],"z:",z,"beta:",current[,1,1],"\n")
+    etime <- proc.time()
+    cat("\niter",iter,":",llks[iter],"z:",z,"\n")
+    cat(current[,1,1],"\n")
     
-    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter)
-    if (!is.null(outdir)) {
-      outfile <- paste(outdir,"/",model.type,".",K,".rdata",sep="")
+    deltas[iter,] <- etime-stime
+    if (K>1) cat(current[,2,2],"\n")
+    cat("time:",deltas[iter],"\n")
+    
+    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter,deltas=deltas)
+    if (!is.null(outfile)) {
       save(res,file=outfile)
     }
   }
@@ -223,20 +230,36 @@ brem.mh <- function(A,N,K,P,z,s,current,px,model.type="baserates",priors,mcmc.sd
   }
   if (model.type=="full") {
     cand <- current
-    for (p in which(px==1)) {
-      cand[p,,]  <- cand[p,,] + rnorm(K^2,0,mcmc.sd)
-      cand[1,1,1] <- 0  # identifiability?
-      clp <- brem.lpost.fast(A,N,K,z,s,cand,priors)
-      if (clp - olp > log(runif(1))) {
-        current <- cand
-        olp <- clp
+#     for (p in which(px==1)) {
+#       cand[p,,]  <- cand[p,,] + rnorm(K^2,0,mcmc.sd)
+#       cand[1,1,1] <- 0  # identifiability?
+#       clp <- brem.lpost.fast(A,N,K,z,s,cand,priors)
+#       if (clp - olp > log(runif(1))) {
+#         current <- cand
+#         olp <- clp
+#       }
+#     }
+    for (k1 in 1:K) {
+      for (k2 in 1:K) {
+        olp <- brem.lpost.fast.block(A,N,K,z,s,current,k1,k2,priors)
+        for (p in which(px==1)) {
+          if (!(p==1 & k1==1 & k2==1)) {
+            cat(".")
+            cand[p,k1,k2]  <- cand[p,k1,k2] + rnorm(1,0,mcmc.sd)
+            clp <- brem.lpost.fast.block(A,N,K,z,s,cand,k1,k2,priors)
+            if (clp - olp > log(runif(1))) {
+              current <- cand
+              olp <- clp
+            }
+          }
+        }
       }
     }
   }
   return(list(current=current,olp=olp))
 }
 
-brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NULL) {
+brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NULL,m=20) {
   
   #' Needs p,k1,k2,A,N,K,z,s,beta,priors,model.type
   slicellk <- function(x) {
@@ -275,7 +298,7 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
   if (model.type=="baserates") {
     beta[-1,,] <- 0
   } else if (model.type=="full") {
-  } else if (model.type=="shared") {
+  } else if (model.type=="shared" & K>1) {
     kx1 <- 1
     kx2 <- 1:2
   }
@@ -288,7 +311,7 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
       for (p in which(px==1)) {
         cat(".")
         if (!(k1==1 & k2==1 & p==1)) {
-          newval <- uni.slice(beta[p,k1,k2],slicellk,gx0=olp)
+          newval <- uni.slice.alt(beta[p,k1,k2],slicellk,gx0=olp,m=m)
           beta[p,k1,k2] <- newval
           if (model.type=="shared") beta <- use.first.blocks(beta)
           olp <- attr(newval,"log.density")

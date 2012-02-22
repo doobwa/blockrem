@@ -91,6 +91,8 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - near beginning of test set or end? [not really.  see email to
     padhraic on eckmann data]
 - [x] Compute multinomial score for all tasks
+- Get slice sampling working with fixed z and learning z on twitter
+  - see if we have significatnly different parameters
 - fix  bug in uniform/marginal llks
 - Compare loglikelihood of homogeneous poisson process to sums of our
   estimated rates.
@@ -98,6 +100,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - compare to observed counts.
 - Implement prediction task for those we haven't seen in dashbaord.
 - Add statistic indicating if something's been seen before (dc > 1)
+- Fix baserates MCMC
 - Add baseline for number of shared partners
 - Try and come up with heuristics that get us to good places in the posterior
 - Examine nonstationarity of dataset by looking at how snapshots

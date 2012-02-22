@@ -2,6 +2,7 @@ opts <- list(dataset="synthetic",numclusters=1,model.type="full",gibbs="fast",nu
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
 library(brem)
+source("pkg/R/brem.r")
 
 # Precompute data structures
 N <- max(c(train[,2],train[,3]))
@@ -18,7 +19,7 @@ px[8:13] <- 0
 px[7] <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
                  niter=opts$numiterations,gibbs=opts$gibbs,px=px,
-                 outdir=NULL)
+                 outfile=NULL)
 fit1 <- fit
 
 px <- rep(1,13)
@@ -27,7 +28,7 @@ px[7] <- 0
 #px[8]  <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
                  niter=opts$numiterations,gibbs=opts$gibbs,px=px,
-                 outdir=NULL)
+                 outfile=NULL)
 fit2 <- fit
 
 # look at mixing for both
@@ -45,7 +46,7 @@ px[8:13] <- 0
 px[7] <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
                  niter=opts$numiterations,gibbs=opts$gibbs,px=px,
-                 outdir=NULL)
+                 outfile=NULL)
 fit1 <- fit
 
 px <- rep(1,13)
@@ -53,7 +54,7 @@ px[13] <- 0
 px[7] <- 0
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
                  niter=opts$numiterations,gibbs=opts$gibbs,px=px,#beta=beta,
-                 outdir=NULL)
+                 outfile=NULL)
 fit2 <- fit
 
 # Use shared model
