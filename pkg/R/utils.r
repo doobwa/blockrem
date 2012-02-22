@@ -1,3 +1,17 @@
+
+#' Returns the number of occurrences prior to each event for the observed dyad
+#' @x event history
+#' @N number of nodes
+counts.of.observed <- function(x,N) {
+  counts <- ratemat.online(x,N)
+  M <- nrow(x)
+  r <- rep(0, M)
+  for (i in 1:M) {
+    r[i] <- counts[i,x[i,2],x[i,3]]
+  }
+  return(r)
+}
+
 plotmat <- function(mat,labels=c("Sender","Receiver"),limits=c(0,max(mat[,3])),color="black") {
   require(ggplot2)
   colnames(mat)[3] <- "value"

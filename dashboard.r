@@ -31,6 +31,7 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 fs <- list.files(results.dir,full.names=TRUE)
 fs <- fs[-grep("ranks",fs)]
 fs <- fs[-grep("llks",fs)]
+fs <- fs[-grep("counts",fs)]
 fits <- lapply(fs,function(f) {
   load(f)
   return(res)
@@ -155,21 +156,44 @@ llks.train <- lapply(fs,function(f) {
   load(f)
   return(llk.train)
 })
-names(llks.test) <- names(llks.train) <- strsplit(dir(folder),".rdata")
+mllks.test <- lapply(fs,function(f) {
+  load(f)
+  return(llkm.test)
+})
+mllks.train <- lapply(fs,function(f) {
+  load(f)
+  return(llkm.train)
+})
+names(llks.test) <- names(llks.train) <- names(mllks.test) <- names(mllks.train) <- strsplit(dir(folder),".rdata")
 
 llks.train <- melt(llks.train)
-llks.train$iter <- 1:nrow(train)
+llks.train$event <- 1:nrow(train)
 llks.test <- melt(llks.test)
-llks.test$iter <- 1:nrow(test)
+llks.test$event <- 1:nrow(test)
+mllks.train <- melt(mllks.train)
+mllks.train$event <- 1:nrow(train)
+mllks.test <- melt(mllks.test)
+mllks.test$event <- 1:nrow(test)
 
 # Examine log likelihood of observations
-qplot(iter,value,data=llks.train,geom="point",colour=factor(L1)) + ylim(c(-50,0))
-qplot(iter,value,data=llks.test,geom="point",colour=factor(L1)) + ylim(c(-50,0))
+qplot(event,value,data=llks.train,geom="point",colour=factor(L1)) + ylim(c(-50,0))
+qplot(event,value,data=llks.test,geom="point",colour=factor(L1)) + ylim(c(-50,0))
+qplot(event,value,data=mllks.train,geom="point",colour=factor(L1))
+qplot(event,value,data=mllks.test,geom="point",colour=factor(L1)) 
 
 ddply(llks.train,.(L1),summarise,llk=mean(value))
-ddply(llks.test,.(L1),summarise,llk=mean(value)))
+ddply(llks.test,.(L1),summarise,llk=mean(value))
+ddply(mllks.train,.(L1),summarise,llk=mean(value))
+ddply(mllks.test,.(L1),summarise,llk=mean(value))
 
-
+load("results/eckmann-small/llks/online.rdata")
+load("results/eckmann-small/counts.rdata")
+llk.test <- llk.test
+ctest <- ctest
+par(mfrow=c(3,1))
+plot(llk.test,xlab="event")
+plot(ctest,xlab="event",ylab="dyad count for observed event")
+plot(ctest,llk.test,xlab="dyad count for observed event")
 
 # trace plots
 library(coda)
