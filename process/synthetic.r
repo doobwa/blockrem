@@ -44,6 +44,7 @@ s$precompute()
 llk.true <- loglikelihood_fast(beta,z-1,s$ptr(),K)  
 true.lpost <- brem.lpost.fast(A,N,K,z,s,beta)
 
+A <- rbind(train,test)
 save(A,sim,N,K,P,M,z,beta,train,test,true.lpost,file="data/synthetic.rdata")
 #ggsave("figs/syn/mat.pdf",width=3,height=3)
 

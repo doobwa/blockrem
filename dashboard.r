@@ -5,6 +5,8 @@ option_list <- list(
   make_option(c("-d", "--dataset"), 
               help="Name of dataset with data at /data/[dataset].rdata 
                     and results at /results/[dataset]/."),
+  make_option(c("-p", "--predictions"), default=FALSE,
+              help="compute prediction experiments?"),
   make_option(c("-s", "--save.figs"),default=FALSE,
               help="Save each individual figure to figs/[dataset]/ [default %default]."))
 parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
@@ -154,51 +156,64 @@ q6 <- qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) 
 # b$block <- paste(b$X2,b$X3)
 # qplot(factor(X1),value,data=b,geom="point",colour=factor(block))+theme_bw()+labs(x="parameter")
 
-# # Compute out of sample log posterior
-load(paste("data/",opts$dataset,".rdata",sep=""))
-folder <- paste("results/",opts$dataset,"/llks/",sep="")
-fs <- dir(folder,full.names=TRUE)
-llks.test <- lapply(fs,function(f) {
-  load(f)
-  return(llk.test)
-})
-llks.train <- lapply(fs,function(f) {
-  load(f)
-  return(llk.train)
-})
-mllks.test <- lapply(fs,function(f) {
-  load(f)
-  return(llkm.test)
-})
-mllks.train <- lapply(fs,function(f) {
-  load(f)
-  return(llkm.train)
-})
-names(llks.test) <- names(llks.train) <- names(mllks.test) <- names(mllks.train) <- strsplit(dir(folder),".rdata")
-
-llks.train <- melt(llks.train)
-llks.train$event <- 1:nrow(train)
-llks.test <- melt(llks.test)
-llks.test$event <- 1:nrow(test)
-mllks.train <- melt(mllks.train)
-mllks.train$event <- 1:nrow(train)
-mllks.test <- melt(mllks.test)
-mllks.test$event <- 1:nrow(test)
-
-# Examine log likelihood of observations
-qplot(event,value,data=llks.train,geom="point",colour=factor(L1))
-qplot(event,value,data=llks.test,geom="point",colour=factor(L1))
-qplot(event,value,data=mllks.train,geom="point",colour=factor(L1))
-qplot(event,value,data=mllks.test,geom="point",colour=factor(L1)) 
-
-r <- cbind(ddply(llks.train,.(L1),summarise,llk=mean(value)),
-      ddply(llks.test,.(L1),summarise,llk=mean(value)),
-      ddply(mllks.train,.(L1),summarise,llk=mean(value)),
-      ddply(mllks.test,.(L1),summarise,llk=mean(value)))
-r <- r[,c(1,2,4,6,8)]
-colnames(r) <- c("method","brem.train","brem.test","multin.train","multin.test")
-for (i in 2:5) r[,i] <- round(r[,i],2)
-r
+if (opts$predictions) {
+  # # Compute out of sample log posterior
+  load(paste("data/",opts$dataset,".rdata",sep=""))
+  folder <- paste("results/",opts$dataset,"/llks/",sep="")
+  fs <- dir(folder,full.names=TRUE)
+  llks.test <- lapply(fs,function(f) {
+    load(f)
+    return(llk.test)
+  })
+  llks.train <- lapply(fs,function(f) {
+    load(f)
+    return(llk.train)
+  })
+  mllks.test <- lapply(fs,function(f) {
+    load(f)
+    return(llkm.test)
+  })
+  mllks.train <- lapply(fs,function(f) {
+    load(f)
+    return(llkm.train)
+  })
+  names(llks.test) <- names(llks.train) <- names(mllks.test) <- names(mllks.train) <- strsplit(dir(folder),".rdata")
+  
+  llks.train <- melt(llks.train)
+  llks.train$event <- 1:nrow(train)
+  llks.test <- melt(llks.test)
+  llks.test$event <- 1:nrow(test)
+  mllks.train <- melt(mllks.train)
+  mllks.train$event <- 1:nrow(train)
+  mllks.test <- melt(mllks.test)
+  mllks.test$event <- 1:nrow(test)
+  
+  # Examine log likelihood of observations
+  qplot(event,value,data=llks.train,geom="point",colour=factor(L1))
+  qplot(event,value,data=llks.test,geom="point",colour=factor(L1))
+  qplot(event,value,data=mllks.train,geom="point",colour=factor(L1))
+  qplot(event,value,data=mllks.test,geom="point",colour=factor(L1)) 
+  
+  qplot(event,value,data=subset(llks.test,L1 %in% c("full.2","online")),geom="point",colour=factor(L1))
+  
+  tmp <- subset(llks.test,L1 %in% c("full.2","online"))
+  
+  # window.size <- 200
+  # llks.train <- subset(llks.train,event>window.size)
+  # llks.test <- subset(llks.test,event>window.size)
+  # mllks.train <- subset(mllks.train,event>window.size)
+  # mllks.test <- subset(mllks.test,event>window.size)
+  
+  r <- cbind(ddply(llks.train,.(L1),summarise,llk=mean(value)),
+             ddply(llks.test,.(L1),summarise,llk=mean(value)),
+             ddply(mllks.train,.(L1),summarise,llk=mean(value)),
+             ddply(mllks.test,.(L1),summarise,llk=mean(value)))
+  r <- r[,c(1,2,4,6,8)]
+  colnames(r) <- c("method","brem.train","brem.test","multin.train","multin.test")
+  for (i in 2:5) r[,i] <- round(r[,i],2)
+  r
+  print(xtable(r),include.rownames=FALSE,file=paste("figs/",opts$dataset,".llk.tex",sep=""))
+}
 # 
 # load("results/eckmann-small/llks/online.rdata")
 # load("results/eckmann-small/counts.rdata")
@@ -215,7 +230,7 @@ cat("Creating dashboard.\n")
 library(gridExtra)
 pdf(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=25,height=10)
 blankPanel <- grid.rect(gp=gpar(col="white"))
-grid.arrange(q1, q1a, q2, q3, q3a, q4, q5, q6,ncol=5)
+grid.arrange(q1, q1a, q2, q3, q3a, q4, q5, q6,ncol=4)
 dev.off()
 
 #save.image(paste("figs/",opts$dataset,"/dashboard.rdata",sep=""))

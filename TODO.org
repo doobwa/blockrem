@@ -91,9 +91,11 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - near beginning of test set or end? [not really.  see email to
     padhraic on eckmann data]
 - [x] Compute multinomial score for all tasks
-- Get slice sampling working with fixed z and learning z on twitter
-  - see if we have significatnly different parameters
-- fix  bug in uniform/marginal llks
+- [x] Get slice sampling working with fixed z and learning z on
+  twitter.  Seems that we weren't escaping initialization with MH.
+  - [x] see if we have significatnly different parameters [seems to]
+  - [x] slice sampling works better without AB-AB effect? [seems to]
+- [x] fix  bug in uniform/marginal llks
 - Compare loglikelihood of homogeneous poisson process to sums of our
   estimated rates.
   - compare to smoothed rates.

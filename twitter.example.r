@@ -3,7 +3,7 @@ library(brem)
 load("data/twitter-small.rdata")
 source("pkg/R/brem.r")
 
-tb <- table(factor(c(train[,2],train[,3]),1:N))
+tb <- table(factor(c(A[,2],A[,3]),1:N))
 chosen <- names(tb)[which(tb > 20)]
 chosen <- as.numeric(chosen)
 z <- rep(1,N)
@@ -20,6 +20,7 @@ s$precompute()
 
 px <- rep(1,13)
 px[13] <- 0
+px[7]  <- 0
 f <- paste("results/",opts$dataset,"/full.1.rdata",sep="")
 if (K > 1 & file.exists(f) & opts$initialize) {
   load(f)
@@ -62,25 +63,6 @@ r <- melt(res$param)
 r <- subset(r,X1<10)
 q7 <- qplot(X1,value,data=r, colour=factor(X2),geom="line") + labs(colour="parameters for\n 1x1 block",x="iteration") + theme_bw() + facet_grid(X3~X4,scales="free")
 q7
-
-
-
-save(fit,opts,file="results/twitter-small/fixed/full.2.slice.rdata")
-
-fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
-                 niter=opts$numiterations, gibbs=opts$gibbs,  beta=beta, px=px,
-                 outdir=paste("tmp/",sep=""))
-save(fit,opts,file="results/twitter-small/fixed/full.2.learn.slice.rdata")
-
-load("results/twitter-small/full.2.2.TRUE.TRUE.rdata")
-load("results/twitter-small/full.2.2.TRUE.FALSE.rdata")
-load("results/twitter-small/full.2.2.FALSE.FALSE.rdata")
-fit.fix <- res
-z.fixed <- res$z
-load("results/twitter-small/full.2.rdata")
-fit.lrn <- res
-z <- res$z
-table(z,z.fixed)
 
 # Look at whether learned betas are statistically significant
 b <- melt(fit.lrn$param)
