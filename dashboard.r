@@ -197,7 +197,7 @@ plot(ctest,llk.test,xlab="dyad count for observed event")
 
 # trace plots
 library(coda)
-load(paste("results/",opts$dataset,"/full.1.rdata",sep=""))
+load(paste("results/",opts$dataset,"/full.2.rdata",sep=""))
 r <- melt(res$param)
 q7 <- qplot(X1,value,data=r, colour=factor(X4),geom="line") + labs(colour="parameters for\n 1x1 block",x="iteration") + theme_bw() + facet_grid(X2~X3,scales="free")
 

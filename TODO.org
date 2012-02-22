@@ -90,7 +90,8 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - for new users on test set?  [doesn't seem to be the case]
   - near beginning of test set or end? [not really.  see email to
     padhraic on eckmann data]
-- Compute multinomial score for all tasks
+- [x] Compute multinomial score for all tasks
+- fix  bug in uniform/marginal llks
 - Compare loglikelihood of homogeneous poisson process to sums of our
   estimated rates.
   - compare to smoothed rates.
