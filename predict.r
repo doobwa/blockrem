@@ -19,8 +19,16 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 test.ix <- (1:nrow(A))[-(1:nrow(train))]
 
 if (!opts$model %in% c("uniform","online","marg")) {
-  f <- paste("results/",opts$dataset,"/",opts$model,".rdata",sep="")
-  load(f)
+  if (opts$model=="countsonly") {
+    beta <- rep(0,13)
+    beta[12] <- 1
+    beta <- array(beta,c(13,1,1))
+    z <- rep(1,N)
+    res <- list(z=z,beta=beta)
+  } else {
+    f <- paste("results/",opts$dataset,"/",opts$model,".rdata",sep="")
+    load(f)
+  }
   cat("precomputing\n")
   P <- 13
   strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
@@ -63,6 +71,7 @@ if (!opts$model %in% c("uniform","online","marg")) {
       m.train[i,,] <- lam/sum(lam)
     }
     m.test <- get.ms(A)
+    m.test <- m.test[test.ix,,]
     m.test[which(m.test==-Inf)] <- 0
     for (i in 1:length(test.ix)) {
       lam <- m.test[i,,] + eps

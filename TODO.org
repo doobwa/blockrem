@@ -98,9 +98,23 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [x] fix  bug in uniform/marginal llks
 - [x] Reduce memory for prediction task
 - [x] Compare baserates model for eckmann, synthetic
+
+* Final crunch for deadline
 - Look closely at predictions of online model to see why test llk is
   so high.
 - Compare log prob score of online vs brem with K=1
+  - look only at events from group 3 to group 1 with K=3 fit.  see
+    which events may be leading to overfitting. 
+  - see if those likelihood numbers are justified.  
+  - [x] perhaps the initial events are throwing things off for the
+    models.  perhaps it "works" really hard at fitting those first few
+    events. [this idea didn't pan out.  we do an OK job of fitting the
+    time for the first few.
+  - Strangeness: multinomial likelihoods for trained modle bunched
+    around a few values.  For example, many lambda_ij's are 0 even
+    much later in the event sequence.
+
+
 - Compare loglikelihood of homogeneous poisson process to sums of our
   estimated rates.
   - compare to smoothed rates.
