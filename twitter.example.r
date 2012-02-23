@@ -69,3 +69,15 @@ b <- melt(fit.lrn$param)
 
 df <- data.frame(count=tb,z=z)
 qplot(log(count.Freq),data=df,geom="histogram") +facet_grid(z~.)
+
+load("results/twitter-small/full.3.rdata")
+M <- nrow(train)
+P <- 13
+K <- 3
+s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
+s$precompute()
+beta <- res$beta
+brem.lpost.fast(train,N,K,res$z,s,res$beta)
+
+beta[c(8,11),3,1] <- 10
+brem.lpost.fast(train,N,K,res$z,s,beta)

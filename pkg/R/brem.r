@@ -55,7 +55,14 @@ brem.lrm <- function(A,N,z,beta) {
 brem.lrm.fast <- function(M,s,z,beta) {
   K <- dim(beta)[2]
   lrm <- log_intensity_array_fast(beta,z-1,s$ptr(),K)
-  for (i in 1:M) diag(lrm[i,,]) <- -Inf
+  for (i in 1:(dim(lrm)[1])) diag(lrm[i,,]) <- -Inf
+  return(lrm)
+}
+brem.lrm.fast2 <- function(s,z,beta,ix) {
+  K <- dim(beta)[2]
+  ix <- as.integer(ix)
+  lrm <- log_intensity_array_fast_subset(beta,z-1,s$ptr(),K,ix-1)
+  for (i in 1:(dim(lrm)[1])) diag(lrm[i,,]) <- -Inf
   return(lrm)
 }
 
@@ -296,6 +303,7 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
   kx2 <- 1:K
   beta[1,1,1] <- 0
   if (model.type=="baserates") {
+    px <- 1
     beta[-1,,] <- 0
   } else if (model.type=="full") {
   } else if (model.type=="shared" & K>1) {
@@ -310,7 +318,7 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
       olp <- brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
       for (p in which(px==1)) {
         cat(".")
-        if (!(k1==1 & k2==1 & p==1)) {
+        if (!(k1==1 & k2==1 & p==1)) {  # identifiability
           newval <- uni.slice.alt(beta[p,k1,k2],slicellk,gx0=olp,m=m)
           beta[p,k1,k2] <- newval
           if (model.type=="shared") beta <- use.first.blocks(beta)

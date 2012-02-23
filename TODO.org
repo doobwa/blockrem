@@ -96,6 +96,11 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - [x] see if we have significatnly different parameters [seems to]
   - [x] slice sampling works better without AB-AB effect? [seems to]
 - [x] fix  bug in uniform/marginal llks
+- [x] Reduce memory for prediction task
+- [x] Compare baserates model for eckmann, synthetic
+- Look closely at predictions of online model to see why test llk is
+  so high.
+- Compare log prob score of online vs brem with K=1
 - Compare loglikelihood of homogeneous poisson process to sums of our
   estimated rates.
   - compare to smoothed rates.

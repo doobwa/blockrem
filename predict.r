@@ -16,6 +16,8 @@ options(verbose=FALSE)
 # Pull data from each saved file and grab the name of the fit
 load(paste("data/",opts$dataset,".rdata",sep=""))
 
+test.ix <- (1:nrow(A))[-(1:nrow(train))]
+
 if (!opts$model %in% c("uniform","online","marg")) {
   f <- paste("results/",opts$dataset,"/",opts$model,".rdata",sep="")
   load(f)
@@ -28,14 +30,14 @@ if (!opts$model %in% c("uniform","online","marg")) {
   cat("lambdas (train)\n")
   lrm.train <- brem.lrm.fast(nrow(train), strain, res$z, res$beta)
   cat("lambdas (test)\n")
-  lrm.test  <- brem.lrm.fast(nrow(A),   stest, res$z, res$beta)
+  lrm.test  <- brem.lrm.fast2(stest, res$z, res$beta,test.ix)
   # Compute multinomial likelihoods
   m.train <- exp(lrm.train)
   m.test  <- exp(lrm.test)
   for (i in 1:nrow(train)) {
     m.train[i,,] <- m.train[i,,]/sum(m.train[i,,],na.rm=TRUE)
   }
-  for (i in 1:nrow(A)) {
+  for (i in 1:length(test.ix)) {
     m.test[i,,] <- m.test[i,,]/sum(m.test[i,,],na.rm=TRUE)
   }
 } else {
@@ -62,7 +64,7 @@ if (!opts$model %in% c("uniform","online","marg")) {
     }
     m.test <- get.ms(A)
     m.test[which(m.test==-Inf)] <- 0
-    for (i in 1:nrow(A)) {
+    for (i in 1:length(test.ix)) {
       lam <- m.test[i,,] + eps
       m.test[i,,] <- lam/sum(lam)
     }
@@ -84,24 +86,19 @@ multinomial.score <- function(m,x) {
   return(r)
 }
 llkm.train <- log(multinomial.score(m.train,train))
-llkm.test  <- log(multinomial.score(m.test, A))
+llkm.test  <- log(multinomial.score(m.test, test))
 
 # Compute loglikelihood of each observation
 llk.train <- loglikelihood_vec_from_lrm(lrm.train,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train))
-llk.test <- loglikelihood_vec_from_lrm(lrm.test,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A))
-
+llk.test <- loglikelihood_vec_from_lrm(lrm.test,test[,1],as.integer(test[,2])-1,as.integer(test[,3])-1,N,nrow(test))
 
 # Compute rank of each observation
 cat("ranks (train)\n")
 rk.train <- ranks(train,-lrm.train,ties.method="random")
 cat("ranks (test)\n")
-rk.test  <- ranks(A, -lrm.test, ties.method="random")
+rk.test  <- ranks(test, -lrm.test, ties.method="random")
 
-# Only get part of test vectors involved in test set
-llk.test  <- llk.test[-(1:nrow(train))]
-llkm.test <- llkm.test[-(1:nrow(train))]
-rk.test   <- rk.test[-(1:nrow(train))]
-
+# Save
 dir.create(paste("results/",opts$dataset,"/llks/",sep=""))
 save(llkm.train,llkm.test,llk.train,llk.test,opts,file=paste("results/",opts$dataset,"/llks/",opts$model,".rdata",sep=""))
 dir.create(paste("results/",opts$dataset,"/ranks/",sep=""))

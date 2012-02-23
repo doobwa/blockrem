@@ -748,6 +748,28 @@ Rcpp::NumericVector lrmfast(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEX
   return lrmat;
 }
 
+Rcpp::NumericVector lrmfast_subset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector ix) {
+  RemStat *s = XPtr<RemStat>(statptr_);
+  int N = s->N;
+  int P = s->P;
+  int M = s->M;
+  Rcpp::NumericVector lrmat = Rcpp::NumericVector(Dimension(ix.size(),N,N));
+  for (int k = 0; k < ix.size(); k++) {
+    int m = ix[k];
+    //    Rprintf("%i %i\n",k,m);
+    for (int i = 0; i < N; i++) {
+      for (int j = 0; j < N; j++) {
+        int zi = z[i];
+        int zj = z[j];
+        double lam  = computeLambdaFast(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+        lrmat[threeDIndex(k,i,j,ix.size(),N,N)] = lam;
+      }
+    }
+  }
+  return lrmat;
+}
+
+
 // Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
 
 Rcpp::NumericVector lrm(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec,Rcpp::IntegerVector z, int N, int M,int K, int P){
@@ -857,10 +879,10 @@ RCPP_MODULE(brem){
   function( "loglikelihood_vec_from_lrm", &llk_vec_from_lrm ) ;
   function( "log_intensity_array", &lrm ) ;
   function( "log_intensity_array_fast", &lrmfast ) ;
+  function( "log_intensity_array_fast_subset", &lrmfast_subset ) ;
   function( "update_statistics", &updateStatistics);
   function( "compute_lambda", &computeLambda);
   function( "initialize_statistics", &initializeStatistics);
-  function( "test_last", &test_last);
   function( "compute_lambda_fast", &computeLambdaFast);
   function( "rcategorical", &rcategorical);
 }

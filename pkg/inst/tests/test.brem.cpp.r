@@ -108,7 +108,6 @@ test_that("lrm and llk functions work on small example for K=1",{
   # Constract log rate matrix by hand and compare to drem$lrm
   K <- 1
   lrm <- log_intensity_array(beta,times,sen-1,rec-1,z-1,N,M,K,P)
-#   expect_that(lrm,equals(a))
   
   # Compute log likelihood by hand.  
   llks <- llk_slow(lrm,times,sen-1,rec-1,M,N)
@@ -121,6 +120,11 @@ test_that("lrm and llk functions work on small example for K=1",{
   llk3 <- loglikelihood_fast(beta,z-1,s$ptr(),K)
   lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
 
+  # log intensity array functions act as expected and agree with previous versions
+  lrm3 <- log_intensity_array_fast(beta,z-1,s$ptr(),K)
+  lrm4 <- log_intensity_array_fast_subset(beta,z-1,s$ptr(),K,0:(M-1))
+  expect_that(all(lrm3==lrm),is_true())
+  expect_that(all(lrm4==lrm),is_true())
   
   true.fast <- c(1,
                  2 - 2*(13*exp(1) + exp(2)), 
@@ -190,28 +194,32 @@ test_that("lrm and llk functions work on small example for K=2",{
 #   y <- brem$test_last(beta,z-1,s$ptr(),K)
 #   expect_that(all.equal(x$taus,y$taus),is_true())
 })
+# 
 
-set.seed(1)
-load("data/eckmann-small.rdata")
-M <- 100
-A <- A[1:M,]
-z <- rep(1,N)
-K <- 1
-P <- 13
-beta <- array(0,c(P,K,K))
-beta[12] <- 1
-lrm <- log_intensity_array(beta,A[,1],A[,2]-1,A[,3]-1,z-1,N,M,K,P)
 
-lrmo <- ratemat.online(A,N)
 
-for (i in 1:M) {
-  diag(lrm[i,,]) <- 0
-  diag(lrmo[i,,]) <- 0
-  o1 <- order(lrm[i,,])
-  o2 <- order(lrmo[i,,])
-  if (any(o1!=o2)) browser()
-}
-lam <- lrm[i,,]
-ix <- (order(lrm[i,,]) != order(lrmo[i,,]))
-
-compute_lambda(1,0,0,0,s,beta,N,K,P)  #
+# Used for debugging online statistics vs. our intensity array with just the dyad count statistics
+# set.seed(1)
+# load("data/eckmann-small.rdata")
+# M <- 100
+# A <- A[1:M,]
+# z <- rep(1,N)
+# K <- 1
+# P <- 13
+# beta <- array(0,c(P,K,K))
+# beta[12] <- 1
+# lrm <- log_intensity_array(beta,A[,1],A[,2]-1,A[,3]-1,z-1,N,M,K,P)
+# 
+# lrmo <- ratemat.online(A,N)
+# 
+# for (i in 1:M) {
+#   diag(lrm[i,,]) <- 0
+#   diag(lrmo[i,,]) <- 0
+#   o1 <- order(lrm[i,,])
+#   o2 <- order(lrmo[i,,])
+#   if (any(o1!=o2)) browser()
+# }
+# lam <- lrm[i,,]
+# ix <- (order(lrm[i,,]) != order(lrmo[i,,]))
+# 
+# compute_lambda(1,0,0,0,s,beta,N,K,P)  #

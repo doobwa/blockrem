@@ -44,23 +44,23 @@ for (i in 1:nsim) {
   beta <- b$current
   lps[i] <- brem.lpost.fast(A, N, K, z, s, beta, priors)
 }
-
-load("data/synthetic.rdata")
-s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,M,P)
-s$precompute()
-priors <- list(beta=list(mu=0,sigma=1))
-olp <- brem.lpost.fast(A, N, K, z, s, beta, priors)
-brem.lpost.fast.block(A, N, K, z, s, beta, 1, 1, priors)
-nsim <- 50
-lps <- rep(0,nsim)
-current <- beta * 0
-params <- matrix(0,nsim,P*K*K)
-for (i in 1:nsim) {
-  px <- 1:12
-  b <- brem.slice(A,N,K,P,z,s,current,px,model.type="shared",priors)
-  current <- b$current
-  params[i,] <- c(current)
-  lps[i] <- b$olp #brem.lpost.fast(A, N, K, z, s, current, priors)
-}
-
-
+# 
+# load("data/synthetic.rdata")
+# s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,M,P)
+# s$precompute()
+# priors <- list(beta=list(mu=0,sigma=1))
+# olp <- brem.lpost.fast(A, N, K, z, s, beta, priors)
+# brem.lpost.fast.block(A, N, K, z, s, beta, 1, 1, priors)
+# nsim <- 50
+# lps <- rep(0,nsim)
+# current <- beta * 0
+# params <- matrix(0,nsim,P*K*K)
+# for (i in 1:nsim) {
+#   px <- 1:12
+#   b <- brem.slice(A,N,K,P,z,s,current,px,model.type="shared",priors)
+#   current <- b$current
+#   params[i,] <- c(current)
+#   lps[i] <- b$olp #brem.lpost.fast(A, N, K, z, s, current, priors)
+# }
+# 
+# 

@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages(library("optparse"))
+suppressPackageStartupMessages(library(xtable))
 
 option_list <- list(
   make_option(c("-d", "--dataset"), 
@@ -57,9 +58,9 @@ if (opts$dataset == "synthetic") {
 }
 
 library(coda)
-load(paste("results/",opts$dataset,"/full.2.rdata",sep=""))
+load(paste("results/",opts$dataset,"/full.3.rdata",sep=""))
 r <- melt(res$param)
-r <- subset(r,X1 < 10)
+r <- subset(r,X1 < 60)
 q1a <- qplot(X1,value,data=r, colour=factor(X2),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(X3~X4,scales="free")
 
 
@@ -73,7 +74,7 @@ q2 <- qplot(X1,X2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1) + la
 
 cat("Compute distribution of activity using results from the full model.\n")
 tb <- table(factor(c(train[,2],train[,3]),1:N))
-fx <- grep("full.2",names(fits))
+fx <- grep("full.3",names(fits))
 z <- fits[[fx]]$z
 df <- data.frame(group=z,count=tb)
 q3a <- qplot(log(count.Freq),data=df,geom="histogram")+facet_grid(group~.,scales="free")+labs(y="number of users",x="log(number of events)") + theme_bw()
@@ -150,7 +151,11 @@ betas <- lapply(fits,function(f) f$beta)
 names(betas) <- names(fits)
 b <- melt(betas)
 q6 <- qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
-#q6 <- qplot(X1,value,data=b,geom="point") + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
+qplot(X1,value,data=subset(b,L1=="full.3"),geom="point") + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
+
+if (opts$dataset=="twitter-small") {
+  lapply(1:3,function(k) nmap[which(z==k)])
+}
 
 # b <- melt(fits[['results/twitter-small/full.3']]$beta)
 # b$block <- paste(b$X2,b$X3)
