@@ -23,20 +23,22 @@
 
 \begin{document} 
 
- \centerline{\Large \bf Blockmodels for Dynamic Network Data} 
+ \centerline{\Large \bf Stochastic Blockmodels for Relational Events} 
  \medskip
 \centerline{\bf Christopher DuBois}
  \bigskip
 
 \abstract{
 
-\begin{itemize}
-\item Blockmodels and clustering algorithms often applied to static networks for exploratory data analysis
-\item continuous time methods allow one to predict future events given the previous history
-\item we combine these two ideas with a hierarchical model such that each pair of blocks has a set of parameters guiding the event dynamics for those dyads
-\item prediction experiments on real datasets
-\item show that the parameter estimates are interpretable
-\end{itemize}
+Stochastic blockmodels are a tool for exploring the structure of static social networks by learning latent groups of individuals who have similar tendencies in their  group-wise interactions. Continuous-time methods, such as the relational event framework (Butts 2008), model the rate of dyadic events conditioned on the observed history of events and covariates about the actors.  We propose a hierarchical model combining these two approaches where each pair of blocks has a set of parameters guiding the event dynamics for dyads between those blocks.  The  method is illustrated using  dyadic interaction data (e.g. email, Twitter) among hundreds of actors and thousands of events.  We show parameter estimates from the model can reveal heterogeneity in the dynamics among groups of individuals, providing a better fit to the data than a single relational event model for all actors in the network.  Our approach illustrates the efficacy of combining a detailed model for local dependencies and a latent variable model for meso-scale dependencies.
+
+% \begin{itemize}
+% \item Blockmodels and clustering algorithms often applied to static networks for exploratory data analysis
+% \item continuous time methods allow one to predict future events given the previous history
+% \item we combine these two ideas with a hierarchical model such that each pair of blocks has a set of parameters guiding the event dynamics for those dyads
+% \item prediction experiments on real datasets
+% \item show that the parameter estimates are interpretable
+% \end{itemize}
 
 }
 

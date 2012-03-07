@@ -302,7 +302,8 @@ double computeLambdaFast(int i, int j, int zi, int zj, vector<int> s, Rcpp::Nume
   }
   double numEvents = double(s[12]);
   for (int p = 7; p < 12; p++) {
-    lam += s[p]/(numEvents + 1) * beta[threeDIndex(p,zi,zj,P,K,K)];
+    //    lam += s[p]/(numEvents + 1) * beta[threeDIndex(p,zi,zj,P,K,K)];
+    lam += log((s[p]+1)/(numEvents + N*(N-1))) * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
   return lam;
 }
@@ -658,7 +659,8 @@ double computeLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::
   }
   double numEvents = double(s[threeDIndex(12,i,j,P,N,N)]);//s[12];
   for (int p = 7; p < 12; p++) {
-    lam += s[threeDIndex(p,i,j,P,N,N)]/(numEvents+1) * beta[threeDIndex(p,zi,zj,P,K,K)];
+    //    lam += s[threeDIndex(p,i,j,P,N,N)]/(numEvents+1) * beta[threeDIndex(p,zi,zj,P,K,K)];
+    lam += log((s[threeDIndex(p,i,j,P,N,N)] + 1)/(numEvents + N*(N-1))) * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
 
   return lam;
