@@ -84,7 +84,7 @@ save(fit,file="tmp.rdata")
 
 load("tmp.rdata")
 fit$beta[2:3] <- 0
-fit$beta[12] <- 20
+fit$beta[12] <- 1
 preds <- get.pred(train,A,test.ix,fit)
 mllk.train <- log(multinomial.score(preds$m$train,train))
 llk.train <- loglikelihood_vec_from_lrm(preds$lrm$train,train[1:M,1],as.integer(train[1:M,2])-1,as.integer(train[1:M,3])-1,N,M)
@@ -101,6 +101,13 @@ plot(llk.train,llk.train.online,asp=1,pch=".")
 abline(0,1)
 dev.off()
 
+################
+# Make plot of rate of popular dyad over time
+i <- 75; j <- 85
+i <- 21; j <- 20
+plot(preds$m$train[1:300,i,j],type="S")
+lines(preds.online$m$train[1:300,i,j],type="S",col="red")
+
 ############################################
 # After meeting with Smyth
 
@@ -115,13 +122,37 @@ for (i in 1:nrow(train)) {
 m.train.online <- m.train
 
 # Compute log lambda_ij(m)
-fit$beta[2:3] <- 0
-fit$beta[12] <- 1#exp(1)
+fit$beta[12] <- 1
 P <- 13
-strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
-strain$precompute()
-#lrm <- list(train = brem.lrm.fast(nrow(train), strain, fit$z, fit$beta),test=NULL)
-lrm.train <- brem.lrm(train,N,fit$z,fit$beta)
+lrm <- brem.lrm.fast(nrow(train), strain, fit$z, fit$beta)
+m.train <- lrm
+for (i in 1:nrow(train)) {
+  m.train[i,,] <- exp(m.train[i,,])/sum(exp(m.train[i,,]))
+}
+
+# Compare rates for given dyads
+i <- 75#sample(1:N,1)
+j <- 85#sample(1:N,1)
+summary(m.train[,i,j])
+plot(m.train[,i,j],type="S")
+lines(m.train.online[,i,j],type="S",col="red")
+
+i <- 3#sample(1:N,1)
+j <- 5#sample(1:N,1)
+summary(m.train[,i,j])
+summary(m.train.online[,i,j])
+plot(m.train[,i,j],type="S")
+lines(m.train.online[,i,j],type="S",col="red")
+
+# Compare prob for observed dyads
+obs.lambda <- sapply(1:nrow(train),function(i) m.train[i,train[i,2],train[i,3]])
+obs.lambda.online <- sapply(1:nrow(train),function(i) m.train.online[i,train[i,2],train[i,3]])
+plot(obs.lambda,obs.lambda.online,pch=".",asp=1)
+abline(0,1)
+
+# Now fit model
+
+### OLD
 # check lrm is correct
 x <- s$get_s(200,72,0)
 b <- c(fit$beta)
