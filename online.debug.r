@@ -41,18 +41,21 @@ get.pred <- function(train,A,test.ix,fit) {
   strain$precompute()
   stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
   stest$precompute()
-  lrm <- list(train = brem.lrm.fast(nrow(train), strain, fit$z, fit$beta),test=NULL)
-#              test  = brem.lrm.fast2(stest, res$z, res$beta,test.ix))
+  lrm <- list()
+  lrm$train <- brem.lrm.fast(nrow(train), strain, fit$z, fit$beta)
+  lrm$test  <- brem.lrm.fast(nrow(A), stest, fit$z, fit$beta)
+  lrm$test  <- lrm$test[test.ix,,]
+  
+  
   # Compute multinomial likelihoods
   m.train <- exp(lrm$train)
-  m.test <- NULL
-#   m.test  <- exp(lrm$test)
+  m.test <- exp(lrm$test)
   for (i in 1:nrow(train)) {
-    m.train[i,,] <- m.train[i,,]/sum(m.train[i,,],na.rm=TRUE)
+    m.train[i,,] <- m.train[i,,]/sum(m.train[i,,])
   }
-#   for (i in 1:length(test.ix)) {
-#     m.test[i,,] <- m.test[i,,]/sum(m.test[i,,],na.rm=TRUE)
-#   }
+  for (i in 1:length(test.ix)) {
+    m.test[i,,] <- m.test[i,,]/sum(m.test[i,,],na.rm=TRUE)
+  }
   list(lrm=lrm,m=list(train=m.train,test=m.test))
 }
 multinomial.score <- function(m,x) {
@@ -65,236 +68,136 @@ multinomial.score <- function(m,x) {
 }
 
 # Compare fit of abba, abby, dyad count to baseline on eckmann
+K <- 1
 opts <- list(dataset="eckmann-small",numclusters=K,model.type="full",gibbs="none",numiterations=10,slice=TRUE)
 library(brem)
 load("data/eckmann-small.rdata")
+source("pkg/R/brem.r")
 test.ix <- 2001:nrow(A)
 M <- nrow(train)
 P <- 13
 K <- 1#opts$numclusters
 s <- new(RemStat,train[1:M,1],as.integer(train[1:M,2])-1,as.integer(train[1:M,3])-1,N,M,P)
 s$precompute()
+
+# Test that llks agree using lrm (pc)
+beta <- array(0,c(P,K,K))
+beta[12] <- 1
+z <- rep(1,N)
+
+lrm <- LogIntensityArrayPc(beta,z-1,s$ptr(),K)
+
+times <- train[,1];sen <- train[,2];rec <- train[,3]
+
+llk.a <- RemLogLikelihood(beta,times,sen-1,rec-1,z-1,N,M,K,P)
+llk.b <- RRemLogLikelihoodFromArraySlow(lrm,times,sen-1,rec-1,N,M)
+llk.c <-  RemLogLikelihoodFromArray(lrm,times,sen-1,rec-1,N,M)
+llk.d <-  RemLogLikelihoodVecFromArray(lrm,times,sen-1,rec-1,N,M)
+llk.e <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+beta[12] <- .15
+llk.e2 <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+sum(llk.e2)
+
 px <- rep(0,13)
-#px[c(2,3,12)] <- 1
 px[c(12)] <- 1
-fit <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
+fit.1 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
                  niter=opts$numiterations,gibbs=opts$gibbs,beta=NULL,px=px,
                  outfile=NULL)
-save(fit,file="tmp.rdata")
+
+lrm.1 <- LogIntensityArrayPc(fit.1$beta,z-1,s$ptr(),K)
+
+px[c(2,3,12)] <- 1
+fit.2 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
+                   niter=opts$numiterations,gibbs=opts$gibbs,beta=NULL,px=px,
+                   outfile=NULL)
+fit.0 <- fit.1
+fit.0$beta[12] <- 1
+fit.0$beta[-12] <- 0
+px[c(1,2,3,12)] <- 1
+fit.3 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
+                   niter=opts$numiterations,gibbs=opts$gibbs,beta=NULL,px=px,
+                   outfile=NULL,fix.first=FALSE)
+fit.3=fit.2
+save(fit.0,fit.1,fit.2,fit.3,file="tmp.rdata")
+
 
 load("tmp.rdata")
-fit$beta[2:3] <- 0
-fit$beta[12] <- 1
-preds <- get.pred(train,A,test.ix,fit)
-mllk.train <- log(multinomial.score(preds$m$train,train))
-llk.train <- loglikelihood_vec_from_lrm(preds$lrm$train,train[1:M,1],as.integer(train[1:M,2])-1,as.integer(train[1:M,3])-1,N,M)
 
-preds.online <- get.pred.baseline(train,A,test.ix,"online")
-mllk.train.online <- log(multinomial.score(preds.online$m$train,train[1:M,]))
-llk.train.online <- loglikelihood_vec_from_lrm(preds.online$lrm$train,train[1:M,1],as.integer(train[1:M,2])-1,as.integer(train[1:M,3])-1,N,M)
+preds <- list(get.pred.baseline(train,A,test.ix,"online"),
+              get.pred(train,A,test.ix,fit.0),
+              get.pred(train,A,test.ix,fit.1),
+              get.pred(train,A,test.ix,fit.2),
+              get.pred(train,A,test.ix,fit.3))
 
-pdf("figs/onlinedebug.eckmann.pdf",width=8,height=4)
-par(mfrow=c(1,2))
-plot(mllk.train,mllk.train.online,asp=1,pch=".")
+# Compute brem llk for multinomial from model multiplied by baserate
+preds[[5]] <- preds[[4]]
+preds[[5]]$lrm <- list(train=log(preds[[4]]$m$train * nrow(train)/train[nrow(train),1]),
+                       test =log(preds[[4]]$m$test * nrow(train)/train[nrow(train),1]))
+
+mllk.trains <- lapply(preds,function(p) log(multinomial.score(p$m$train,train)))
+llk.trains <- lapply(preds,function(p) RemLogLikelihoodVecFromArray(p$lrm$train,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train)))
+
+mllk.tests <- lapply(preds,function(p) log(multinomial.score(p$m$test,test)))
+llk.tests <- lapply(preds,function(p) RemLogLikelihoodVecFromArray(p$lrm$test,test[,1],as.integer(test[,2])-1,as.integer(test[,3])-1,N,nrow(test)))
+
+names(mllk.trains) <- names(llk.trains) <- names(mllk.tests) <- names(llk.tests) <- c("baseline","beta.12 fixed","beta.12","beta.1,2,12","beta.0,1,2,12")#,"beta.0,1,2,12 alt")
+
+
+# Compute likelihoods
+rbind(mllk.train=sapply(mllk.trains,sum),
+      llk.train =sapply(llk.trains,sum),
+      mllk.test =sapply(mllk.tests,sum),
+      llk.test  =sapply(llk.tests,sum))
+
+
+pdf("figs/onlinedebug.eckmann.pdf",width=12,height=10)
+par(mfrow=c(2,4))
+for (i in 1:4) { plot(mllk.trains[[5]],mllk.trains[[i]],asp=1,pch=".",xlab="baseline",ylab="model",main="mult. llk")
 abline(0,1)
-plot(llk.train,llk.train.online,asp=1,pch=".")
-abline(0,1)
+}
+for (i in 1:4) {
+  plot(llk.trains[[5]], llk.trains[[i]],asp=1,pch=".",xlab="baseline",ylab="model",main="brem llk")
+  abline(0,1)
+}
 dev.off()
 
-################
+
+# TODO: Idea: Devide lambdas by lambda_12, and get llk of lam.hat * lam
+# rm2 <- exp(preds[[3]]$lrm$train)
+# for (m in 1:nrow(train)) rm2[i,,] <- rm2[i,,] / rm2[i,1,2]
+# lam.hat <- nrow(train)/train[nrow(train),1]
+# lrm2 <- log( lam.hat * rm2/sum(rm2))
+# sum(loglikelihood_vec_from_lrm(lrm2,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M))
+
+# Plot loglikelihood of events over time
+par(mfrow=c(1,1))
+plot(llk.trains[[3]],pch=".")
+points(llk.trains[[4]],pch=".",col="red")
+
+# Examine misfit of temporal component
+total.lambda <- sapply(1:nrow(train),function(i) sum(exp(preds[[5]]$lrm$train[i,,])))
+par(mfrow=c(1,1))
+time.hat <- cumsum(1/total.lambda)
+time.fixed <- cumsum(rep(train[nrow(train),1]/nrow(train),nrow(train)))
+time.obs <- train[,1]
+plot(time.obs,type="l")
+lines(time.hat)
+lines(time.fixed)
+
+
+fit.3 <- brem.mcmc(train[100:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
+                   niter=opts$numiterations,gibbs=opts$gibbs,beta=NULL,px=px,
+                   outfile=NULL)
+preds.3 <- get.pred(train,A,test.ix,fit.3)
+total.lambda.3 <- sapply(1:nrow(train),function(i) sum(exp(preds.3$lrm$train[i,,])))
+time.hat <- cumsum(1/total.lambda.3)
+lines(time.hat,col="red")
+
 # Make plot of rate of popular dyad over time
 i <- 75; j <- 85
-i <- 21; j <- 20
-plot(preds$m$train[1:300,i,j],type="S")
-lines(preds.online$m$train[1:300,i,j],type="S",col="red")
+plot(exp(preds[[4]]$lrm$train[1:500,i,j]),type="S",ylab="rate",xlab="m")
+v <- sapply(1:nrow(train), function(m) i %in% train[m,] | j %in% train[m,])
+points(which(v),rep(.2,sum(v)),pch=17)
+lines(exp(preds[[5]]$lrm$train[1:500,i,j]),type="S",col="red")
 
-############################################
-# After meeting with Smyth
-
-# Compute p_ij(m)
-m.train <- ratemat.online(train,N)
-m.train[which(m.train==-Inf)] <- 0
-eps <- 1
-for (i in 1:nrow(train)) {
-  lam <- m.train[i,,] + eps
-  m.train[i,,] <- lam/sum(lam)
-}
-m.train.online <- m.train
-
-# Compute log lambda_ij(m)
-fit$beta[12] <- 1
-P <- 13
-lrm <- brem.lrm.fast(nrow(train), strain, fit$z, fit$beta)
-m.train <- lrm
-for (i in 1:nrow(train)) {
-  m.train[i,,] <- exp(m.train[i,,])/sum(exp(m.train[i,,]))
-}
-
-# Compare rates for given dyads
-i <- 75#sample(1:N,1)
-j <- 85#sample(1:N,1)
-summary(m.train[,i,j])
-plot(m.train[,i,j],type="S")
-lines(m.train.online[,i,j],type="S",col="red")
-
-i <- 3#sample(1:N,1)
-j <- 5#sample(1:N,1)
-summary(m.train[,i,j])
-summary(m.train.online[,i,j])
-plot(m.train[,i,j],type="S")
-lines(m.train.online[,i,j],type="S",col="red")
-
-# Compare prob for observed dyads
-obs.lambda <- sapply(1:nrow(train),function(i) m.train[i,train[i,2],train[i,3]])
-obs.lambda.online <- sapply(1:nrow(train),function(i) m.train.online[i,train[i,2],train[i,3]])
-plot(obs.lambda,obs.lambda.online,pch=".",asp=1)
-abline(0,1)
-
-# Now fit model
-
-### OLD
-# check lrm is correct
-x <- s$get_s(200,72,0)
-b <- c(fit$beta)
-compute_lambda_fast(72,0,0,0,x,b,N,K,P) == log((9+1)/(199+N*(N-1))) * b[12]
-# compare "pij" to "sij"
-obs.count.online <- sapply(1:nrow(train),function(i) m.train.online[i,train[i,2],train[i,3]])
-obs.count <- sapply(1:nrow(train),function(i) s$get_s(i-1,train[i,2]-1,train[i,3]-1)[12])
-obs.count.alt <- sapply(1:nrow(train),function(i) s$get_s(i-1,train[i,2]-1,train[i,3]-1)[12])
-
-m.train <- ratemat.online(train,N)
-m.train[200,73,1]
-lrm.train[200,73,1]
-log(m.train.online[200,73,1])
-
-obs.lambda <- sapply(1:nrow(train),function(i) lrm.train[i,train[i,2],train[i,3]])
-obs.lambda.online <- sapply(1:nrow(train),function(i) log(m.train.online[i,train[i,2],train[i,3]]))
-plot(obs.lambda,obs.lambda.online,pch=".");abline(0,1)
-
-# Compute lambda_ij / sum_ij lambda_ij
-m.train <- exp(lrm.train)/exp(1)
-for (i in 1:nrow(train)) {
-  lam <- m.train[i,,]
-  m.train[i,,] <- lam/sum(lam)
-}
-
-obs.lambda <- sapply(1:nrow(train),function(i) m.train[i,train[i,2],train[i,3]])
-obs.lambda.online <- sapply(1:nrow(train),function(i) m.train.online[i,train[i,2],train[i,3]])
-plot(obs.lambda/exp(1),obs.lambda.online,pch=".");abline(0,1)
-
-
-
-
-########################################
-preds <- get.pred(train,A,test.ix,fit)
-obs.count.online <- sapply(1:nrow(train),function(i) tmp[i,train[i,2],train[i,3]])
-obs.count <- sapply(1:nrow(train),function(i) s$get_s(i-1,train[i,2]-1,train[i,3]-1)[12])
-plot(obs.count,obs.count.online)
-obs.lambda.online <- sapply(1:nrow(train),function(i) m.train[i,train[i,2],train[i,3]])
-obs.lambda.online2 <- sapply(1:nrow(train),function(i) preds.online$m$train[i,train[i,2],train[i,3]])
-obs.lambda <- sapply(1:nrow(train),function(i) lrm$train[i,train[i,2],train[i,3]])# preds$m$train[i,train[i,2],train[i,3]])
-obs.lambda2 <- sapply(1:nrow(train),function(i) lrm.train[i,train[i,2],train[i,3]])
-plot(obs.lambda.online,obs.lambda,pch=".")
-plot(obs.lambda2,obs.lambda,pch=".")
-plot(obs.lambda.online2,obs.lambda2,pch=".");abline(0,1)
-
-cbind(train[1:30,],obs.lambda2[1:30],obs.lambda.online2[1:30])
-
-P <- 13
-strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
-strain$precompute()
-lrm <- list(train = brem.lrm.fast(nrow(train), strain, fit$z, fit$beta),test=NULL)
-lrm.train <- brem.lrm(train,N,fit$z,fit$beta)
-
-m.train <- ratemat.online(train,N)
-m.train[which(m.train==-Inf)] <- 0
-for (i in 1:nrow(train)) {
-  lam <- m.train[i,,] + eps
-  m.train[i,,] <- lam/sum(lam)
-}
-
-
-
-# high rate @ m=1835: 68,3
-chosen <- 1835
-x <- s$get_s(1835,67,2)
-compute_lambda_fast(67,2,0,0,x,b,N,K,P)
-x <- s$get_s(1835,74,84)
-compute_lambda_fast(74,84,0,0,x,b,N,K,P)
-
-
-
-
-
-
-
-mean(mllk.train.online)
-mean(mllk.train)
-mean(llk.train.online)
-mean(llk.train)
-
-load("data/synthetic.rdata")
-test.ix <- 2001:nrow(A)
-M <- nrow(train)
-fit <- list(beta=beta,z=z)
-
-preds <- get.pred(train,A,test.ix,fit)
-mllk.train <- log(multinomial.score(preds$m$train,train))
-llk.train <- loglikelihood_vec_from_lrm(preds$lrm$train,train[1:M,1],as.integer(train[1:M,2])-1,as.integer(train[1:M,3])-1,N,M)
-
-preds.online <- get.pred.baseline(train,A,test.ix,"online")
-mllk.train.online <- log(multinomial.score(preds.online$m$train,train[1:M,]))
-llk.train.online <- loglikelihood_vec_from_lrm(preds.online$lrm$train,train[1:M,1],as.integer(train[1:M,2])-1,as.integer(train[1:M,3])-1,N,M)
-
-pdf("figs/onlinedebug.synthetic.pdf",width=8,height=4)
-par(mfrow=c(1,2))
-plot(mllk.train,mllk.train.online)
-abline(0,1)
-plot(llk.train,llk.train.online)
-abline(0,1)
-dev.off()
-mean(mllk.train.online)
-mean(mllk.train)
-mean(llk.train.online)
-mean(llk.train)
-
-
-
-
-# 
-# qqplot(lambda.hat.train,c(1/2000/diff(train[,1]),.5))
-# lambda.hat.train <- sapply(1:nrow(train),function(i) sum(exp(lrm.train[i,,])))
-
-pdf("time-incorrect.pdf",width=5,height=5)
-plot(cumsum(1/lamhat),type="l")
-lines(train[,1],type="l")
-dev.off()
-
-
-
-
-df <- data.frame(i=1:nrow(test),online=mllk.test.online,full=mllk.test.full.3,block=paste(res$z[test[,2]],res$z[test[,3]]))
-qplot(i,online-full,colour=block,data=df) + scale_color_brewer() + theme_bw()
-
-# Look at how fast our model says the overall rate is
-opts$model <- "full.3"
-f <- paste("results/",opts$dataset,"/",opts$model,".rdata",sep="")
-load(f)
-cat("precomputing\n")
-P <- 13
-strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
-strain$precompute()
-stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
-stest$precompute()
-lrm.train <- brem.lrm.fast(nrow(train), strain, res$z, res$beta)
-test.ix <- (1:nrow(A))[-(1:nrow(train))]
-lrm.test  <- brem.lrm.fast2(stest, res$z, res$beta,test.ix)
-
-lambda.hat.train <- sapply(1:nrow(train),function(i) sum(exp(lrm.train[i,,])))
-lambda.hat.test <- sapply(1:length(test.ix),function(i) sum(exp(lrm.test[i,,])))
-nrow(train)/train[nrow(train),1]
-
-ix <- 100:2000
-deltas <- c(diff(train[ix,1]),0)
-plot(lambda.hat.train[ix],1/deltas/length(ix),asp=1)
 

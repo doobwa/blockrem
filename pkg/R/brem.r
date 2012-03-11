@@ -54,14 +54,14 @@ brem.lrm <- function(A,N,z,beta) {
 }
 brem.lrm.fast <- function(M,s,z,beta) {
   K <- dim(beta)[2]
-  lrm <- RemLogIntensityArrayPc(beta,z-1,s$ptr(),K)
+  lrm <- LogIntensityArrayPc(beta,z-1,s$ptr(),K)
   for (i in 1:(dim(lrm)[1])) diag(lrm[i,,]) <- -Inf
   return(lrm)
 }
 brem.lrm.fast.subset <- function(s,z,beta,ix) {
   K <- dim(beta)[2]
   ix <- as.integer(ix)
-  lrm <- RemLogIntensityArrayPcSubset(beta,z-1,s$ptr(),K,ix-1)
+  lrm <- LogIntensityArrayPcSubset(beta,z-1,s$ptr(),K,ix-1)
   for (i in 1:(dim(lrm)[1])) diag(lrm[i,,]) <- -Inf
   return(lrm)
 }
@@ -274,8 +274,8 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
     if (model.type=="shared") {
       beta <- use.first.blocks(beta)
     }
-    brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
-    #brem.lpost.fast(A,N,K,z,s,beta,priors)
+    #brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
+    brem.lpost.fast(A,N,K,z,s,beta,priors)
   }
   
   use.first.blocks <- function(beta) {
@@ -315,7 +315,8 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
   #olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
   for (k1 in kx1) {
     for (k2 in kx2) {
-      olp <- brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
+      #olp <- brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
+      olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
       for (p in which(px==1)) {
         cat(".")
         if (!(k1==1 & k2==1 & p==1)) {  # identifiability
