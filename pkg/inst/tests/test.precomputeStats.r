@@ -71,58 +71,6 @@ test_that("get_v gets vectors as expected",{
   }
 })
 
-test_that("taus from get_tau match with R version",{
-  set.seed(1)
-  M <- 100
-  N <- 10
-  times <- sort(runif(M,0,1))
-  sen <- sample(1:N,M,replace=TRUE)
-  rec <- sample(1:N,M,replace=TRUE)
-  ix <- which(sen==rec)
-  times <- times[-ix]
-  sen <- sen[-ix]
-  rec <- rec[-ix]
-  M <- length(times)
-  K <- 2
-  beta <- list("intercept"=matrix(-1,K,K),
-               "abba" = matrix(c(1,2,3,4),K,K),
-               "abby"=matrix(0,K,K),
-               "abxa"=matrix(0,K,K),
-               "abxb"=matrix(0,K,K),
-               "abay"=matrix(1,K,K),
-               "abab"=matrix(0,K,K),
-               "sod"=matrix(0,K,K),
-               "rod"=matrix(0,K,K),
-               "sid"=matrix(0,K,K),
-               "rid"=matrix(0,K,K),
-               "dc"=matrix(0,K,K),
-               "cc"=matrix(0,K,K))
-  z <- c(rep(1,N/2),rep(2,N/2))
-  P <- length(beta)
-  beta <- abind(beta,rev.along=3)
-  
-  lrm <- log_intensity_array(beta,times,sen-1,rec-1,z-1,N,M,K,P)
-  
-  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
-  s$precompute()
-  
-  #lrm2 <- lrm_slow(beta,z-1,s,M,N,K,P)
-  
-  taus <- test_taus(lrm,times,sen-1,rec-1,M,N)
-  taus2 <- test_taus_from_s(times,sen-1,rec-1,N,M,P)
-  expect_that(all.equal(taus,taus2),is_true())
-  
-  llks <- llk_slow(lrm,times,sen-1,rec-1,M,N)
-  llk2 <-  loglikelihood_from_lrm(lrm,times,sen-1,rec-1,N,M)
-  expect_that(sum(llks),equals(llk2))
-  
-  llk3 <- loglikelihood_fast(beta,z-1,s$ptr(),K)
-  llk4 <- llk_fast(lrm,times,sen-1,rec-1,M,N)
-  expect_that(llk3,equals(llk4))
-  
-  # First event of non-fast version has a mistake
-  expect_that(sum(llk3),equals(llk2 + 1))
-})
 
 
 test_stats_from_s <- function(times,sen,rec,N,M,P) {
@@ -139,7 +87,7 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
   M <- length(times)
   s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
-  r <- initialize_statistics(N,P)
+  r <- InitializeStatisticsArray(N,P)
   for (m in 0:(M-1)) {
     a <- sen[m+1]-1
     b <- rec[m+1]-1
@@ -152,11 +100,11 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
         }
       }
     }
-    r <- update_statistics(r,a,b,N,P)
+    r <- UpdateStatisticsArray(r,a,b,N,P)
   }
 }
 
-test_that("computeLambdaFast uses degree effects properly",{
+test_that("LogLambdaPc uses degree effects properly",{
   s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
   i <- 1
@@ -187,9 +135,9 @@ test_that("computeLambdaFast uses degree effects properly",{
   beta[12,1,1] <- .5
   
   sij <- s$get_s(3,i-1,j-1)
-  lam <- compute_lambda_fast(i-1,j-1,zi-1,zj-1,sij,beta,N,K,P)
+  lam <- LogLambdaPc(i-1,j-1,zi-1,zj-1,sij,beta,N,K,P)
   
-  sij[8:12] <- sij[8:12]/(sij[13] + 1)
+  sij[8:12] <- log((sij[8:12]+1)/(sij[13] + N*(N-1)))
   sij <- sij[-13]
   b <- beta[-13,zi,zj]
   ans <- as.numeric(b %*% sij)

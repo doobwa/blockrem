@@ -10,20 +10,20 @@ simulate.brem <- function(M,N,z,beta) {
   A <- matrix(c(time,1,2),1,3)
   lambda <- beta[1,z,z]
   lrm <- array(0,c(M,N,N))
-  s <- initialize_statistics(N,P);
+  s <- InitializeStatisticsArray(N,P);
   z <- z-1
   for (m in 2:M) {
     
     i <- A[m-1,2]
     j <- A[m-1,3]
     
-    s <- update_statistics(s,m-1,i-1,j-1,N,P)
+    s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
     # Compute changes to lambda
     for (r in 1:N) {
-      lambda[r,j] <- compute_lambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
-      lambda[j,r] <- compute_lambda(j-1,r-1,z[j],z[r],s,beta,N,K,P)
-      lambda[i,r] <- compute_lambda(i-1,r-1,z[i],z[r],s,beta,N,K,P)
-      lambda[r,i] <- compute_lambda(r-1,i-1,z[r],z[i],s,beta,N,K,P)
+      lambda[r,j] <- LogLambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
+      lambda[j,r] <- LogLambda(j-1,r-1,z[j],z[r],s,beta,N,K,P)
+      lambda[i,r] <- LogLambda(i-1,r-1,z[i],z[r],s,beta,N,K,P)
+      lambda[r,i] <- LogLambda(r-1,i-1,z[r],z[i],s,beta,N,K,P)
     }
     diag(lambda) <- -Inf
     
@@ -48,20 +48,20 @@ brem.lrm <- function(A,N,z,beta) {
   sen <- A[,2]-1
   rec <- A[,3]-1
   z <- z - 1
-  lrm <- log_intensity_array(beta,times,sen,rec,z,N,M,K,P)
+  lrm <- RemLogIntensityArray(beta,times,sen,rec,z,N,M,K,P)
   for (i in 1:M) diag(lrm[i,,]) <- -Inf
   return(lrm)
 }
 brem.lrm.fast <- function(M,s,z,beta) {
   K <- dim(beta)[2]
-  lrm <- log_intensity_array_fast(beta,z-1,s$ptr(),K)
+  lrm <- RemLogIntensityArrayPc(beta,z-1,s$ptr(),K)
   for (i in 1:(dim(lrm)[1])) diag(lrm[i,,]) <- -Inf
   return(lrm)
 }
-brem.lrm.fast2 <- function(s,z,beta,ix) {
+brem.lrm.fast.subset <- function(s,z,beta,ix) {
   K <- dim(beta)[2]
   ix <- as.integer(ix)
-  lrm <- log_intensity_array_fast_subset(beta,z-1,s$ptr(),K,ix-1)
+  lrm <- RemLogIntensityArrayPcSubset(beta,z-1,s$ptr(),K,ix-1)
   for (i in 1:(dim(lrm)[1])) diag(lrm[i,,]) <- -Inf
   return(lrm)
 }
@@ -75,10 +75,10 @@ brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
   rec <- A[,3]-1
   z <- z-1
   if (use.lrm) {
-    tmp <- log_intensity_array(beta,times,sen,rec,z,N,M,K,P)
-    return(loglikelihood_from_lrm(tmp,times,sen,rec,N,M))
+    tmp <- LogIntensityArray(beta,times,sen,rec,z,N,M,K,P)
+    return(RemLogLikelihoodFromArray(tmp,times,sen,rec,N,M))
   } else {
-    return(loglikelihood(beta,times,sen,rec,z,N,M,K,P))
+    return(RemLogLikelihood(beta,times,sen,rec,z,N,M,K,P))
   }
 }
 brem.mle <- function(A,N,K,P,z,beta=NULL) {
@@ -97,7 +97,7 @@ brem.lpost <- function(A,N,K,z,beta,priors) {
   sum(llks)+lprior
 }
 brem.lpost.fast <- function(A,N,K,z,s,beta,priors=list(beta=list(mu=0,sigma=1))) {   
-  sum(loglikelihood_fast(beta,z-1,s$ptr(),K)) +
+  sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K)) +
   sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + 
   N * log(1/K)
 }
@@ -115,7 +115,7 @@ brem.lpost.fast.block <- function(A,N,K,z,s,beta,k1,k2,priors=list(beta=list(mu=
   if (length(ix)==0) {
     return(llk)
   } else {
-    return(llk + sum(loglikelihood_fast_subset(beta,z-1,s$ptr(),K,ix))) 
+    return(llk + sum(RemLogLikelihoodPcSubset(beta,z-1,s$ptr(),K,ix))) 
   }    
 }
 
