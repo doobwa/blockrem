@@ -1,72 +1,4 @@
 
-get.pred.baseline <- function(train,A,test.ix,model="online") {
-  get.ms <- switch(model,
-                   "uniform" = function(x) array(1,c(nrow(x),N,N)),
-                   "online"  = function(x) ratemat.online(x,N),
-                   "marg"    = function(x) {
-                     b <- table(factor(train[, 2], 1:N), factor(train[, 3], 1:N))
-                     rowrates <- rowSums(b)
-                     colrates <- colSums(b)
-                     r <- rowrates %*% t(colrates)
-                     ma <- array(0, c(nrow(x), N, N))
-                     for (i in 1:nrow(x)) ma[i, , ] <- r
-                     return(ma)
-                   })
-  
-  eps <- 1  # smoothing
-  cat("lambdas (train)\n")
-  m.train <- get.ms(train)
-  m.train[which(m.train==-Inf)] <- 0
-  for (i in 1:nrow(train)) {
-    lam <- m.train[i,,] + eps
-    m.train[i,,] <- lam/sum(lam)
-  }
-  m.test <- get.ms(A)
-  m.test <- m.test[test.ix,,]
-  m.test[which(m.test==-Inf)] <- 0
-  for (i in 1:length(test.ix)) {
-    lam <- m.test[i,,] + eps
-    m.test[i,,] <- lam/sum(lam)
-  }
-  # Get lambda estimates using global rate
-  lrm.train <- log(m.train * nrow(train)/train[nrow(train),1])
-  lrm.train <- log(m.train * nrow(train)/train[nrow(train),1])
-  lrm.test  <- log(m.test  * nrow(train)/train[nrow(train),1])
-  return(list(lrm=list(train=lrm.train,test=lrm.test),m=list(train=m.train,test=m.test)))
-}
-get.pred <- function(train,A,test.ix,fit) {
-  cat("precomputing\n")
-  P <- 13
-  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
-  strain$precompute()
-  stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
-  stest$precompute()
-  lrm <- list()
-  lrm$train <- brem.lrm.fast(strain, fit$z, fit$beta)
-  lrm$test  <- brem.lrm.fast(stest, fit$z, fit$beta)
-  lrm$test  <- lrm$test[test.ix,,]
-  
-  
-  # Compute multinomial likelihoods
-  m.train <- exp(lrm$train)
-  m.test <- exp(lrm$test)
-  for (i in 1:nrow(train)) {
-    m.train[i,,] <- m.train[i,,]/sum(m.train[i,,])
-  }
-  for (i in 1:length(test.ix)) {
-    m.test[i,,] <- m.test[i,,]/sum(m.test[i,,],na.rm=TRUE)
-  }
-  list(lrm=lrm,m=list(train=m.train,test=m.test))
-}
-multinomial.score <- function(m,x) {
-  M <- nrow(x)
-  r <- rep(0, M)
-  for (i in 1:M) {
-    r[i] <- m[i,x[i,2],x[i,3]]
-  }
-  return(r)
-}
-
 # Compare fit of abba, abby, dyad count to baseline on eckmann
 K <- 1
 opts <- list(dataset="eckmann-small",numclusters=K,model.type="full",gibbs="none",numiterations=10,slice=TRUE)
@@ -123,14 +55,14 @@ fit.2 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
 px <- rep(0,13)
 px[c(1,2,3,12)] <- 1
 fit.3 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
-                   niter=opts$numiterations,gibbs=opts$gibbs,beta=NULL,px=px,
-                   outfile=NULL,skip.intercept=FALSE)
+                   niter=opts$numiterations,gibbs=opts$gibbs,px=px,
+                   outfile=NULL,skip.intercept=FALSE,priors=priors,beta=fit.2$beta)
 
 px <- rep(0,13)
 px[c(1)] <- 1
 fit.4 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
                    niter=opts$numiterations,gibbs=opts$gibbs,beta=NULL,px=px,
-                   outfile=NULL,skip.intercept=FALSE)
+                   outfile=NULL,skip.intercept=FALSE,priors=priors)
 
 save(fit.0,fit.1,fit.2,fit.3,fit.4,file="tmp.rdata")
 
@@ -144,7 +76,7 @@ total.lambda4 <- sapply(1:nrow(train),function(i) sum(exp(lrm4[i,,])))
 total.lambda  <- sapply(1:nrow(train),function(i) sum(exp(lrm[i,,])))
 pdf("figs/online-debug-time.pdf",width=7,height=7)
 par(mfrow=c(1,1))
-time.hat4 <- cumsum(1/total.lambda0)
+time.hat4 <- cumsum(1/total.lambda4)
 time.hat  <- cumsum(1/total.lambda)
 time.fixed <- cumsum(rep(train[nrow(train),1]/nrow(train),nrow(train)))
 time.obs <- train[,1]
