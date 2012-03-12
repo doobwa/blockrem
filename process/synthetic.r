@@ -50,18 +50,28 @@ mat <- melt(as.matrix(mat))
 colnames(mat) <- c("X1","X2","value")
 mat$X1 <- as.character(mat$X1)
 mat$X1 <- factor(mat$X1,10:1)
+mat$X2 <- factor(mat$X2,1:10)
 plotmat(mat)
 ggsave("figs/synthetic/mat.pdf",width=3,height=3)
 
 
+set.seed(2)
+ix <- sample(1:10)
+mat$X1 <- factor(as.character(mat$X1),rev(ix))
+mat$X2 <- factor(as.character(mat$X2),ix)
+plotmat(mat)
+ggsave("figs/synthetic/unsorted.pdf",width=3,height=3)
+
 bm <- matrix(0,N,N)
-bm[1:5,6:10] <- bm[6:10,1:5] <- -7
+bm[1:5,6:10] <- bm[6:10,1:5] <- -8
 diag(bm) <- -10
 mat <- melt(as.matrix(bm))
 colnames(mat) <- c("X1","X2","value")
 mat$X1 <- factor(as.character(mat$X1),10:1)
+mat$X2 <- factor(mat$X2,1:10)
 plotmat(mat,limits=c(-10,3))
 ggsave("figs/synthetic/bm.pdf",width=3,height=3)
+
 
 test_that("simulated lrm agrees with brem.lrm",{
   tmp <- brem.lrm(sim$A,N,z,beta)

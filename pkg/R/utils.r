@@ -19,7 +19,9 @@ plotmat <- function(mat,labels=c("Sender","Receiver"),limits=c(0,max(mat[,3])),c
     geom_tile(aes(fill=value)) + 
     scale_fill_gradient(low="white",high=color,limits=limits)+
     theme_bw() + labs(x=labels[2],y=labels[1],fill="Probability")+
-    coord_equal(ratio=1) +
+    coord_equal(ratio=1) + 
+    scale_x_discrete(expand=c(0,0)) + 
+    scale_y_discrete(expand=c(0,0)) +
     opts(legend.position = "none",
          panel.grid.minor=theme_blank(),
          panel.grid.major=theme_blank())
