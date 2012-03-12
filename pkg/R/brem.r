@@ -119,7 +119,7 @@ brem.lpost.fast.block <- function(A,N,K,z,s,beta,k1,k2,priors=list(beta=list(mu=
   }    
 }
 
-brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NULL,z=NULL,gibbs="fast",mh=FALSE,outfile=NULL,priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE,px=NULL,skip.intercept=TRUE) {
+brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NULL,z=NULL,gibbs=TRUE,mh=FALSE,outfile=NULL,priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE,px=NULL,skip.intercept=TRUE) {
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 13
@@ -154,21 +154,31 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NUL
       olp <- res$olp
     }
     
-    if (gibbs=="slow") {
-      # Gibbs sample assignments
-      for (i in 1:N) {
-        ps <- rep(0,K)
-        for (k in 1:K) {
-          z[i] <- k
-          ps[k] <- brem.lpost.fast(A,N,K,z,s,current,priors)
-        }
-        ps <- exp(ps - max(ps))
-        z[i] <- sample(1:K,size=1,prob=ps)
-      }
-    }
-    if (gibbs=="fast") {
+#     if (gibbs=="slow") {
+#       # Gibbs sample assignments
+#       for (i in 1:N) {
+#         ps <- rep(0,K)
+#         for (k in 1:K) {
+#           z[i] <- k
+#           ps[k] <- brem.lpost.fast(A,N,K,z,s,current,priors)
+#         }
+#         ps <- exp(ps - max(ps))
+#         z[i] <- sample(1:K,size=1,prob=ps)
+#       }
+#     }
+    if (gibbs) {
       cat("gibbs")
-      z <- gibbs(1:N-1,current,z-1,s$ptr(),K)$z + 1
+      z <- RemGibbsPc(1:N-1,current,z-1,s$ptr(),K)$z + 1
+      
+      # Sample empty cluster parameters from prior.  Only sample baserates.
+      #     for (k in 1:K) {
+      #       if (length(which(z==k))==0) {
+      #         current[,k,] <- current[,,k] <- 0
+      #         current[1,k,] <- current[1,,k] <- rnorm(K,priors$beta$mu,priors$beta$sigma)
+      #         cat("sampling empty cluster params\n",current[1,,],"\n")
+      #       }
+      #     }
+      
     }
     
     zs[[iter]] <- z
@@ -239,15 +249,6 @@ brem.mh <- function(A,N,K,P,z,s,current,px,model.type="baserates",priors,mcmc.sd
   }
   if (model.type=="full") {
     cand <- current
-#     for (p in which(px==1)) {
-#       cand[p,,]  <- cand[p,,] + rnorm(K^2,0,mcmc.sd)
-#       cand[1,1,1] <- 0  # identifiability?
-#       clp <- brem.lpost.fast(A,N,K,z,s,cand,priors)
-#       if (clp - olp > log(runif(1))) {
-#         current <- cand
-#         olp <- clp
-#       }
-#     }
     for (k1 in 1:K) {
       for (k2 in 1:K) {
         olp <- brem.lpost.fast.block(A,N,K,z,s,current,k1,k2,priors)
@@ -276,8 +277,8 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
     if (model.type=="shared") {
       beta <- use.first.blocks(beta)
     }
-    #brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
-    brem.lpost.fast(A,N,K,z,s,beta,priors)
+    brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
+    #brem.lpost.fast(A,N,K,z,s,beta,priors)
   }
   
   use.first.blocks <- function(beta) {
@@ -314,11 +315,10 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
   }
   
   olps <- olp
-  #olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
   for (k1 in kx1) {
     for (k2 in kx2) {
-      #olp <- brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
-      olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
+      olp <- brem.lpost.fast.block(A,N,K,z,s,beta,k1,k2,priors)
+      #olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
       for (p in which(px==1)) {
         cat(".")
         if (!(k1==1 & k2==1 & p==1) | !skip.intercept) {  # identifiability
@@ -334,12 +334,3 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
 
   return(list(current=beta,olp=olp,olps=olps))
 }
-
-# Sample empty cluster parameters from prior.  Only sample baserates.
-#     for (k in 1:K) {
-#       if (length(which(z==k))==0) {
-#         current[,k,] <- current[,,k] <- 0
-#         current[1,k,] <- current[1,,k] <- rnorm(K,priors$beta$mu,priors$beta$sigma)
-#         cat("sampling empty cluster params\n",current[1,,],"\n")
-#       }
-#     }

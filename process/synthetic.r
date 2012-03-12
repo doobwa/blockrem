@@ -21,28 +21,32 @@ beta <- list("intercept"=matrix(c(0,-1,-1,0),K,K),
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
 
-M <- 2000
+M <- 7000
 set.seed(1)
 z <- c(rep(1,5),rep(2,5))
 
 sim <- simulate.brem(M,N,z,beta)
 
-A <- train <- sim$A
+A <- sim$A
 plot(A[,1],type="l")
 
-test <- simulate.brem(5000,N,z,beta)$A
+train <- sim$A[1:2000,]
+test.ix <- 2001:7000
+test <- sim$A[test.ix,]
+test[,1] <- test[,1] - test[1,1]
 
 # Compute log likelihood and log posterior of data under true model
-times <- sim$A[,1]
-sen <- sim$A[,2]
-rec <- sim$A[,3]
-s <- new(brem:::RemStat,times,sen-1,rec-1,N,M,P)
+times <- train[,1]
+sen <- train[,2]
+rec <- train[,3]
+s <- new(brem:::RemStat,times,sen-1,rec-1,N,2000,P)
 s$precompute()
-llk.true <- loglikelihood_fast(beta,z-1,s$ptr(),K)  
-true.lpost <- brem.lpost.fast(A,N,K,z,s,beta)
+true.llk <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
+priors <- list(beta=list(mu=0,sigma=3))
+true.lpost <- brem.lpost.fast(A,N,K,z,s,beta,priors=priors)
 
-A <- rbind(train,test)
-save(A,sim,N,K,P,M,z,beta,train,test,true.lpost,file="data/synthetic.rdata")
+#TODO: have test.ix and A's time from 0, t_M
+save(A,sim,N,K,P,M,z,beta,train,test,test.ix,true.lpost,file="data/synthetic.rdata")
 
 
 mat <- table(sim$A[,2],sim$A[,3])

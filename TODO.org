@@ -114,6 +114,17 @@ Debug issues with whether to include intercept term or not. (Understand collinea
     around a few values.  For example, many lambda_ij's are 0 even
     much later in the event sequence.
 
+* Week 7
+- Fix shared model to have different within block dynamics
+- clean up R code some more
+- Implement online prediction that doesn't need to store full log
+  intensity arrays (or does it piecemeal)
+- Identifiability and intercept terms.
+- Explosion guarantees?
+- Get synthetic example figures completed
+ - show parameter values vs posterior dist.
+
+
 
 - Compare loglikelihood of homogeneous poisson process to sums of our
   estimated rates.
@@ -131,7 +142,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Try prediction task where the test set is smaller
 - 
 
-
+  
 * Other
 - Add tests for Gibbs equations.  For example, start with true data
   and learn z's.

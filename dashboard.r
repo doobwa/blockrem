@@ -58,7 +58,7 @@ if (opts$dataset == "synthetic") {
 }
 
 library(coda)
-load(paste("results/",opts$dataset,"/full.3.rdata",sep=""))
+load(paste("results/",opts$dataset,"/full.2.rdata",sep=""))
 r <- melt(res$param)
 r <- subset(r,X1 < 60)
 q1a <- qplot(X1,value,data=r, colour=factor(X2),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(X3~X4,scales="free")
@@ -74,7 +74,7 @@ q2 <- qplot(X1,X2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1) + la
 
 cat("Compute distribution of activity using results from the full model.\n")
 tb <- table(factor(c(train[,2],train[,3]),1:N))
-fx <- grep("full.3",names(fits))
+fx <- grep("full.2",names(fits))
 z <- fits[[fx]]$z
 df <- data.frame(group=z,count=tb)
 q3a <- qplot(log(count.Freq),data=df,geom="histogram")+facet_grid(group~.,scales="free")+labs(y="number of users",x="log(number of events)") + theme_bw()
@@ -151,7 +151,7 @@ betas <- lapply(fits,function(f) f$beta)
 names(betas) <- names(fits)
 b <- melt(betas)
 q6 <- qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
-qplot(X1,value,data=subset(b,L1=="full.3"),geom="point") + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
+#qplot(X1,value,data=subset(b,L1=="full.3"),geom="point") + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
 
 if (opts$dataset=="twitter-small") {
   lapply(1:3,function(k) nmap[which(z==k)])
@@ -194,15 +194,13 @@ if (opts$predictions) {
   mllks.test$event <- 1:nrow(test)
   
   # Examine log likelihood of observations
-  qplot(event,value,data=llks.train,geom="point",colour=factor(L1))
-  qplot(event,value,data=llks.test,geom="point",colour=factor(L1))
-  qplot(event,value,data=mllks.train,geom="point",colour=factor(L1))
-  qplot(event,value,data=mllks.test,geom="point",colour=factor(L1)) 
-  
-  qplot(event,value,data=subset(llks.test,L1 %in% c("full.2","online")),geom="point",colour=factor(L1))
-  
-  tmp <- subset(llks.test,L1 %in% c("full.2","online"))
-  
+#   qplot(event,value,data=llks.train,geom="point",colour=factor(L1))
+#   qplot(event,value,data=llks.test,geom="point",colour=factor(L1))
+#   qplot(event,value,data=mllks.train,geom="point",colour=factor(L1))
+#   qplot(event,value,data=mllks.test,geom="point",colour=factor(L1)) 
+#   
+#   qplot(event,value,data=subset(llks.test,L1 %in% c("full.2","online")),geom="point",colour=factor(L1))
+#   
   # window.size <- 200
   # llks.train <- subset(llks.train,event>window.size)
   # llks.test <- subset(llks.test,event>window.size)
@@ -242,24 +240,24 @@ dev.off()
 
 # cat("Complete.\n")
 # 
-# if (opts$save.figs) {
-#   print(q1)
-#   ggsave(paste("figs/",opts$dataset,"/lpost.pdf",sep=""),height=4,width=5)
-#   print(q2)
-#   ggsave(paste("figs/",opts$dataset,"/zs.pdf",sep=""),height=4,width=5)
-#   print(q3)
-#   ggsave(paste("figs/",opts$dataset,"/counts.pdf",sep=""),width=6,height=4)
-#   print(q4)
-#   ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=5,height=4)
-# #   print(q5)
-# #   ggsave(paste("figs/",opts$dataset,"/test-recall.pdf",sep=""),width=5,height=4)
-# #   print(q4a)
-# #   ggsave(paste("figs/",opts$dataset,"/train-recall-zoom.pdf",sep=""),width=5,height=4)
-# #   print(q5a)
-# #   ggsave(paste("figs/",opts$dataset,"/train-recall.pdf",sep=""),width=5,height=4)
-#   print(q6)
-#   ggsave(paste("figs/",opts$dataset,"/parameters.pdf",sep=""),width=5,height=4)
-#   print(q7)
-#   ggsave(paste("figs/",opts$dataset,"/traceplots.pdf",sep=""),width=5,height=4)
-# }
-# 
+if (opts$save.figs) {
+  print(q1)
+  ggsave(paste("figs/",opts$dataset,"/lpost.pdf",sep=""),height=4,width=5)
+  print(q2)
+  ggsave(paste("figs/",opts$dataset,"/zs.pdf",sep=""),height=4,width=5)
+  print(q3)
+  ggsave(paste("figs/",opts$dataset,"/counts.pdf",sep=""),width=6,height=4)
+  print(q4)
+  ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=5,height=4)
+#   print(q5)
+#   ggsave(paste("figs/",opts$dataset,"/test-recall.pdf",sep=""),width=5,height=4)
+#   print(q4a)
+#   ggsave(paste("figs/",opts$dataset,"/train-recall-zoom.pdf",sep=""),width=5,height=4)
+#   print(q5a)
+#   ggsave(paste("figs/",opts$dataset,"/train-recall.pdf",sep=""),width=5,height=4)
+  print(q6)
+  ggsave(paste("figs/",opts$dataset,"/parameters.pdf",sep=""),width=5,height=4)
+  print(q7)
+  ggsave(paste("figs/",opts$dataset,"/traceplots.pdf",sep=""),width=5,height=4)
+}
+

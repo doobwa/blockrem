@@ -201,7 +201,6 @@ Only use covariates for $(i,j)$ that involve either $i$ or $j$.
 \item Restricts the class of effects one can use
 \item Complexity of likelihood computation reduced ($N^2 \rightarrow N$)
 \end{itemize}
-
 \end{frame}
 
 \begin{frame}{Synthetic example: 2000 events among 10 actors}
@@ -211,9 +210,53 @@ Only use covariates for $(i,j)$ that involve either $i$ or $j$.
 
 
 \begin{frame}{Synthetic example}
-Parameter estimates
+True parameters
 
+Observed counts for each block.
+
+Parameter estimates (using Gibbs sampling for $\mathbf{z}$ and slice sampling for $\boldsymbol{\beta}$).
 \end{frame}
 
+\begin{frame}{Application: Dyadic interactions on Twitter}
+  \begin{itemize}
+  \item Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 with hashtag \texttt{\#rstats}.
+  \item Selecting tweets beginning with the \texttt{@} symbol, and mark the first mentioned user as the recipient.
+  \item Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.
+  \item We consider a subset 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Application: Dyadic interactions on Twitter}
+Prediction experiments and model comparison
+\end{frame}
+
+\begin{frame}{Application: Dyadic interactions on Twitter}
+Plot parameter estimates for winning model
+Compare to fitting a single relational event model
+\end{frame}
+
+\begin{frame}{Discussion}
+Interpretation of parameter estimates
+  \begin{itemize}
+  \item Method clusters with respect to the relational event dynamics for a set of actors
+  \end{itemize}
+
+Main takeaways
+\begin{itemize}
+\item Detailed, highly dependent model for local structure\\ (using relational event models)
+\item Latent variable model to capture meso-level structure \\(using stochastic block model)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Future directions}
+  \begin{itemize}
+  \item Benefits of mixed-membership ideas
+  \item Dirichlet process instead of fixed $K$ (with split-merge sampling?)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{References}
+  
+\end{frame}
 
 \end{document}
