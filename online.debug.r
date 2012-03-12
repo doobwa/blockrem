@@ -1,6 +1,5 @@
 
 get.pred.baseline <- function(train,A,test.ix,model="online") {
-  
   get.ms <- switch(model,
                    "uniform" = function(x) array(1,c(nrow(x),N,N)),
                    "online"  = function(x) ratemat.online(x,N),
@@ -31,7 +30,7 @@ get.pred.baseline <- function(train,A,test.ix,model="online") {
   }
   # Get lambda estimates using global rate
   lrm.train <- log(m.train * nrow(train)/train[nrow(train),1])
-  lrm.train <- log(m.train) + nrow(train)/train[nrow(train),1])
+  lrm.train <- log(m.train * nrow(train)/train[nrow(train),1])
   lrm.test  <- log(m.test  * nrow(train)/train[nrow(train),1])
   return(list(lrm=list(train=lrm.train,test=lrm.test),m=list(train=m.train,test=m.test)))
 }
@@ -73,7 +72,7 @@ K <- 1
 opts <- list(dataset="eckmann-small",numclusters=K,model.type="full",gibbs="none",numiterations=10,slice=TRUE)
 library(brem)
 load("data/eckmann-small.rdata")
-A[,1] <- 10 * A[,1]
+A[,1] <- 1000 * A[,1]
 train[,1] <- 10 * train[,1]
 source("pkg/R/brem.r")
 test.ix <- 2001:nrow(A)
@@ -190,7 +189,7 @@ llk.trains <- lapply(preds,function(p) RemLogLikelihoodVecFromArray(p$lrm$train,
 mllk.tests <- lapply(preds,function(p) log(multinomial.score(p$m$test,test)))
 llk.tests <- lapply(preds,function(p) RemLogLikelihoodVecFromArray(p$lrm$test,test[,1],as.integer(test[,2])-1,as.integer(test[,3])-1,N,nrow(test)))
 
-names(mllk.trains) <- names(llk.trains) <- names(mllk.tests) <- names(llk.tests) <- c("baseline","beta.12 fixed","beta.12","beta.1,2,12","beta.0,1,2,12")#,"beta.0,1,2,12 alt")
+names(mllk.trains) <- names(llk.trains) <- names(mllk.tests) <- names(llk.tests) <- c("baseline","beta.12 fixed","beta.12","beta.0.12","beta.0,1,2,12","beta.0")#,"beta.0,1,2,12 alt")
 
 rbind(mllk.train=sapply(mllk.trains,sum),
       llk.train =sapply(llk.trains,sum),
