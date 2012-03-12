@@ -72,6 +72,20 @@ mat$X2 <- factor(mat$X2,1:10)
 plotmat(mat,limits=c(-10,3))
 ggsave("figs/synthetic/bm.pdf",width=3,height=3)
 
+library(sna)
+edgelist <- melt(table(sim$A[,2],sim$A[,3]))
+colnames(edgelist) <- c("sen","rec","val")
+mypal <- brewer.pal(9,"Greys")
+edge.colors <- col2rgb(mypal[as.numeric(cut(edgelist$val,9))])
+edge.colors <- rbind(edge.colors,100)
+edgelist <- as.matrix(edgelist)
+attr(edgelist,"n") <- N
+net <- as.edgelist.sna(edgelist)
+pdf("figs/synthetic/network.pdf",width=20,height=20)
+par(mar=rep(0,4))
+set.seed(4)
+gplot(net,pad=0,thresh=10,vertex.cex=2,label.cex=4,vertex.sides=30,label=1:10)#,edge.col=1:5)#t(edge.colors))
+dev.off()
 
 test_that("simulated lrm agrees with brem.lrm",{
   tmp <- brem.lrm(sim$A,N,z,beta)
@@ -79,6 +93,9 @@ test_that("simulated lrm agrees with brem.lrm",{
   diag(sim$lrm[1,,]) <- -Inf
   expect_that(all.equal(tmp[-1,,],sim$lrm[-1,,]),is_true())
 })
+
+
+
 
 
 ## OLD CODE
