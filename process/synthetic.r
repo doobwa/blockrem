@@ -26,10 +26,7 @@ set.seed(1)
 z <- c(rep(1,5),rep(2,5))
 
 sim <- simulate.brem(M,N,z,beta)
-mat <- table(sim$A[,2],sim$A[,3])
-mat <- melt(as.matrix(mat))
-colnames(mat) <- c("X1","X2","value")
-plotmat(mat)
+
 A <- train <- sim$A
 plot(A[,1],type="l")
 
@@ -46,8 +43,25 @@ true.lpost <- brem.lpost.fast(A,N,K,z,s,beta)
 
 A <- rbind(train,test)
 save(A,sim,N,K,P,M,z,beta,train,test,true.lpost,file="data/synthetic.rdata")
-#ggsave("figs/syn/mat.pdf",width=3,height=3)
 
+
+mat <- table(sim$A[,2],sim$A[,3])
+mat <- melt(as.matrix(mat))
+colnames(mat) <- c("X1","X2","value")
+mat$X1 <- as.character(mat$X1)
+mat$X1 <- factor(mat$X1,10:1)
+plotmat(mat)
+ggsave("figs/synthetic/mat.pdf",width=3,height=3)
+
+
+bm <- matrix(0,N,N)
+bm[1:5,6:10] <- bm[6:10,1:5] <- -7
+diag(bm) <- -10
+mat <- melt(as.matrix(bm))
+colnames(mat) <- c("X1","X2","value")
+mat$X1 <- factor(as.character(mat$X1),10:1)
+plotmat(mat,limits=c(-10,3))
+ggsave("figs/synthetic/bm.pdf",width=3,height=3)
 
 test_that("simulated lrm agrees with brem.lrm",{
   tmp <- brem.lrm(sim$A,N,z,beta)

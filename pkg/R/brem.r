@@ -52,7 +52,7 @@ brem.lrm <- function(A,N,z,beta) {
   for (i in 1:M) diag(lrm[i,,]) <- -Inf
   return(lrm)
 }
-brem.lrm.fast <- function(M,s,z,beta) {
+brem.lrm.fast <- function(s,z,beta) {
   K <- dim(beta)[2]
   lrm <- LogIntensityArrayPc(beta,z-1,s$ptr(),K)
   for (i in 1:(dim(lrm)[1])) diag(lrm[i,,]) <- -Inf
@@ -119,7 +119,7 @@ brem.lpost.fast.block <- function(A,N,K,z,s,beta,k1,k2,priors=list(beta=list(mu=
   }    
 }
 
-brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NULL,z=NULL,gibbs="fast",mh=FALSE,outfile=NULL,priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE,px=NULL) {
+brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NULL,z=NULL,gibbs="fast",mh=FALSE,outfile=NULL,priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE,px=NULL,skip.intercept=TRUE) {
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 13
@@ -130,7 +130,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NUL
   for (p in which(px==0)) {
     current[p,,] <- 0
   }
-  current[1,1,1] <- 0  # identifiability?
+  if (skip.intercept) current[1,1,1] <- 0  # identifiability?
   
   if (!is.null(beta)) current <- beta
   if (is.null(z))     z <- sample(1:K,N,replace=TRUE)
@@ -149,7 +149,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NUL
         olp <- res$olp
       }
     } else {
-      res <- brem.slice(A,N,K,P,z,s,current,px,model.type,priors,olp,m=m)
+      res <- brem.slice(A,N,K,P,z,s,current,px,model.type,priors,olp,m=m,skip.intercept)
       current <- res$current
       olp <- res$olp
     }
@@ -190,6 +190,8 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NUL
   }
   return(res)
 }
+
+
 brem.mh <- function(A,N,K,P,z,s,current,px,model.type="baserates",priors,mcmc.sd=.1,olp=NULL) {
   if (is.null(olp)) {
     olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
@@ -266,7 +268,7 @@ brem.mh <- function(A,N,K,P,z,s,current,px,model.type="baserates",priors,mcmc.sd
   return(list(current=current,olp=olp))
 }
 
-brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NULL,m=20) {
+brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NULL,m=20,skip.intercept=TRUE) {
   
   #' Needs p,k1,k2,A,N,K,z,s,beta,priors,model.type
   slicellk <- function(x) {
@@ -301,7 +303,7 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
   
   kx1 <- 1:K
   kx2 <- 1:K
-  beta[1,1,1] <- 0
+  if (skip.intercept) beta[1,1,1] <- 0
   if (model.type=="baserates") {
     px <- 1
     beta[-1,,] <- 0
@@ -319,7 +321,7 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
       olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
       for (p in which(px==1)) {
         cat(".")
-        if (!(k1==1 & k2==1 & p==1)) {  # identifiability
+        if (!(k1==1 & k2==1 & p==1) | !skip.intercept) {  # identifiability
           newval <- uni.slice.alt(beta[p,k1,k2],slicellk,gx0=olp,m=m)
           beta[p,k1,k2] <- newval
           if (model.type=="shared") beta <- use.first.blocks(beta)
