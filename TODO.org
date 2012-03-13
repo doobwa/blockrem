@@ -126,7 +126,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 
 
 
-- Compare loglikelihood of homogeneous poisson process to sums of our
+- [x] Compare loglikelihood of homogeneous poisson process to sums of our
   estimated rates.
   - compare to smoothed rates.
   - compare to observed counts.

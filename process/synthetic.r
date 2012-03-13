@@ -77,6 +77,7 @@ plotmat(mat,limits=c(-10,3))
 ggsave("figs/synthetic/bm.pdf",width=3,height=3)
 
 library(sna)
+library(RColorBrewer)
 edgelist <- melt(table(sim$A[,2],sim$A[,3]))
 colnames(edgelist) <- c("sen","rec","val")
 mypal <- brewer.pal(9,"Greys")
@@ -87,8 +88,8 @@ attr(edgelist,"n") <- N
 net <- as.edgelist.sna(edgelist)
 pdf("figs/synthetic/network.pdf",width=20,height=20)
 par(mar=rep(0,4))
-set.seed(4)
-gplot(net,pad=0,thresh=10,vertex.cex=2,label.cex=4,vertex.sides=30,label=1:10)#,edge.col=1:5)#t(edge.colors))
+set.seed(5)
+gplot(net,pad=0,thresh=30,vertex.cex=2,label.cex=4,vertex.sides=30,label=1:10)#,edge.col=1:5)#t(edge.colors))
 dev.off()
 
 test_that("simulated lrm agrees with brem.lrm",{

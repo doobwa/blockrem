@@ -62,8 +62,11 @@ if (opts$dataset=="twitter-small" & opts$fixz) {
 
 outfile <- paste("results/",opts$dataset,"/",opts$model.type,".",K,".rdata",sep="")
 
-priors <- list(beta=list(mu=0,sigma=3))
+priors <- list(beta=list(mu=0,sigma=1))
 
+M <- nrow(train)
+s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
+s$precompute()
 fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
                  niter=opts$numiterations,gibbs=opts$gibbs,beta=beta,px=px,z=z,
-                 outfile=outfile,priors=priors,skip.intercept=TRUE)
+                 outfile=outfile,priors=priors,skip.intercept=FALSE)

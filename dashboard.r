@@ -87,7 +87,10 @@ if (length(fx) > 0) {
   df <- melt(df)
   df$i <- z[df$X1]
   df$j <- z[df$X2]
-  q3 <- qplot(X3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="shift type",y="count for a given dyad") + opts(axis.text.x=theme_text(angle=90))
+  levels(df$X3) <- rev(list("AB-BA"="ab-ba","AB-BY"="ab-by","AB-XA"="ab-xa","AB-AY"="ab-ay","AB-XB"="ab-xb","AB-AB"="ab-ab"))
+  q3 <- qplot(X3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="",y="count for a given dyad") + opts(axis.text.x=theme_text(angle=90)) + coord_flip()
+  q3
+  ggsave("figs/synthetic/counts.pdf",width=4,height=5)
 } else {
   q3 <- qplot(0,0,label="not available",geom="text")
 }
@@ -236,6 +239,37 @@ blankPanel <- grid.rect(gp=gpar(col="white"))
 grid.arrange(q1, q1a, q2, q3, q3a, q4, q5, q6,ncol=4)
 dev.off()
 
+if (opts$dataset=="synthetic") {
+  load("data/synthetic.rdata")
+  load("results/synthetic/full.2.rdata")
+  b <- melt(res$param)
+  colnames(b) <- c ("iter","p","k1","k2","value")
+  pnames <- c("Intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdeg","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
+  dimnames(beta)[[1]] <- pnames
+  tb <- melt(beta)
+  colnames(tb) <- c("p","k1","k2","value")
+ # tb <- subset(tb,!(p %in% c("ab-ab","total")))
+  d <- ddply(b,.(p,k1,k2),function(x) c(mean=mean(x$value),quantile(x$value,c(.025,.2,.8,.975))))
+  
+  # Fix group assignments
+  d$k1 <- c(2,1)[d$k1]
+  d$k2 <- c(2,1)[d$k2]
+  
+  # Fix parameter names
+  d$p <- pnames[d$p]
+  d <- subset(d,! p %in% c("ab-ab","total"))
+  tb <- subset(tb,! p %in% c("ab-ab","total"))
+  d$p <- factor(as.character(d$p),pnames[-c(7,13)])
+  tb$p <- factor(as.character(tb$p),pnames[-c(7,13)])
+  
+  # Plot
+  ggplot(d) + geom_point(aes(x=p,y=mean),colour="white") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="white") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="white") + geom_point(colour="red",aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
+  ggsave("figs/synthetic/params-true.pdf",width=5,height=4)
+  ggplot(d) + geom_point(aes(x=p,y=mean),colour="black") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="black") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="black") + geom_point(colour="red",aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
+  ggsave("figs/synthetic/params-estimates.pdf",width=5,height=4)
+  
+}
+
 #save.image(paste("figs/",opts$dataset,"/dashboard.rdata",sep=""))
 
 # cat("Complete.\n")
@@ -243,11 +277,17 @@ dev.off()
 if (opts$save.figs) {
   print(q1)
   ggsave(paste("figs/",opts$dataset,"/lpost.pdf",sep=""),height=4,width=5)
+  print(q1a)
+  ggsave(paste("figs/",opts$dataset,"/lpost.pdf",sep=""),height=4,width=5)
   print(q2)
   ggsave(paste("figs/",opts$dataset,"/zs.pdf",sep=""),height=4,width=5)
   print(q3)
   ggsave(paste("figs/",opts$dataset,"/counts.pdf",sep=""),width=6,height=4)
+  print(q3a)
+  ggsave(paste("figs/",opts$dataset,"/counts.pdf",sep=""),width=6,height=4)
   print(q4)
+  ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=5,height=4)
+  print(q5)
   ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=5,height=4)
 #   print(q5)
 #   ggsave(paste("figs/",opts$dataset,"/test-recall.pdf",sep=""),width=5,height=4)

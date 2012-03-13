@@ -23,14 +23,15 @@
 
 \begin{document} 
 
- \centerline{\Large \bf Stochastic Blockmodels for Relational Events} 
+ \centerline{\Large \bf Stochastic Blockmodels for Relational Event Data} 
  \medskip
 \centerline{\bf Christopher DuBois}
  \bigskip
 
 \abstract{
+Stochastic blockmodels assume latent groups of individuals have similar tendencies in their  group-wise interactions.  Many find these methods useful for exploratory analysis of static networks. On the other hand, continuous-time methods such as the relational event framework (Butts 2008) model the rate of dyadic events conditioned on the observed history of events and covariates about the actors.  We propose to combine these two approaches where each pair of blocks has a set of parameters guiding the event dynamics for dyads between those blocks.  The method is illustrated using dyadic interaction data (e.g. email, Twitter direct messages) among hundreds of actors and thousands of events.  We show parameter estimates from the model can reveal heterogeneity in the dynamics among groups of individuals, providing a better fit to the data than using a single relational event model.  Our approach illustrates the efficacy of combining a detailed model for local dependencies and a latent variable model for meso-scale dependencies. 
 
-Stochastic blockmodels are a tool for exploring the structure of static social networks by learning latent groups of individuals who have similar tendencies in their  group-wise interactions. Continuous-time methods, such as the relational event framework (Butts 2008), model the rate of dyadic events conditioned on the observed history of events and covariates about the actors.  We propose a hierarchical model combining these two approaches where each pair of blocks has a set of parameters guiding the event dynamics for dyads between those blocks.  The  method is illustrated using  dyadic interaction data (e.g. email, Twitter) among hundreds of actors and thousands of events.  We show parameter estimates from the model can reveal heterogeneity in the dynamics among groups of individuals, providing a better fit to the data than a single relational event model for all actors in the network.  Our approach illustrates the efficacy of combining a detailed model for local dependencies and a latent variable model for meso-scale dependencies.
+%Stochastic blockmodels are a tool for exploring the structure of static social networks by learning latent groups of individuals who have similar tendencies in their  group-wise interactions. Continuous-time methods, such as the relational event framework (Butts 2008), model the rate of dyadic events conditioned on the observed history of events and covariates about the actors.  We propose a hierarchical model combining these two approaches where each pair of blocks has a set of parameters guiding the event dynamics for dyads between those blocks.  The  method is illustrated using  dyadic interaction data (e.g. email, Twitter) among hundreds of actors and thousands of events.  We show parameter estimates from the model can reveal heterogeneity in the dynamics among groups of individuals, providing a better fit to the data than a single relational event model for all actors in the network.  Our approach illustrates the efficacy of combining a detailed model for local dependencies and a latent variable model for meso-scale dependencies.
 
 % \begin{itemize}
 % \item Blockmodels and clustering algorithms often applied to static networks for exploratory data analysis
@@ -198,8 +199,8 @@ Slice sampling with $m=20$.
 \section{Simulation}
 \begin{figure}
 \center
-\includegraphics[width=2in]{../figs/syn/mat.pdf}
-\includegraphics[width=3in]{../figs/syn/counts.pdf}
+\includegraphics[width=2in]{../figs/synthetic/mat.pdf}
+\includegraphics[width=3in]{../figs/synthetic/counts.pdf}
 \caption{Illustration of 1000 simulated events, as described in text. Left: Counts of each dyad. Right: Boxplot of distribution of participation counts across dyads.  The top left shows an increased propensity for reciprocity within cluster 1; bottom right shows more AB-AY events within cluster 2.}
 \label{fig:syncounts}
 \end{figure}
@@ -224,8 +225,8 @@ Each of the following data sets are sequences of dyadic events, where each event
 
 \begin{figure}
 \center
-\includegraphics[width=3in]{../figs/syn/logposterior.pdf}
-\includegraphics[width=3in]{../figs/syn/test-recall.pdf}
+%\includegraphics[width=3in]{../figs/synthetic/logposterior.pdf}
+\includegraphics[width=3in]{../figs/synthetic/test-recall.pdf}
 \caption{Results from fitting models to synthetic data. Left: Log posterior of 1000 simulated events vs. iteration during MCMC.  Right: Recall on 3000 test events.}
 \label{fig:synresults}
 \end{figure}
@@ -321,6 +322,16 @@ and so $\hat{\gamma}_{ab} = \frac{n_{ab}}{t_Mn_an_b}$.
 
 
 I do not believe it is possible to perform EM for a model where we have the more general linear predictor for the intensity function.  Since the assignment of one node depends on the assignments of the other nodes, we suffer combinatorial explosion.
+
+\section{Gradient}
+
+\begin{align*}
+\frac{\partial \ell}{\partial \beta_{p,k,l}} = \frac{\partial}{\partial \beta_{p,k,l}} \sum_{m = 1}^M \left[ \log \lambda_{i_m,j_m}(t_m | \cdot) - \sum_{(i,j) \in \mathcal{R}_{i_m,j_m}} (t_m-\tau_{i,j,m}) \lambda_{i,j}(t_m|\cdot) \right] \\ 
+  =\sum_{m \in V} \left[ s_p(t_m,i_m,j_m) - \sum_{(i,j) \in \mathcal{R}_{i_m,j_m}} (t_m-\tau_{i,j,m}) s_p(t_m,i,j) \lambda_{i,j}(t_m|\cdot) \right]
+\end{align*}
+
+where $V$ is the set of $m$ where either $z_i \in \{k,l\}$ or $z_j \in \{k,l\}$.
+
 \bibliographystyle{plain}
 \bibliography{refs}
 
