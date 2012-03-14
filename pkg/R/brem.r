@@ -180,6 +180,7 @@ brem.mcmc <- function(A,N,K,niter=5,model.type="full",beta=NULL,z=NULL,px=NULL,p
         if (length(which(z==k))==0) {
           current[,k,] <- current[,,k] <- 0
           current[,k,] <- current[,,k] <- rnorm(P*K,priors$beta$mu,priors$beta$sigma)
+          current[which(px==0),,] <- 0
           cat("sampling empty cluster params\n",current[,k,k],"\n")
         }
       }
@@ -311,7 +312,6 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
   
   kx1 <- 1:K
   kx2 <- 1:K
-  if (skip.intercept) beta[1,1,1] <- 0
   if (model.type=="baserates") {
     px <- 1
     beta[-1,,] <- 0
@@ -328,13 +328,13 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
       #olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
       for (p in which(px==1)) {
         cat(".")
-        if (!(k1==1 & k2==1 & p==1) | !skip.intercept) {  # identifiability
+        #if (!(k1==1 & k2==1 & p==1) | !skip.intercept) {  # identifiability
           newval <- uni.slice.alt(beta[p,k1,k2],slicellk,gx0=olp,m=m)
           beta[p,k1,k2] <- newval
           if (model.type=="shared") beta <- use.first.blocks(beta)
           olp <- attr(newval,"log.density")
           olps <- c(olps,olp)
-        }
+        #}
       }
     }
   }

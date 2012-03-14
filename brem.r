@@ -34,8 +34,6 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 M <- nrow(train)
 P <- 13
 K <- opts$numclusters
-s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
-s$precompute()
 
 # Initialize with K=1 solution, if available
 f <- paste("results/",opts$dataset,"/full.1.rdata",sep="")
@@ -67,7 +65,7 @@ if (opts$dataset=="twitter-small" & opts$fixz) {
 
 outfile <- paste("results/",opts$dataset,"/",opts$model.type,".",K,".rdata",sep="")
 
-priors <- list(beta=list(mu=0,sigma=1))
+priors <- list(beta=list(mu=0,sigma=3))
 
 fit <- brem.mcmc(train,N,K,model.type=opts$model.type,slice=opts$slice,gibbs=opts$gibbs,mh=opts$mh,
                  niter=opts$numiterations,beta=beta,px=px,z=z,

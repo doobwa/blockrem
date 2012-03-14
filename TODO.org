@@ -130,6 +130,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Bug: Synthetic example: last observation not equal for
   RemLogLikelihoodPc and RemLogLikelihood.
 - Reorg: Put precomputing inside of brem.mcmc
+- Reorg: change get.pred to predict() 
 
 
 - [x] Compare loglikelihood of homogeneous poisson process to sums of our

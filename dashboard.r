@@ -97,18 +97,22 @@ z <- fits[[fx]]$z
 df <- data.frame(group=z,count=tb)
 q3a <- qplot(log(count.Freq),data=df,geom="histogram")+facet_grid(group~.,scales="free")+labs(y="number of users",x="log(number of events)") + theme_bw()
 
-cat("Compute dyad counts for each pshift using results from the full model.\n")
+cat("Compute dyad counts for each pshift using results from the true model.\n")
 fx <- grep("full.2",fnames)
 if (length(fx) > 0) {
-  z <- fits[[fx]]$z
+  if (opts$dataset!="synthetic") z <- fits[[fx]]$z
+  else z <- c(1,1,1,1,1,2,2,2,2,2)
+  
   df <- dyad.ps(train,N)
   df <- melt(df)
   df$i <- z[df$X1]
   df$j <- z[df$X2]
-  levels(df$X3) <- rev(list("AB-BA"="ab-ba","AB-BY"="ab-by","AB-XA"="ab-xa","AB-AY"="ab-ay","AB-XB"="ab-xb","AB-AB"="ab-ab"))
-  q3 <- qplot(X3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="",y="count for a given dyad") + opts(axis.text.x=theme_text(angle=90)) + coord_flip()
+  df <- subset(df,X3 != "AB-AB")
+  df$X3 <- factor(as.character(df$X3))
+  levels(df$X3) <- rev(list("AB-BA"="ab-ba","AB-BY"="ab-by","AB-XA"="ab-xa","AB-XB"="ab-xb","AB-AY"="ab-ay"))#,"AB-AB"="ab-ab"))
+  q3 <- qplot(X3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="",y="count for a given dyad") + coord_flip()# +opts(axis.text.x=theme_text(angle=90)) 
   q3
-  ggsave("figs/synthetic/counts.pdf",width=4,height=5)
+  ggsave("figs/synthetic/counts.pdf",width=4,height=4)
 } else {
   q3 <- qplot(0,0,label="not available",geom="text")
 }
@@ -214,14 +218,14 @@ if (opts$predictions) {
   mllks.test <- melt(mllks.test)
   mllks.test$event <- 1:nrow(test)
   
-#   if (length(grep("full.2",fs) & length(grep("online",fs)) > 0)) {
-#     tmp <- subset(llks.test,L1 %in% c("full.2","online"))
-#     tmp <- cast(tmp, event ~ L1)
-#     q7 <- ggplot(tmp) + geom_point(aes(x=online,y=full.2),alpha=.1) + geom_abline(intercept=0,slope=1,colour="red") + theme_bw()
-#     pdf(paste("figs/",opts$dataset,"/lpost-compare-2-online.pdf",sep=""),height=4,width=4)
-#     print(q7)
-#     dev.off()
-#   }
+  if (length(grep("full.2",fs) & length(grep("online",fs)) > 0)) {
+    tmp <- subset(llks.test,L1 %in% c("full.2","online"))
+    tmp <- cast(tmp, event ~ L1)
+    q7 <- ggplot(tmp) + geom_point(aes(x=online,y=full.2),alpha=.1) + geom_abline(intercept=0,slope=1,colour="red") + theme_bw()
+    pdf(paste("figs/",opts$dataset,"/lpost-compare-2-online.pdf",sep=""),height=4,width=4)
+    print(q7)
+    dev.off()
+  }
   
   # Make results table
   r <- cbind(ddply(llks.train,.(L1),summarise,llk=mean(value)),

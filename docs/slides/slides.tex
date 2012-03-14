@@ -104,18 +104,25 @@ $$\log \lambda_{ij}(t | \cdot) = \boldsymbol{\beta}' \mathbf{s}(t,i,j)$$
 \right] \\
 }
 \uncover<6->{
-\mbox{Dyad (i,j)} &  & y_{ij} \sim& F(\eta_{z_i,z_j}) \\
+\mbox{Actor i's class} & & z_i \sim& \mbox{Categorical}(\pi) \\
 }
 \uncover<7->{
-\mbox{Actor i's class} & & z_i \sim& \mbox{Categorical}(\pi)
+\mbox{Dyad (i,j)} &  & y_{ij} \sim& F(\eta_{z_i,z_j}) \\
 }
 \end{align*}
 
 \end{frame}
 
+\begin{frame}{Stochastic blockmodels for relational event data}
+Subsets of interactions may have distinct dynamics
+\begin{itemize}
+  \item Core-periphery structures \\(e.g. periphery only sends, core reciprocates immediately)
+  \item<2-> Cohesive subgroups with differing behavior \\(e.g. students and professors)
+  \end{itemize}
+\end{frame}
 
 \begin{frame}{Stochastic blockmodels for relational event data}
-Idea:
+Idea: 
   \begin{itemize}
   \item Assume each actor $i$ belongs to a latent class $z_i$.
   \item Model event dynamics between blocks.
@@ -128,7 +135,7 @@ Idea:
 \uncover<2>{Notation:
 \begin{itemize}
 \item $\boldsymbol{\beta}_{k,l}$: parameter vector for relational events from an actor in block $k$ to an actor in block $l$
-\item  $\mathcal{A}_t$: history prior to time $t$
+\item $\mathcal{A}_t$: history prior to time $t$
 \item $\mathbf{z}$: vector of class assignments
 \end{itemize}
 }
@@ -140,12 +147,11 @@ Benefits:
 \item Adjust for unobserved heterogeneity.
 \item Obtain clusters of nodes who have similar interaction dynamic with other parts of the network.
 \end{itemize}
-
 }
 
 \end{frame}
 
-\begin{frame}{Model specification for $X_{ij}(t)$}
+\begin{frame}{Model specification for $\mathbf{s}(t,i,j)$}
 \textbf{Participation shifts} adjust for the next event
 \begin{itemize}
 \item AB-BA
@@ -234,16 +240,16 @@ Only use covariates for $(i,j)$ that involve either $i$ or $j$.
 \begin{frame}{Synthetic example: $\beta$ and observed counts}
 \begin{picture}(0.0,0.0)
    \put(-.1,-0.25){\includegraphics[width=0.7\textwidth]{../../figs/synthetic/params-true}}
-   \put(.6,-0.3){\includegraphics[width=0.5\textwidth]{../../figs/synthetic/counts}}
+   \put(.55,-0.25){\includegraphics[width=0.55\textwidth]{../../figs/synthetic/counts}}
 \end{picture}
 \end{frame}
 
 
-\begin{frame}{Synthetic example: slice sampling for $\hat{\beta}$ and Gibbs on
+\begin{frame}{Synthetic example: slice sampling for $\beta$ and Gibbs on
     $\mathbf{z}$}
 \begin{picture}(0.0,0.0)
    \put(-.1,-0.25){\includegraphics[width=0.7\textwidth]{../../figs/synthetic/params-estimates}}
-   \put(.6,-0.3){\includegraphics[width=0.5\textwidth]{../../figs/synthetic/counts}}
+   \put(.65,-0.25){\includegraphics[width=0.55\textwidth]{../../figs/synthetic/counts}}
 \end{picture}
 
 %\vspace{1in}
