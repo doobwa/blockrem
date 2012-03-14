@@ -1,12 +1,11 @@
 \documentclass{beamer}
 \usetheme{default}
 \usepackage{tikz}
-\usepackage{subfig}
+
 \setlength{\unitlength}{\textwidth} 
 \tikzstyle{vertex}=[auto=left,circle,fill=black!25,minimum size=20pt,inner sep=0pt]
-\title[Blockmodels for relational events]%(optional, only for long titles)
-{Stochastic blockmodels for relational events}
-\subtitle{}
+\title{Stochastic blockmodels for relational events}
+% \subtitle{}
 \author[DuBois, Christopher] % (optional, for multiple authors)
 {Christopher~DuBois\inst{1} \and Carter~Butts\inst{2} \and Padhraic~Smyth\inst{3}}
 \institute[] % (optional)
@@ -25,7 +24,6 @@ University of California, Irvine
 }
 \date[Sunbelt 2012] % (optional)
 {Sunbelt 2012}
-\subject{Informatik}
 \begin{document}
 \frame{\titlepage}
 
@@ -47,17 +45,24 @@ University of California, Irvine
 
 \begin{itemize}
 \item Above example: 2 dyadic events occurring among 4 nodes
-\item Nodes may have covariates
+\item Nodes and edges may have covariates
 \item Interested in inferences about the rate of particular events, conditioned on what we have observed
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Relational event models}
-
-Multiplicative models for the hazard:
+\begin{frame}{Relational event models: Modeling the \emph{hazard}}
+Multiplicative models for the hazard of a dyad $(i,j)$:
 $$\log \lambda_{ij}(t | \cdot) = \boldsymbol{\beta}' \mathbf{s}(t,i,j)$$
+\begin{itemize}
+\item $\lambda_{ij}(t | \cdot)$: ``rate'' of interaction from $i$ to
+  $j$ at time $t$
+\item $\boldsymbol{\beta}$: vector of model parameters
+\item $\mathbf{s}(t,i,j)$: vector of sufficient statistics for $(i,j)$
+  given the events before time $t$
+\end{itemize}
+\end{frame}
 
-Likelihood:
+\begin{frame}{Relational event models: Likelihood}
 
 \begin{align}
 \mathcal{L}(\mathcal{A}|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}}\exp\{ - (t_m - t_{m-1}) \lambda_{ij}(t_m | .) \}
@@ -79,13 +84,13 @@ Likelihood:
 \item Model block-wise interactions (mixing rates).
 \end{itemize}
 
-\includegraphics[scale=.45]{../../figs/synthetic/unsorted}
-\uncover<2->{\includegraphics[scale=.45]{../../figs/synthetic/mat}}
-\uncover<3->{\includegraphics[scale=.45]{../../figs/synthetic/bm} }
+\uncover<2->{\includegraphics[scale=.45]{../../figs/synthetic/unsorted}}
+\uncover<3->{\includegraphics[scale=.45]{../../figs/synthetic/mat}}
+\uncover<4->{\includegraphics[scale=.45]{../../figs/synthetic/bm} }
 
 \vspace{-.8cm}
 \begin{align*}
-\uncover<4->{
+\uncover<5->{
 \mbox{Mixing rates} & & \boldsymbol{\eta} =& \left[
 \begin {array}{cc}
  \eta_{11}& \eta_{12} \\
@@ -98,10 +103,10 @@ Likelihood:
 \end {array}
 \right] \\
 }
-\uncover<5->{
+\uncover<6->{
 \mbox{Dyad (i,j)} &  & y_{ij} \sim& F(\eta_{z_i,z_j}) \\
 }
-\uncover<6->{
+\uncover<7->{
 \mbox{Actor i's class} & & z_i \sim& \mbox{Categorical}(\pi)
 }
 \end{align*}
@@ -260,6 +265,11 @@ Prediction experiments and model comparison
 \end{frame}
 
 \begin{frame}{Application: Dyadic interactions on Twitter}
+Plot parameter estimates for winning model
+Compare to fitting a single relational event model
+\end{frame}
+
+\begin{frame}{Model adequacy}
 Plot parameter estimates for winning model
 Compare to fitting a single relational event model
 \end{frame}
