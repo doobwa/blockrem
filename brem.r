@@ -10,9 +10,11 @@ option_list <- list(
               help="Number of latent classes to use [default %default]."),
   make_option(c("-n", "--numiterations"), type="integer", default=100,
               help="Number of MCMC iterations [default %default]"),
-  make_option(c("-m","--model.type"), default="full",
+  make_option(c("-t","--model.type"), default="full",
               help="Type of model to fit.  Options: \"baserate\", \"shared\", \"full\"."),
   make_option(c("-g","--gibbs"), default=TRUE,
+              help="Slow or fast version of gibbs."),
+  make_option(c("-m","--mh"), default=FALSE,
               help="Slow or fast version of gibbs."),
   make_option(c("-s","--slice"), default=FALSE,
               help="Slice sample instead of MH."),
@@ -47,7 +49,10 @@ if ((K > 1) & file.exists(f) & opts$initialize) {
 px <- rep(1,13)
 px[13] <- 0
 px[7]  <- 0
-#if (K==1) px[1] <- 0 # identifiability?
+
+if (opts$dataset=="synthetic") {
+  px[8:13] <- 0
+}
 
 if (opts$dataset=="twitter-small" & opts$fixz) {
   tb <- table(factor(c(train[,2],train[,3]),1:N))
@@ -64,9 +69,6 @@ outfile <- paste("results/",opts$dataset,"/",opts$model.type,".",K,".rdata",sep=
 
 priors <- list(beta=list(mu=0,sigma=1))
 
-M <- nrow(train)
-s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
-s$precompute()
-fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
-                 niter=opts$numiterations,gibbs=opts$gibbs,beta=beta,px=px,z=z,
+fit <- brem.mcmc(train,N,K,model.type=opts$model.type,slice=opts$slice,gibbs=opts$gibbs,mh=opts$mh,
+                 niter=opts$numiterations,beta=beta,px=px,z=z,
                  outfile=outfile,priors=priors,skip.intercept=FALSE)

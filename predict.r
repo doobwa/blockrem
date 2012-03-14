@@ -6,7 +6,7 @@ option_list <- list(
   make_option(c("-d", "--dataset"), 
               help="Name of dataset with data at /data/[dataset].rdata 
                     and results at /results/[dataset]/."),
-  make_option(c("-m", "--model"), default=NULL,
+  make_option(c("-t", "--model"), default=NULL,
               help=""))
 parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
