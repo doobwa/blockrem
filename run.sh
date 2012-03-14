@@ -24,7 +24,7 @@
 
 ./parallel --sshlogin 2/d4,2/d5,2/d6,2/d7 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "synthetic" ::: "full.2" "full.1" "uniform" "online" "marg"
 
-./parallel --sshlogin 2/d4,2/d5,2/d6,2/d7 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "eckmann-small" ::: "full.2" "full.1" "uniform" "online" "marg"
+./parallel --sshlogin 2/d4,2/d5,2/d6,2/d7 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "eckmann-small" ::: "full.3" "full.2" "full.1" "uniform" "online" "marg"
 
 ./parallel --sshlogin 8/d5 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "synthetic" "eckmann-small" "twitter-small" ::: "baserates.2" "baserates.3"
 
@@ -44,7 +44,9 @@ rsync -auvz brem.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz predict.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz getcounts.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz data/synthetic.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
+rsync -auvz data/eckmann-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
+rsync -auvz tmp.rdata duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results .
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/figs .
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/data .
