@@ -64,6 +64,24 @@ r <- subset(r,X1 < 60)
 q1a <- qplot(X1,value,data=r, colour=factor(X2),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(X3~X4,scales="free")
 
 
+cat("Plot overall rate\n")
+if (FALSE) {
+  s <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
+  s$precompute()
+  lrm <- LogIntensityArrayPc(res$beta,res$z-1,s$ptr(),K)
+  for (m in 1:nrow(A)) diag(lrm[m,,]) <- -Inf
+  total.lambda  <- sapply(1:nrow(A),function(i) sum(exp(lrm[i,,])))
+  pdf("figs/online-debug-time1.pdf",width=7,height=7)
+  par(mfrow=c(1,1))
+  time.hat  <- cumsum(1/total.lambda)
+  time.fixed <- cumsum(rep(A[nrow(A),1]/nrow(A),nrow(A)))
+  time.obs <- A[,1]
+  plot(time.obs,type="l")
+  lines(time.hat,col="red")
+  lines(time.fixed,col="green")
+  dev.off()
+}
+
 #qplot(iter,log(-llk + 1),data=subset(llks,iter < 20 & iter > 15),geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 
 cat("Plotting progress of z at each MCMC iteration.\n")
@@ -196,41 +214,26 @@ if (opts$predictions) {
   mllks.test <- melt(mllks.test)
   mllks.test$event <- 1:nrow(test)
   
-  # Examine log likelihood of observations
-#   qplot(event,value,data=llks.train,geom="point",colour=factor(L1))
-#   qplot(event,value,data=llks.test,geom="point",colour=factor(L1))
-#   qplot(event,value,data=mllks.train,geom="point",colour=factor(L1))
-#   qplot(event,value,data=mllks.test,geom="point",colour=factor(L1)) 
-#   
-#   qplot(event,value,data=subset(llks.test,L1 %in% c("full.2","online")),geom="point",colour=factor(L1))
-#   
-  # window.size <- 200
-  # llks.train <- subset(llks.train,event>window.size)
-  # llks.test <- subset(llks.test,event>window.size)
-  # mllks.train <- subset(mllks.train,event>window.size)
-  # mllks.test <- subset(mllks.test,event>window.size)
+  if (length(grep("full.2",fs) & length(grep("online",fs)) > 0)) {
+    tmp <- subset(llks.test,L1 %in% c("full.2","online"))
+    tmp <- cast(tmp, event ~ L1)
+    q7 <- ggplot(tmp) + geom_point(aes(x=online,y=full.3),alpha=.1) + geom_abline(intercept=0,slope=1,colour="red") + theme_bw()
+    pdf(paste("figs/",opts$dataset,"/lpost-compare-2-online.pdf",sep=""),height=4,width=4)
+    print(q7)
+    dev.off()
+  }
   
+  # Make results table
   r <- cbind(ddply(llks.train,.(L1),summarise,llk=mean(value)),
              ddply(llks.test,.(L1),summarise,llk=mean(value)),
              ddply(mllks.train,.(L1),summarise,llk=mean(value)),
              ddply(mllks.test,.(L1),summarise,llk=mean(value)))
-  r <- r[,c(1,2,4,6,8)]
+  r <- r[,c(1,2,4,6,8)]  # remove extraneous columns
   colnames(r) <- c("method","brem.train","brem.test","multin.train","multin.test")
   for (i in 2:5) r[,i] <- round(r[,i],2)
   r
   print(xtable(r),include.rownames=FALSE,file=paste("figs/",opts$dataset,".llk.tex",sep=""))
 }
-# 
-# load("results/eckmann-small/llks/online.rdata")
-# load("results/eckmann-small/counts.rdata")
-# llk.test <- llk.test
-# ctest <- ctest
-# par(mfrow=c(3,1))
-# plot(llk.test,xlab="event")
-# plot(ctest,xlab="event",ylab="dyad count for observed event")
-# plot(ctest,llk.test,xlab="dyad count for observed event")
-
-# trace plots
 
 cat("Creating dashboard.\n")
 library(gridExtra)
@@ -244,7 +247,8 @@ if (opts$dataset=="synthetic") {
   load("results/synthetic/full.2.rdata")
   b <- melt(res$param)
   colnames(b) <- c ("iter","p","k1","k2","value")
-  pnames <- c("Intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdeg","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
+  b <- subset(b, iter > 50)
+  pnames <- c("Intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdegree","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
   dimnames(beta)[[1]] <- pnames
   tb <- melt(beta)
   colnames(tb) <- c("p","k1","k2","value")
@@ -252,49 +256,42 @@ if (opts$dataset=="synthetic") {
   d <- ddply(b,.(p,k1,k2),function(x) c(mean=mean(x$value),quantile(x$value,c(.025,.2,.8,.975))))
   
   # Fix group assignments
-  d$k1 <- c(2,1)[d$k1]
-  d$k2 <- c(2,1)[d$k2]
+  if (res$z[1]==2) {
+    d$k1 <- c(2,1)[d$k1]
+    d$k2 <- c(2,1)[d$k2]
+  }
   
   # Fix parameter names
   d$p <- pnames[d$p]
-  d <- subset(d,! p %in% c("ab-ab","total"))
-  tb <- subset(tb,! p %in% c("ab-ab","total"))
-  d$p <- factor(as.character(d$p),pnames[-c(7,13)])
-  tb$p <- factor(as.character(tb$p),pnames[-c(7,13)])
+  d <- subset(d,! p %in% c("ab-ab","total","rec. indegree","sen. indegree","rec. outdegree","sen. outdegree","dyad count"))
+  tb <- subset(tb,! p %in% c("ab-ab","total","rec. indegree","sen. indegree","rec. outdegree","sen. outdegree","dyad count"))
+  d$p <- factor(as.character(d$p),rev(pnames[-c(7:13)]))
+  tb$p <- factor(as.character(tb$p),rev(pnames[-c(7:13)]))
   
-  # Plot
+  cat("Plotting dashboard\n")
   ggplot(d) + geom_point(aes(x=p,y=mean),colour="white") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="white") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="white") + geom_point(colour="red",aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
   ggsave("figs/synthetic/params-true.pdf",width=5,height=4)
-  ggplot(d) + geom_point(aes(x=p,y=mean),colour="black") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="black") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="black") + geom_point(colour="red",aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
+  ggplot(d) + geom_point(aes(x=p,y=mean),colour="black") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="black") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="black") + geom_point(colour="red",alpha=.5,aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
   ggsave("figs/synthetic/params-estimates.pdf",width=5,height=4)
   
 }
 
-#save.image(paste("figs/",opts$dataset,"/dashboard.rdata",sep=""))
-
-# cat("Complete.\n")
-# 
+cat("Saving figures\n")
 if (opts$save.figs) {
   print(q1)
   ggsave(paste("figs/",opts$dataset,"/lpost.pdf",sep=""),height=4,width=5)
   print(q1a)
-  ggsave(paste("figs/",opts$dataset,"/lpost.pdf",sep=""),height=4,width=5)
+  ggsave(paste("figs/",opts$dataset,"/lpost-iter.pdf",sep=""),height=4,width=5)
   print(q2)
   ggsave(paste("figs/",opts$dataset,"/zs.pdf",sep=""),height=4,width=5)
   print(q3)
   ggsave(paste("figs/",opts$dataset,"/counts.pdf",sep=""),width=6,height=4)
   print(q3a)
-  ggsave(paste("figs/",opts$dataset,"/counts.pdf",sep=""),width=6,height=4)
+  ggsave(paste("figs/",opts$dataset,"/countsa.pdf",sep=""),width=6,height=4)
   print(q4)
   ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=5,height=4)
   print(q5)
-  ggsave(paste("figs/",opts$dataset,"/recall.pdf",sep=""),width=5,height=4)
-#   print(q5)
-#   ggsave(paste("figs/",opts$dataset,"/test-recall.pdf",sep=""),width=5,height=4)
-#   print(q4a)
-#   ggsave(paste("figs/",opts$dataset,"/train-recall-zoom.pdf",sep=""),width=5,height=4)
-#   print(q5a)
-#   ggsave(paste("figs/",opts$dataset,"/train-recall.pdf",sep=""),width=5,height=4)
+  ggsave(paste("figs/",opts$dataset,"/recall-all.pdf",sep=""),width=5,height=4)
   print(q6)
   ggsave(paste("figs/",opts$dataset,"/parameters.pdf",sep=""),width=5,height=4)
   print(q7)

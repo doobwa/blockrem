@@ -1,18 +1,15 @@
 
 # Compare fit of abba, abby, dyad count to baseline on eckmann
-K <- 1
-opts <- list(dataset="eckmann-small",numclusters=K,model.type="full",gibbs="none",numiterations=10,slice=TRUE)
+opts <- list(dataset="eckmann-small",numclusters=K,model.type="full",gibbs=TRUE,numiterations=10,slice=TRUE)
 library(brem)
 load("data/eckmann-small.rdata")
-A[,1] <- 1000 * A[,1]
+A[,1] <- 10 * A[,1]
 train[,1] <- 10 * train[,1]
 source("pkg/R/brem.r")
 test.ix <- 2001:nrow(A)
 M <- nrow(train)
 P <- 13
 K <- 1#opts$numclusters
-s <- new(RemStat,train[1:M,1],as.integer(train[1:M,2])-1,as.integer(train[1:M,3])-1,N,M,P)
-s$precompute()
 
 # Test that llks agree using lrm (pc)
 beta <- array(0,c(P,K,K))
@@ -39,7 +36,7 @@ sapply(llks,sum)
 priors <- list(beta=list(mu=0,sigma=3))
 px <- rep(0,13)
 px[c(12)] <- 1
-fit.1 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
+fit.1 <- brem.mcmc(train[1:M,],N,K,model.type=opts$model.type,mh=FALSE,slice=TRUE,
                  niter=opts$numiterations,gibbs=opts$gibbs,beta=NULL,px=px,
                  outfile=NULL,priors=priors)
 fit.0 <- fit.1
@@ -48,19 +45,19 @@ fit.0$beta[-12] <- 0
 
 px <- rep(0,13)
 px[c(1,12)] <- 1
-fit.2 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
+fit.2 <- brem.mcmc(train[1:M,],N,K,model.type=opts$model.type,mh=!opts$slice,
                    niter=opts$numiterations,gibbs=opts$gibbs,beta=NULL,px=px,
                    outfile=NULL,priors=priors,skip.intercept=FALSE)
 
 px <- rep(0,13)
 px[c(1,2,3,12)] <- 1
-fit.3 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
+fit.3 <- brem.mcmc(train[1:M,],N,K,model.type=opts$model.type,mh=!opts$slice,
                    niter=opts$numiterations,gibbs=opts$gibbs,px=px,
                    outfile=NULL,skip.intercept=FALSE,priors=priors,beta=fit.2$beta)
 
 px <- rep(0,13)
 px[c(1)] <- 1
-fit.4 <- brem.mcmc(train[1:M,],N,K,s,model.type=opts$model.type,mh=!opts$slice,
+fit.4 <- brem.mcmc(train[1:M,],N,K,model.type=opts$model.type,mh=!opts$slice,
                    niter=opts$numiterations,gibbs=opts$gibbs,beta=NULL,px=px,
                    outfile=NULL,skip.intercept=FALSE,priors=priors)
 
@@ -97,16 +94,21 @@ preds <- list(get.pred.baseline(train,A,test.ix,"online"),
 
 # Check that Pc gives same answer
 sum(RemLogLikelihoodVecFromArray(preds[[5]]$lrm$train,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train)))
+s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
+s$precompute()
 sum(RemLogLikelihoodPc(fit.3$beta,fit.3$z-1,s$ptr(),K))
 
 
-# TODO: Possible bug since intensity for fit0 and baseline don't agree
-# Compare online multinomial with fit.0
-a <- RemLogLikelihoodVecFromArray(preds[[1]]$m$train,times,sen-1,rec-1,N,M)
-b <- RemLogLikelihoodVecFromArray(preds[[1]]$lrm$train,times,sen-1,rec-1,N,M)
-beta[1] <- 8; beta[12] <- 1
-lrm2 <- LogIntensityArray(beta,times,sen-1,rec-1,z-1,N,M,K,P)
-d <- RemLogLikelihoodVecFromArray(lrm2,times,sen-1,rec-1,N,M) # gets to -815 llk
+# # TODO: Possible bug since intensity for fit0 and baseline don't agree
+# # Compare online multinomial with fit.0
+# a <- RemLogLikelihoodVecFromArray(preds[[1]]$m$train,times,sen-1,rec-1,N,M)
+# b <- RemLogLikelihoodVecFromArray(preds[[1]]$lrm$train,times,sen-1,rec-1,N,M)
+# beta[1] <- 8; beta[12] <- 1
+# lrm2 <- LogIntensityArray(beta,times,sen-1,rec-1,z-1,N,M,K,P)
+# d <- RemLogLikelihoodVecFromArray(lrm2,times,sen-1,rec-1,N,M) 
+# sum(a)
+# sum(b)
+# sum(d)
 
 # 
 # # Compute brem llk for multinomial from model multiplied by baserate
@@ -123,10 +125,10 @@ llk.tests <- lapply(preds,function(p) RemLogLikelihoodVecFromArray(p$lrm$test,te
 
 names(mllk.trains) <- names(llk.trains) <- names(mllk.tests) <- names(llk.tests) <- c("baseline","beta.12 fixed","beta.12","beta.0.12","beta.0,1,2,12","beta.0")#,"beta.0,1,2,12 alt")
 
-rbind(mllk.train=sapply(mllk.trains,sum),
-      llk.train =sapply(llk.trains,sum),
-      mllk.test =sapply(mllk.tests,sum),
-      llk.test  =sapply(llk.tests,sum))
+ans <- rbind(mllk.train=sapply(mllk.trains,mean),
+      llk.train =sapply(llk.trains,mean),
+      mllk.test =sapply(mllk.tests,mean),
+      llk.test  =sapply(llk.tests,mean))
 
 
 pdf("figs/onlinedebug.eckmann.pdf",width=12,height=10)
