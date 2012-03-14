@@ -37,7 +37,7 @@ simulate.brem <- function(M,N,z,beta) {
     
     lrm[m,,] <- lambda
   }
-  return(list(A=A,lrm=lrm))
+  return(list(A=A,lrm=lrm,s=s))
 }
 
 brem.lrm <- function(A,N,z,beta) {
@@ -81,13 +81,13 @@ brem.llk <- function(A,N,z,beta,use.lrm=FALSE) {
     return(RemLogLikelihood(beta,times,sen,rec,z,N,M,K,P))
   }
 }
-brem.mle <- function(A,N,K,P,z,beta=NULL) {
+brem.mle <- function(A,N,K,P,z,px,beta=NULL) {
   fn <- function(par) {
-    beta <- array(par,c(P,K,K))
-    beta[7:13,,] <- 0
-    -brem.llk(A,N,z,beta)
+    beta <- array(0,c(P,K,K))
+    beta[which(px==1),,] <- par
+    -sum(brem.llk(A,N,z,beta))
   }
-  if (is.null(beta)) beta <- array(0,c(P,K,K))
+  if (is.null(beta)) beta <- array(0,c(sum(px),K,K))
   beta.hat <- optim(as.vector(beta),fn)$par
   array(beta.hat,c(P,K,K))
 }
@@ -101,6 +101,8 @@ brem.lpost.fast <- function(A,N,K,z,s,beta,priors=list(beta=list(mu=0,sigma=1)))
   sum(dnorm(unlist(beta),priors$beta$mu,priors$beta$sigma,log=TRUE)) + 
   N * log(1/K)
 }
+
+#' Compute loglikelihood pertaining to the (k1,k2) block.
 #' @A event history matrix
 #' @z cluster assignments (1-based)
 brem.lpost.fast.block <- function(A,N,K,z,s,beta,k1,k2,priors=list(beta=list(mu=0,sigma=1))) {   
@@ -108,6 +110,7 @@ brem.lpost.fast.block <- function(A,N,K,z,s,beta,k1,k2,priors=list(beta=list(mu=
   zs <- z[A[,2]]
   zr <- z[A[,3]]
   ix <- which(zs==k1 | zr==k2) - 1  # 0 based indexing for c++
+  # TODO: Why is this setdiff here?
   if (length(ix) > 0) {
     ix <- setdiff(ix,c(0,M-1))
   }
@@ -119,19 +122,24 @@ brem.lpost.fast.block <- function(A,N,K,z,s,beta,k1,k2,priors=list(beta=list(mu=
   }    
 }
 
-brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NULL,z=NULL,gibbs=TRUE,mh=FALSE,outfile=NULL,priors=list(beta=list(mu=0,sigma=1)),verbose=FALSE,px=NULL,skip.intercept=TRUE) {
+brem.mcmc <- function(A,N,K,niter=5,model.type="full",beta=NULL,z=NULL,px=NULL,priors=list(beta=list(mu=0,sigma=1)),
+                      gibbs=TRUE,mh=FALSE,mcmc.sd=.1,slice=TRUE,m=20,outfile=NULL,verbose=FALSE,skip.intercept=TRUE) {
+  
   llks <- rep(0,niter)
   M <- nrow(A)
   P <- 13
   param <- array(0,c(niter,P,K,K))
   zs <- NULL
-
+  
+  cat("precomputing statistics\n")
+  s <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,M,P)
+  s$precompute()
+  
   current <- array(rnorm(P*K^2,priors$beta$mu,priors$beta$sigma),c(P,K,K))
   for (p in which(px==0)) {
     current[p,,] <- 0
   }
   if (skip.intercept) current[1,1,1] <- 0  # identifiability?
-  
   if (!is.null(beta)) current <- beta
   if (is.null(z))     z <- sample(1:K,N,replace=TRUE)
   if (is.null(px))    px <- rep(1,P-1)  # last feature is event index m
@@ -143,43 +151,42 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NUL
     stime <- proc.time()
     # For each effect sample via MH
     if (mh) {
+      cat("mh:")
       for (i in 1:2) {
         res <- brem.mh(A,N,K,P,z,s,current,px,model.type,priors,mcmc.sd,olp)
         current <- res$current
-        olp <- res$olp
+        if (verbose) {
+          olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
+          cat("\n",olp,"\n")
+        }
       }
-    } else {
+    }
+    if (slice) {
+      cat("slice:")
       res <- brem.slice(A,N,K,P,z,s,current,px,model.type,priors,olp,m=m,skip.intercept)
       current <- res$current
-      olp <- res$olp
+      if (verbose) {
+        olp <- brem.lpost.fast(A,N,K,z,s,current,priors)
+        cat("\n",olp,"\n")
+      }
     }
     
-#     if (gibbs=="slow") {
-#       # Gibbs sample assignments
-#       for (i in 1:N) {
-#         ps <- rep(0,K)
-#         for (k in 1:K) {
-#           z[i] <- k
-#           ps[k] <- brem.lpost.fast(A,N,K,z,s,current,priors)
-#         }
-#         ps <- exp(ps - max(ps))
-#         z[i] <- sample(1:K,size=1,prob=ps)
-#       }
-#     }
     if (gibbs) {
       cat("gibbs")
       z <- RemGibbsPc(1:N-1,current,z-1,s$ptr(),K)$z + 1
       
       # Sample empty cluster parameters from prior.  Only sample baserates.
-      #     for (k in 1:K) {
-      #       if (length(which(z==k))==0) {
-      #         current[,k,] <- current[,,k] <- 0
-      #         current[1,k,] <- current[1,,k] <- rnorm(K,priors$beta$mu,priors$beta$sigma)
-      #         cat("sampling empty cluster params\n",current[1,,],"\n")
-      #       }
-      #     }
+      for (k in 1:K) {
+        if (length(which(z==k))==0) {
+          current[,k,] <- current[,,k] <- 0
+          current[,k,] <- current[,,k] <- rnorm(P*K,priors$beta$mu,priors$beta$sigma)
+          cat("sampling empty cluster params\n",current[,k,k],"\n")
+        }
+      }
       
     }
+    
+    # Compute current likelihood and save progress
     
     zs[[iter]] <- z
     param[iter,,,] <- current
@@ -193,7 +200,7 @@ brem.mcmc <- function(A,N,K,s,niter=5,model.type="full",mcmc.sd=.1,m=20,beta=NUL
     if (K>1) cat(current[,2,2],"\n")
     cat("time:",deltas[iter],"\n")
     
-    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter,deltas=deltas)
+    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter,deltas=deltas,priors=priors)
     if (!is.null(outfile)) {
       save(res,file=outfile)
     }
