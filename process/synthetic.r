@@ -10,7 +10,7 @@ beta <- list("intercept"=matrix(c(0,-1,-1,0),K,K),
              "abxa"=matrix(0,K,K),
              "abxb"=matrix(0,K,K),
              "abay"=matrix(c(0,0,0,2),K,K),
-             "abab"=matrix(c(0,-1,-1,0),K,K),
+             "abab"=matrix(c(0,0,0,0),K,K),
              "sod"=matrix(0,K,K),
              "rod"=matrix(0,K,K),
              "sid"=matrix(c(0,0,0,0),K,K),
@@ -42,8 +42,13 @@ rec <- train[,3]
 s <- new(brem:::RemStat,times,sen-1,rec-1,N,2000,P)
 s$precompute()
 true.llk <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
-priors <- list(beta=list(mu=0,sigma=3))
-true.lpost <- brem.lpost.fast(A,N,K,z,s,beta,priors=priors)
+priors <- list(beta=list(mu=0,sigma=1))
+true.lpost <- brem.lpost.fast(train,N,K,z,s,beta,priors=priors)
+
+expect_that(true.lpost,equals(brem.lpost(train,N,K,z,beta,priors=priors)))
+# 
+# tmp1 <- RemLogLikelihoodPc(beta, z - 1, s$ptr(), K)
+# tmp2 <- RemLogLikelihood(beta, times,sen-1,rec-1,z-1,N,nrow(train),K,P)
 
 #TODO: have test.ix and A's time from 0, t_M
 save(A,sim,N,K,P,M,z,beta,train,test,test.ix,true.lpost,file="data/synthetic.rdata")
