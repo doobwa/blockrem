@@ -38,7 +38,7 @@ all <- sort(unique(c(A[,2],A[,3])))
 all <- sample(all)
 A[,2] <- match(A[,2],all)
 A[,3] <- match(A[,3],all)
-A[,1] <- 100 * A[,1] # rescale time
+A[,1] <- 1000 * A[,1] # rescale time
 train <- as.matrix(A[1:2000,])
 test.ix <- 2001:nrow(A)
 test  <- as.matrix(A[test.ix,])

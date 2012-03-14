@@ -24,6 +24,11 @@ University of California, Irvine
 }
 \date[Sunbelt 2012] % (optional)
 {Sunbelt 2012}
+
+
+\renewcommand\footnotemark{}
+\renewcommand*\footnoterule{}
+
 \begin{document}
 \frame{\titlepage}
 
@@ -50,7 +55,7 @@ University of California, Irvine
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Relational event models: Modeling the \emph{hazard}}
+\begin{frame}{Relational event models}
 Multiplicative models for the hazard of a dyad $(i,j)$:
 $$\log \lambda_{ij}(t | \cdot) = \boldsymbol{\beta}' \mathbf{s}(t,i,j)$$
 \begin{itemize}
@@ -60,6 +65,8 @@ $$\log \lambda_{ij}(t | \cdot) = \boldsymbol{\beta}' \mathbf{s}(t,i,j)$$
 \item $\mathbf{s}(t,i,j)$: vector of sufficient statistics for $(i,j)$
   given the events before time $t$
 \end{itemize}
+\vspace{2cm}
+\footnotesize{See \cite{Butts2008, Vu2011,Brandes2009,Perry2011,Stadtfeld2010,Stadtfeld2011,Opsahl2011}.}
 \end{frame}
 
 \begin{frame}{Relational event models: Likelihood}
@@ -110,7 +117,9 @@ $$\log \lambda_{ij}(t | \cdot) = \boldsymbol{\beta}' \mathbf{s}(t,i,j)$$
 \mbox{Dyad (i,j)} &  & y_{ij} \sim& F(\eta_{z_i,z_j}) \\
 }
 \end{align*}
-
+\uncover<8->{
+\footnotesize{See \cite{Nowicki2001, Kemp}.}
+}
 \end{frame}
 
 \begin{frame}{Stochastic blockmodels for relational event data}
@@ -167,14 +176,14 @@ Benefits:
 \item received by sender
 \item sent be receiver
 \item received by receiver
-\item previous occurrences
+\item previous occurrences of this dyad
 \end{itemize}
 
 \end{frame}
 
-\begin{frame}{Specifying degree effects (and explosion)}
+% \begin{frame}{Specifying degree effects (and explosion)}
 
-\end{frame}
+% \end{frame}
 
 \begin{frame}{Scalability}
 Only use covariates for $(i,j)$ that involve either $i$ or $j$.
@@ -249,59 +258,92 @@ Only use covariates for $(i,j)$ that involve either $i$ or $j$.
     $\mathbf{z}$}
 \begin{picture}(0.0,0.0)
    \put(-.1,-0.25){\includegraphics[width=0.7\textwidth]{../../figs/synthetic/params-estimates}}
-   \put(.65,-0.25){\includegraphics[width=0.55\textwidth]{../../figs/synthetic/counts}}
+   \put(.55,-0.25){\includegraphics[width=0.55\textwidth]{../../figs/synthetic/counts}}
 \end{picture}
 
 %\vspace{1in}
 %From 100 samples after 50 burnin using Gibbs sampling for $\mathbf{z}$ and slice sampling for $\boldsymbol{\beta}$).
 \end{frame}
 
-
-\begin{frame}{Application: Dyadic interactions on Twitter}
-  \begin{itemize}
-  \item Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 with hashtag \texttt{\#rstats}.
-  \item Selecting tweets beginning with the \texttt{@} symbol, and mark the first mentioned user as the recipient.
-  \item Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.
-  \item We consider a subset 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
-  \end{itemize}
+\begin{frame}{Prediction experiment: Synthetic data}
+Mean log likelihood on observed events and held out events.
+\input{../../figs/synthetic/results.tex}
 \end{frame}
 
-\begin{frame}{Application: Dyadic interactions on Twitter}
-Prediction experiments and model comparison
+\begin{frame}{Application: Modeling email (88 people, 2000 events)}
+
+\begin{picture}(0.0,0.0)
+   \put(-.05,-0.25){\includegraphics[scale=.4]{../../figs/eckmann-small/countsa}}
+ \uncover<2->{  \put(.5,-0.25){\includegraphics[scale=.5]{../../figs/eckmann-small/params-estimates}}}
+\end{picture}
 \end{frame}
 
-\begin{frame}{Application: Dyadic interactions on Twitter}
-Plot parameter estimates for winning model
-Compare to fitting a single relational event model
+\begin{frame}{Prediction experiment: Eckmann subset}
+Mean log likelihood on observed events and held out events.
+\input{../../figs/eckmann-small/results.tex}
 \end{frame}
 
-\begin{frame}{Model adequacy}
-Plot parameter estimates for winning model
-Compare to fitting a single relational event model
-\end{frame}
+
+% \begin{frame}{Application: Dyadic interactions on Twitter}
+%   \begin{itemize}
+%   \item Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 with hashtag \texttt{\#rstats}.
+%   \item Selecting tweets beginning with the \texttt{@} symbol, and mark the first mentioned user as the recipient.
+%   \item Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.
+%   \item We consider a subset 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
+%   \end{itemize}
+% \end{frame}
+
+% \begin{frame}{Application: Dyadic interactions on Twitter}
+% Prediction experiments and model comparison
+% \end{frame}
+
+% \begin{frame}{Application: Dyadic interactions on Twitter}
+% Plot parameter estimates for winning model
+% Compare to fitting a single relational event model
+% \end{frame}
+
+% \begin{frame}{Model adequacy}
+% Plot parameter estimates for winning model
+% Compare to fitting a single relational event model
+% \end{frame}
 
 \begin{frame}{Discussion}
 Interpretation of parameter estimates
   \begin{itemize}
-  \item Method clusters with respect to the relational event dynamics for a set of actors
+  \item The proposed method clusters individuals with respect to
+    shared relational event dynamics with other clusters
   \end{itemize}
 
+\uncover<2->{
 Main takeaways
 \begin{itemize}
 \item Detailed, highly dependent model for local structure\\ (using relational event models)
 \item Latent variable model to capture meso-level structure \\(using stochastic block model)
 \end{itemize}
-\end{frame}
+}
 
-\begin{frame}{Future directions}
+\uncover<3->{
+Future directions
   \begin{itemize}
-  \item Benefits of mixed-membership ideas
-  \item Dirichlet process instead of fixed $K$ (with split-merge sampling?)
+  \item Consider a mixed-membership approach
+  \item Dirichlet process instead of fixed $K$
   \end{itemize}
+}
 \end{frame}
 
-\begin{frame}{References}
-  
+\begin{frame}[allowframebreaks]{References}
+\tiny
+\bibliographystyle{apalike}
+\bibliography{../refs}
+\end{frame}
+
+\begin{frame}{Thanks}
+Work supported by National Defense Science and Engineering Graduate
+Fellowship.
+
+\vspace{2cm}
+Special thanks to Carter Butts and Padhraic Smyth.
+
 \end{frame}
 
 \end{document}

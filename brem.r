@@ -36,6 +36,8 @@ P <- 13
 K <- opts$numclusters
 
 # Initialize with K=1 solution, if available
+if (K==1) opts$gibbs <- FALSE
+
 f <- paste("results/",opts$dataset,"/full.1.rdata",sep="")
 if ((K > 1) & file.exists(f) & opts$initialize) {
  load(f)
@@ -65,8 +67,8 @@ if (opts$dataset=="twitter-small" & opts$fixz) {
 
 outfile <- paste("results/",opts$dataset,"/",opts$model.type,".",K,".rdata",sep="")
 
-priors <- list(beta=list(mu=0,sigma=3))
+priors <- list(beta=list(mu=0,sigma=1))
 
 fit <- brem.mcmc(train,N,K,model.type=opts$model.type,slice=opts$slice,gibbs=opts$gibbs,mh=opts$mh,
-                 niter=opts$numiterations,beta=beta,px=px,z=z,
+                 niter=opts$numiterations,beta=beta,px=px,z=z,m=10,
                  outfile=outfile,priors=priors,skip.intercept=FALSE)

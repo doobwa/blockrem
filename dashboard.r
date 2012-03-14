@@ -39,7 +39,7 @@ fnames <- unlist(strsplit(fs,".rdata"))
 fitnames <- sapply(fnames,function(f) strsplit(f,paste(results.dir,"/",sep=""))[[1]][2])
 fits <- lapply(fs,function(f) {
   load(f)
-  return(res)
+  return(fit)
 })
 names(fits) <- fitnames
 
@@ -59,7 +59,7 @@ if (opts$dataset == "synthetic") {
 
 library(coda)
 load(paste("results/",opts$dataset,"/full.2.rdata",sep=""))
-r <- melt(res$param)
+r <- melt(fit$param)
 r <- subset(r,X1 < 60)
 q1a <- qplot(X1,value,data=r, colour=factor(X2),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(X3~X4,scales="free")
 
@@ -68,7 +68,7 @@ cat("Plot overall rate\n")
 if (FALSE) {
   s <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
   s$precompute()
-  lrm <- LogIntensityArrayPc(res$beta,res$z-1,s$ptr(),K)
+  lrm <- LogIntensityArrayPc(fit$beta,fit$z-1,s$ptr(),K)
   for (m in 1:nrow(A)) diag(lrm[m,,]) <- -Inf
   total.lambda  <- sapply(1:nrow(A),function(i) sum(exp(lrm[i,,])))
   pdf("figs/online-debug-time1.pdf",width=7,height=7)
@@ -246,12 +246,29 @@ blankPanel <- grid.rect(gp=gpar(col="white"))
 grid.arrange(q1, q1a, q2, q3, q3a, q4, q5, q6,ncol=4)
 dev.off()
 
+if (opts$dataset=="eckmann-small") {
+  load("data/eckmann-small.rdata")
+  load("results/eckmann-small-bk2/full.2.rdata")
+  b <- melt(fit$param)
+  colnames(b) <- c ("iter","p","k1","k2","value")
+  b <- subset(b, iter > 50 & value != 0)
+  pnames <- c("Intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdegree","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
+  b$p <- pnames[b$p]
+  d <- ddply(b,.(p,k1,k2),function(x) c(mean=mean(x$value),quantile(x$value,c(.025,.2,.8,.975))))
+  
+  d$p <- factor(as.character(d$p),rev(pnames))
+  
+  ggplot(d) + geom_point(aes(x=p,y=mean),colour="black") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="black") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="black")  +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
+  
+  ggsave("figs/eckmann-small/params-estimates.pdf",width=5,height=4)  
+}
+
 if (opts$dataset=="synthetic") {
   load("data/synthetic.rdata")
-  load("results/synthetic/full.2.rdata")
-  b <- melt(res$param)
+  load("results/synthetic-bk/full.2.rdata")
+  b <- melt(fit$param)
   colnames(b) <- c ("iter","p","k1","k2","value")
-  b <- subset(b, iter > 50)
+  b <- subset(b, iter > 50 & value != 0)
   pnames <- c("Intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdegree","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
   dimnames(beta)[[1]] <- pnames
   tb <- melt(beta)
@@ -260,7 +277,7 @@ if (opts$dataset=="synthetic") {
   d <- ddply(b,.(p,k1,k2),function(x) c(mean=mean(x$value),quantile(x$value,c(.025,.2,.8,.975))))
   
   # Fix group assignments
-  if (res$z[1]==2) {
+  if (fit$z[1]==2) {
     d$k1 <- c(2,1)[d$k1]
     d$k2 <- c(2,1)[d$k2]
   }
@@ -272,7 +289,6 @@ if (opts$dataset=="synthetic") {
   d$p <- factor(as.character(d$p),rev(pnames[-c(7:13)]))
   tb$p <- factor(as.character(tb$p),rev(pnames[-c(7:13)]))
   
-  cat("Plotting dashboard\n")
   ggplot(d) + geom_point(aes(x=p,y=mean),colour="white") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="white") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="white") + geom_point(colour="red",aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
   ggsave("figs/synthetic/params-true.pdf",width=5,height=4)
   ggplot(d) + geom_point(aes(x=p,y=mean),colour="black") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="black") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="black") + geom_point(colour="red",alpha=.5,aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()

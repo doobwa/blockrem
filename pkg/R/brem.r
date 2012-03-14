@@ -1,43 +1,62 @@
-#' Simulate data from the block relational event model
+#' Simulate data from the block relational event model.
 #' @M number of events
 #' @N number of actors
 #' @z latent class assignments
 #' @beta P x K x K array of parameters
-simulate.brem <- function(M,N,z,beta) {
+#' 
+generate.brem <- function(M,N,z,beta,nsim) {
+  param <- do.call(rbind)
+  fit <- list(param=)
+}
+
+simulate.brem <- function(fit,nsim=1,return.lrm = FALSE) {
+  z <- fit$z
+  beta <- fit$beta
+  M <- fit$M
+  N <- fit$N
+  K <- fit$K
+  P <- fit$P
   
-  # start with a event from 1 to 2
-  time <- 0
-  A <- matrix(c(time,1,2),1,3)
-  lambda <- beta[1,z,z]
-  lrm <- array(0,c(M,N,N))
-  s <- InitializeStatisticsArray(N,P);
-  z <- z-1
-  for (m in 2:M) {
+  sims <- mclapply(1:nsim,function(sim) { 
+    cat(".")
+    beta <- fit$param[fit$niter - sim,,,]
+    beta <- array(beta,c(P,K,K))
+    # start with a event from 1 to 2
+    time <- 0
+    A <- matrix(c(time,1,2),1,3)
+    lambda <- beta[1,z,z]
+    if (return.lrm) lrm <- array(0,c(M,N,N))
+    else lrm <- NULL
     
-    i <- A[m-1,2]
-    j <- A[m-1,3]
-    
-    s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
-    # Compute changes to lambda
-    for (r in 1:N) {
-      lambda[r,j] <- LogLambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
-      lambda[j,r] <- LogLambda(j-1,r-1,z[j],z[r],s,beta,N,K,P)
-      lambda[i,r] <- LogLambda(i-1,r-1,z[i],z[r],s,beta,N,K,P)
-      lambda[r,i] <- LogLambda(r-1,i-1,z[r],z[i],s,beta,N,K,P)
+    s <- InitializeStatisticsArray(N,P);
+    for (m in 2:M) {
+      
+      i <- A[m-1,2]
+      j <- A[m-1,3]
+      
+      s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
+      # Compute changes to lambda
+      for (r in 1:N) {
+        lambda[r,j] <- LogLambda(r-1,j-1,z[r]-1,z[j]-1,s,beta,N,K,P)
+        lambda[j,r] <- LogLambda(j-1,r-1,z[j]-1,z[r]-1,s,beta,N,K,P)
+        lambda[i,r] <- LogLambda(i-1,r-1,z[i]-1,z[r]-1,s,beta,N,K,P)
+        lambda[r,i] <- LogLambda(r-1,i-1,z[r]-1,z[i]-1,s,beta,N,K,P)
+      }
+      diag(lambda) <- -Inf
+      
+      # Draw the next event
+      cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
+      drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
+      i <- cells[drawcell,1]
+      j <- cells[drawcell,2]
+      time <- time + rexp(1,sum(cells[,3]))
+      A <- rbind(A,c(time,i,j))
+      
+      if (return.lrm) lrm[m,,] <- lambda
     }
-    diag(lambda) <- -Inf
-    
-    # Draw the next event
-    cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
-    drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
-    i <- cells[drawcell,1]
-    j <- cells[drawcell,2]
-    time <- time + rexp(1,sum(cells[,3]))
-    A <- rbind(A,c(time,i,j))
-    
-    lrm[m,,] <- lambda
-  }
-  return(list(A=A,lrm=lrm,s=s))
+    return(list(edgelist=A,lrm=lrm,s=s,N=N))
+  })
+  return(sims)
 }
 
 brem.lrm <- function(A,N,z,beta) {
@@ -201,12 +220,13 @@ brem.mcmc <- function(A,N,K,niter=5,model.type="full",beta=NULL,z=NULL,px=NULL,p
     if (K>1) cat(current[,2,2],"\n")
     cat("time:",deltas[iter],"\n")
     
-    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter,deltas=deltas,priors=priors)
+    fit <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter,deltas=deltas,priors=priors,N=N,M=M,K=K,P=P)
+    class(fit) <- "brem"
     if (!is.null(outfile)) {
-      save(res,file=outfile)
+      save(fit,file=outfile)
     }
   }
-  return(res)
+  return(fit)
 }
 
 

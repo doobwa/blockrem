@@ -116,14 +116,18 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 
 * Week 7
 - Debugging synthetic example:
+  - Identifiability and intercept terms?
   - Fixing intercepts and degree effects: slice converges quickly
   - Conclusion: intercepts and pshifts are highly correlated and in the
     synthetic example the degree effects are highly correlated.
     Univariate sampling is working correctly, just slowly.
+- Posterior predictive plots: 
+  - degree dists
+  - time plot
+  - pshifts
 - Fix shared model to have different within block dynamics
 - Implement online prediction that doesn't need to store full log
   intensity arrays (or does it piecemeal)
-- Identifiability and intercept terms.
 - Explosion guarantees?
 - Get synthetic example figures completed
  - show parameter values vs posterior dist.

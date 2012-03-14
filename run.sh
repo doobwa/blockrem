@@ -5,6 +5,8 @@
 
 ./parallel --sshlogin 6/d5,6/m 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 200 -t {3} -s TRUE' ::: "eckmann-small" ::: 1 2 3 ::: "full"
 
+./parallel --sshlogin 6/d5,6/m 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 200 -t {3} -s TRUE --initialize TRUE' ::: "eckmann-small" ::: 2 3 ::: "full"
+
 ./parallel --sshlogin 6/d12,6/m 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -t {3} -s TRUE' ::: "synthetic"  ::: 1 2 :::  "full"
 
 
@@ -22,7 +24,7 @@
 
 ./parallel --sshlogin  7/m 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "twitter-small" ::: "full.1" "full.2" "online" "full.3" "shared.2" "shared.3" "uniform" "online" "marg"
 
-./parallel --sshlogin 2/d4,2/d5,2/d6,2/d7 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "synthetic" ::: "full.2" "full.1" "uniform" "online" "marg"
+./parallel --sshlogin 2/d4,2/d5,2/d6,2/d7 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "synthetic" ::: "full.2" "full.1" "uniform" "online" "marg" "truth"
 
 ./parallel --sshlogin 2/d4,2/d5,2/d6,2/d7 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "eckmann-small" ::: "full.3" "full.2" "full.1" "uniform" "online" "marg"
 
@@ -33,9 +35,7 @@
 
 # Run dashboard
 rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
-./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE' ::: "synthetic" 
-./parallel --sshlogin 8/d10 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE' ::: "twitter-small" 
-./parallel --sshlogin 8/d6 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE --predictions TRUE' ::: "eckmann-small"
+./parallel --sshlogin 8/d6 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE --predictions TRUE' ::: "synthetic" "eckmann-small"
 
 # Helper commands
 cd ~/Documents/blockrem/

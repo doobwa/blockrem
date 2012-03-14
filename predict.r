@@ -23,11 +23,11 @@ if (opts$model %in% c("online","uniform","marg")) {
   pred <- get.pred.baseline(train,A,test.ix,opts$model)
 } else {
   if (opts$dataset == "synthetic" & opts$model == "truth") {
-    res <- list(beta=beta,z=z,llks=rep(true.lpost,500),niter=500,zs=rep(list(z),500),param=beta)  # true values
-    save(res,file=paste("results/",opts$dataset,"/",opts$model,".rdata",sep=""))
+    fit <- list(beta=beta,z=z,llks=rep(true.lpost,500),niter=500,zs=rep(list(z),500),param=beta)  # true values
+    save(fit,file=paste("results/",opts$dataset,"/",opts$model,".rdata",sep=""))
   }
   load(paste("results/",opts$dataset,"/",opts$model,".rdata",sep=""))
-  pred <- get.pred(train,A,test.ix,res)
+  pred <- get.pred(train,A,test.ix,fit)
 }
 
 llkm.train <- log(multinomial.score(pred$m$train,train))
