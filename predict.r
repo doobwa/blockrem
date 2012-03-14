@@ -16,11 +16,16 @@ options(verbose=FALSE)
 # Pull data from each saved file and grab the name of the fit
 load(paste("data/",opts$dataset,".rdata",sep=""))
 
+
 test.ix <- (1:nrow(A))[-(1:nrow(train))]
 
 if (opts$model %in% c("online","uniform","marg")) {
   pred <- get.pred.baseline(train,A,test.ix,opts$model)
 } else {
+  if (opts$dataset == "synthetic" & opts$model == "truth") {
+    res <- list(beta=beta,z=z,llks=rep(200,true.lpost),param=beta)  # true values
+    save(res,file=paste("results/",opts$dataset,"/",opts$model,".rdata",sep=""))
+  }
   load(paste("results/",opts$dataset,"/",opts$model,".rdata",sep=""))
   pred <- get.pred(train,A,test.ix,res)
 }

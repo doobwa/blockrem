@@ -214,14 +214,14 @@ if (opts$predictions) {
   mllks.test <- melt(mllks.test)
   mllks.test$event <- 1:nrow(test)
   
-  if (length(grep("full.2",fs) & length(grep("online",fs)) > 0)) {
-    tmp <- subset(llks.test,L1 %in% c("full.2","online"))
-    tmp <- cast(tmp, event ~ L1)
-    q7 <- ggplot(tmp) + geom_point(aes(x=online,y=full.3),alpha=.1) + geom_abline(intercept=0,slope=1,colour="red") + theme_bw()
-    pdf(paste("figs/",opts$dataset,"/lpost-compare-2-online.pdf",sep=""),height=4,width=4)
-    print(q7)
-    dev.off()
-  }
+#   if (length(grep("full.2",fs) & length(grep("online",fs)) > 0)) {
+#     tmp <- subset(llks.test,L1 %in% c("full.2","online"))
+#     tmp <- cast(tmp, event ~ L1)
+#     q7 <- ggplot(tmp) + geom_point(aes(x=online,y=full.2),alpha=.1) + geom_abline(intercept=0,slope=1,colour="red") + theme_bw()
+#     pdf(paste("figs/",opts$dataset,"/lpost-compare-2-online.pdf",sep=""),height=4,width=4)
+#     print(q7)
+#     dev.off()
+#   }
   
   # Make results table
   r <- cbind(ddply(llks.train,.(L1),summarise,llk=mean(value)),
@@ -232,7 +232,7 @@ if (opts$predictions) {
   colnames(r) <- c("method","brem.train","brem.test","multin.train","multin.test")
   for (i in 2:5) r[,i] <- round(r[,i],2)
   r
-  print(xtable(r),include.rownames=FALSE,file=paste("figs/",opts$dataset,".llk.tex",sep=""))
+  print(xtable(r),include.rownames=FALSE,file=paste("figs/",opts$dataset,"/results.tex",sep=""))
 }
 
 cat("Creating dashboard.\n")
