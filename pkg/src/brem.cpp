@@ -455,7 +455,7 @@ Rcpp::List RemGibbsPc(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::In
 
 /*
  Use the precomputed statistics s to compute the likelihood
- mx: vector of events to compute by default be a vector of 1 to M-2 (inclusive)
+ mx: vector of events to compute by default be a vector of 0 to M-1 (inclusive)
  */
 
 Rcpp::NumericVector RemLogLikelihoodPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector mx) {
@@ -471,15 +471,8 @@ Rcpp::NumericVector RemLogLikelihoodPcSubset(Rcpp::NumericVector beta, Rcpp::Int
   Rcpp::IntegerVector sen = s->sen;
   Rcpp::IntegerVector rec = s->rec;
 
-  i = sen[0];
-  j = rec[0];
-  zi = z[i];
-  zj = z[j];
-  llks[0] = LogLambdaPc(i,j,zi,zj,s->get_s(0,i,j),beta,N,K,P);
-  
   for (int v = 0; v < mx.size(); v++) {
     int m = mx[v];
-  //for (int m = 1; m < (M-1); m++) {
     i = sen[m];
     j = rec[m];
     zi = z[i];
@@ -487,10 +480,6 @@ Rcpp::NumericVector RemLogLikelihoodPcSubset(Rcpp::NumericVector beta, Rcpp::Int
     llk = 0;
 
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
-    // #pragma omp parallel reduction(+:llk)
-    // {
-    // #pragma omp for
-
     for (int r = 0; r < N; r++) {
       double lambda;
       int zr = z[r];
@@ -505,8 +494,6 @@ Rcpp::NumericVector RemLogLikelihoodPcSubset(Rcpp::NumericVector beta, Rcpp::Int
         llk  = llk - (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
       }
     }
-
-    // } // openmp
 
     lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
     llk -= (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
@@ -538,12 +525,91 @@ Rcpp::NumericVector RemLogLikelihoodPcSubset(Rcpp::NumericVector beta, Rcpp::Int
   llks[M-1] = llk;
   return llks;
 }
+
 Rcpp::NumericVector RemLogLikelihoodPc(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
   RemStat *s = XPtr<RemStat>(statptr_);
   int M = s->M;
-  Rcpp::IntegerVector mx = Rcpp::seq(0,M-2);
+  Rcpp::IntegerVector mx = Rcpp::seq(0,M-1);
   return RemLogLikelihoodPcSubset(beta,z,statptr_,K,mx);
 }
+
+// Gradient for beta_.,k,l
+// mx: should index the events where either z_i or z_j is k or l.
+
+Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector mx) {
+  RemStat *s = XPtr<RemStat>(statptr_);
+  int N = s->N;
+  int P = s->P;
+  int M = s->M;
+
+  double llk = 0.0; 
+  double lam;
+  int i,j,r,zi,zj;
+  Rcpp::NumericVector grad(P);
+  Rcpp::NumericVector llks(M);
+  Rcpp::IntegerVector sen = s->sen;
+  Rcpp::IntegerVector rec = s->rec;
+
+  for (int v = 0; v < mx.size(); v++) {
+    int m = mx[v];
+    i = sen[m];
+    j = rec[m];
+    zi = z[i];
+    zj = z[j];
+
+    for (int p = 0; p < 7; p++) {
+      grad[p] += s->get_s(m,i,j)[p];
+    }
+    for (int p = 7; p < 12; p++) {
+      grad[p] -= log((s->get_s(m,i,j)[p] + 1.0) / (s->get_s(m,i,j)[12] + N*(N-1)));
+    }
+    // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
+    double a,b,c,d;
+    for (int r = 0; r < N; r++) {
+      double lambda;
+      int zr = z[r];
+      if (r != i && r != j) {
+        lambda  = LogLambdaPc(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
+        a = (s->times[m] - s->get_tau(m,i,r)) * exp(lambda);
+        lambda  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
+        b  = (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
+        lambda  = LogLambdaPc(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
+        c  = (s->times[m] - s->get_tau(m,j,r)) * exp(lambda);
+        lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
+        d  = (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
+      }
+      for (int p = 0; p < 7; p++) {
+        grad[p] -= a * s->get_s(m,i,r)[p];
+        grad[p] -= b * s->get_s(m,r,i)[p];
+        grad[p] -= c * s->get_s(m,j,r)[p];
+        grad[p] -= d * s->get_s(m,r,j)[p];
+      }
+      for (int p = 7; p < 12; p++) {
+        grad[p] -= a * log((s->get_s(m,i,r)[p] + 1.0) / (s->get_s(m,i,r)[12] + N*(N-1)));
+        grad[p] -= b * log((s->get_s(m,r,i)[p] + 1.0) / (s->get_s(m,r,i)[12] + N*(N-1)));
+        grad[p] -= c * log((s->get_s(m,j,r)[p] + 1.0) / (s->get_s(m,j,r)[12] + N*(N-1)));
+        grad[p] -= d * log((s->get_s(m,r,j)[p] + 1.0) / (s->get_s(m,r,j)[12] + N*(N-1)));
+      }
+    }
+
+    lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+    a    = (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
+    lam  = LogLambdaPc(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
+    b    = (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
+    for (int p = 0; p < 7; p++) {
+      grad[p] -= a * s->get_s(m,i,j)[p];
+      grad[p] -= b * s->get_s(m,j,i)[p];
+    }
+    for (int p = 7; p < 12; p++) {
+      //      Rprintf("%f %f %i\n",smij,smji,s->get_s(m,i,j)[p]);
+      grad[p] -= a * log((s->get_s(m,i,j)[p] + 1.0) / (s->get_s(m,i,j)[12] + N*(N-1)));
+      grad[p] -= b * log((s->get_s(m,j,i)[p] + 1.0) / (s->get_s(m,j,i)[12] + N*(N-1)));
+    }
+  }
+
+  return grad;
+}
+
 
 // Create numeric array with dimensions P x N x N
 Rcpp::NumericVector InitializeStatisticsArray(int N, int P) {
@@ -824,6 +890,7 @@ RCPP_MODULE(brem){
   function( "LogLambdaPc", &LogLambdaPc);
   function( "RemLogLikelihoodPc", &RemLogLikelihoodPc ) ;
   function( "RemLogLikelihoodPcSubset", &RemLogLikelihoodPcSubset ) ;
+  function( "RemGradientPcSubset", &RemGradientPcSubset ) ;
   //  function( "RemLogLikelihoodActorPc", &RemLogLikelihoodActorPc ) ;
    function( "RemGibbsPc", &RemGibbsPc ) ;
   // API using full array for statistics
