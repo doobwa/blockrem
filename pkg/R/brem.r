@@ -6,30 +6,84 @@
 #' 
 generate.brem <- function(M,N,z,beta,nsim) {
   param <- do.call(rbind)
-  fit <- list(param=)
+  fit <- list(param=0)
 }
 
-simulate.brem <- function(fit,nsim=1,return.lrm = FALSE) {
+simulate.brem <- function(fit,train,M=100,nsim=1) {
+  mclapply(1:nsim,function(i) {
+    beta <- fit$param[fit$niter - i,,,]
+    simulate.brem.cond(beta,train,M)
+  })
+}
+simulate.brem.cond <- function(beta,train,M=100) {
+  edgelist <- train[nrow(train),,drop=FALSE]
+  time <- edgelist[1]
+  s <- InitializeStatisticsArray(N,P);
+  for (m in 2:nrow(train)) {
+    i <- train[m-1,2]
+    j <- train[m-1,3]
+    s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
+  }
+  lambda <- matrix(0,N,N)
+  for (i in 1:N) {
+    for (j in 1:N) {
+      lambda[i,j] <- LogLambda(i-1,j-1,z[i]-1,z[j]-1,s,beta,N,K,P)
+    }
+  }
+  for (m in 1:M) {
+    for (r in 1:N) {
+      lambda[r,j] <- LogLambda(r-1,j-1,z[r]-1,z[j]-1,s,beta,N,K,P)
+      lambda[j,r] <- LogLambda(j-1,r-1,z[j]-1,z[r]-1,s,beta,N,K,P)
+      lambda[i,r] <- LogLambda(i-1,r-1,z[i]-1,z[r]-1,s,beta,N,K,P)
+      lambda[r,i] <- LogLambda(r-1,i-1,z[r]-1,z[i]-1,s,beta,N,K,P)
+    }
+    diag(lambda) <- -Inf
+    cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
+    drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
+    i <- cells[drawcell,1]
+    j <- cells[drawcell,2]
+    time <- time + rexp(1,sum(cells[,3]))
+    edgelist <- rbind(edgelist,c(time,i,j))
+    s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
+  }
+  dimnames(edgelist) <- NULL
+  edgelist <- edgelist[-1,]
+  return(list(edgelist=edgelist,s=s,N=N))
+}
+# TODO: reconcile with above
+simulate.brem2 <- function(fit,nsim=1,return.lrm = FALSE, conditioned = NULL, M = NULL) {
   z <- fit$z
   beta <- fit$beta
-  M <- fit$M
+  if (is.null(M)) M <- fit$M
   N <- fit$N
   K <- fit$K
   P <- fit$P
-  
   sims <- mclapply(1:nsim,function(sim) { 
     cat(".")
     beta <- fit$param[fit$niter - sim,,,]
     beta <- array(beta,c(P,K,K))
     # start with a event from 1 to 2
     time <- 0
-    A <- matrix(c(time,1,2),1,3)
     lambda <- beta[1,z,z]
+    if (!is.null(conditioned)) {
+      A <- conditioned
+      s <- InitializeStatisticsArray(N,P);
+      for (m in 2:nrow(A)) {
+        i <- A[m-1,2]
+        j <- A[m-1,3]
+        s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
+        ix <- nrow(A):(nrow(A) + M)
+      }
+      time <- A[nrow(A),1]
+    } else {
+      A <- matrix(c(time,1,2),1,3)  # TODO: this should be drawn from baserates
+      s <- InitializeStatisticsArray(N,P);
+      ix <- 2:M
+    } 
     if (return.lrm) lrm <- array(0,c(M,N,N))
     else lrm <- NULL
     
-    s <- InitializeStatisticsArray(N,P);
-    for (m in 2:M) {
+    for (m in ix) {
       
       i <- A[m-1,2]
       j <- A[m-1,3]
@@ -51,8 +105,10 @@ simulate.brem <- function(fit,nsim=1,return.lrm = FALSE) {
       j <- cells[drawcell,2]
       time <- time + rexp(1,sum(cells[,3]))
       A <- rbind(A,c(time,i,j))
-      
-      if (return.lrm) lrm[m,,] <- lambda
+      if (m==2010) browser()
+      if (return.lrm) {
+        lrm[m,,] <- lambda
+      }
     }
     return(list(edgelist=A,lrm=lrm,s=s,N=N))
   })
