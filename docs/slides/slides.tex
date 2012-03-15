@@ -136,12 +136,12 @@ Idea:
   \item Assume each actor $i$ belongs to a latent class $z_i$.
   \item Model event dynamics between blocks.
   \end{itemize}
-
+\uncover<2->{
 \begin{align}
-\log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{z}) = \boldsymbol{\beta}_{z_i,z_j} \mathbf{s}(t,i,j|\mathcal{A}_t,\mathbf{z}).
+\log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{z}) = \boldsymbol{\beta}_{z_i,z_j} \mathbf{s}(t,i,j|\mathcal{A}_t).
 \end{align}
-
-\uncover<2>{Notation:
+}
+\uncover<3>{Notation:
 \begin{itemize}
 \item $\boldsymbol{\beta}_{k,l}$: parameter vector for relational events from an actor in block $k$ to an actor in block $l$
 \item $\mathcal{A}_t$: history prior to time $t$
@@ -149,7 +149,7 @@ Idea:
 \end{itemize}
 }
 
-\uncover<3>{
+\uncover<4>{
 \vspace{-3cm}
 Benefits:  
 \begin{itemize}
@@ -163,11 +163,11 @@ Benefits:
 \begin{frame}{Model specification for $\mathbf{s}(t,i,j)$}
 \textbf{Participation shifts} adjust for the next event
 \begin{itemize}
-\item AB-BA
-\item AB-BY
-\item AB-AY
-\item AB-XA
-\item AB-XB
+\item AB-BA: Reciprocity
+\item AB-BY:  Turn-taking 
+\item AB-AY: Turn-continuing
+\item AB-XA: Turn-usurping
+\item AB-XB: Turn-usurping
 \end{itemize}
 
 \textbf{Degree effects} count the number of previous events
@@ -176,7 +176,7 @@ Benefits:
 \item received by sender
 \item sent be receiver
 \item received by receiver
-\item previous occurrences of this dyad
+\item involving this dyad
 \end{itemize}
 
 \end{frame}
@@ -188,6 +188,7 @@ Benefits:
 \begin{frame}{Scalability}
 Only use covariates for $(i,j)$ that involve either $i$ or $j$.
 
+\uncover<2->{
 \begin{figure}
 \centering 
 %\subfigure[Dynamic network data]
@@ -233,11 +234,13 @@ Only use covariates for $(i,j)$ that involve either $i$ or $j$.
 \end{tikzpicture}
 %}
 \end{figure}
-
+}
+\uncover<3->{
 \begin{itemize}
 \item Restricts the class of effects one can use
 \item Complexity of likelihood computation reduced ($N^2 \rightarrow N$)
 \end{itemize}
+}
 \end{frame}
 
 \begin{frame}{Synthetic example: 2000 events among 10 actors}
@@ -265,8 +268,23 @@ Only use covariates for $(i,j)$ that involve either $i$ or $j$.
 %From 100 samples after 50 burnin using Gibbs sampling for $\mathbf{z}$ and slice sampling for $\boldsymbol{\beta}$).
 \end{frame}
 
+\begin{frame}{Posterior predictive checks}
+  \begin{itemize}
+  \item Investigate whether observed data is reasonable under model.
+  \item Interested in a particular statistic of a sequence $T(Y)$ \\
+    (e.g. total time, degree distribution, etc.)
+  \item Simulate $Y^{(i)} \sim \mbox{REM}(\beta^{(i)},\mathcal{A})$
+  \item Compare $T(Y)$ to distribution of $T(Y^{(i)})$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Posterior predictive checks}
+\includegraphics[scale=.4]{../../figs/synthetic/postpred-time}
+\includegraphics[scale=.4]{../../figs/synthetic/postpred-pshift}
+\end{frame}
+
 \begin{frame}{Prediction experiment: Synthetic data}
-Mean log likelihood on observed events and held out events.
+Mean log likelihood for observed events and held out events.
 \input{../../figs/synthetic/results.tex}
 \end{frame}
 
@@ -279,10 +297,14 @@ Mean log likelihood on observed events and held out events.
 \end{frame}
 
 \begin{frame}{Prediction experiment: Eckmann subset}
-Mean log likelihood on observed events and held out events.
+Mean log likelihood for observed events and held out events.
 \input{../../figs/eckmann-small/results.tex}
 \end{frame}
 
+\begin{frame}{Posterior predictive checks for $K=2$ model}
+\includegraphics[scale=.4]{../../figs/eckmann-small/postpred-time}
+\includegraphics[scale=.4]{../../figs/eckmann-small/postpred-pshift}
+\end{frame}
 
 % \begin{frame}{Application: Dyadic interactions on Twitter}
 %   \begin{itemize}
@@ -326,7 +348,7 @@ Main takeaways
 Future directions
   \begin{itemize}
   \item Consider a mixed-membership approach
-  \item Dirichlet process instead of fixed $K$
+  \item Intelligent way to share parameters as $K$ grows
   \end{itemize}
 }
 \end{frame}
