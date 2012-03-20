@@ -136,7 +136,7 @@ For a given dyad $(i,j)$ and time $t$ we may also have a vector of statistics $\
 
 We hope to learn about the dynamics between subsets of nodes while allowing for variety among disjoint subsets.   To facilitate this, we assume each node belongs to a cluster $z_i \sim \mbox{Categorical}(\alpha)$ where $\sum_k \alpha_k = 1$ and  model the intensity functions via a log linear model
 \begin{align}
-\log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{z}) = \boldsymbol{\beta}_{z_i,z_j} \mathbf{s}(t,i,j|\mathcal{A}_t,\mathbf{z}).
+\log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{z}) = \boldsymbol{\beta}_{z_i,z_j} \mathbf{s}(t,i,j|\mathcal{A}_t).
 \end{align}
 where for each pair of clusters $(z_i,z_j)$ we have a vector of parameters $\boldsymbol{\beta}_{z_i,z_j}$ that corresponds to the covariate vector $\mathbf{s}_{ij}(t|\cdot)$.   Thus, the model of dynamics for the dyad $(i,j)$ has the same parameters as for other dyads occurring between group $z_i$ and $z_j$. 
 
@@ -331,6 +331,26 @@ I do not believe it is possible to perform EM for a model where we have the more
 \end{align*}
 
 where $V$ is the set of $m$ where either $z_i \in \{k,l\}$ or $z_j \in \{k,l\}$.
+
+\section{DP version}
+\begin{align*}
+G_0 \sim& \mbox{N}_P(0,\sigma^2 I) & \eta \sim &
+\mbox{N}(0,\sigma^2)  & &\\
+\beta \sim& G & \gamma \sim& G & G \sim& \mbox{DP}(\alpha,G_0)
+\end{align*}
+\begin{align*}
+\log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{z}) =
+(\eta_{z_i,z_j} + \beta_{z_i} + \gamma_{z_j}) \mathbf{s}(t,i,j|\mathcal{A}_t).
+\end{align*}
+
+Sampling:
+\begin{itemize}
+\item For each block $k$:
+  \begin{itemize}
+  \item Sample $\beta_k$ via HMC?
+  \item Sample $\gamma_k$ via HMC?
+  \end{itemize}
+\end{itemize}
 
 \bibliographystyle{plain}
 \bibliography{refs}
