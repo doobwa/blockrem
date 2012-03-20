@@ -19,7 +19,7 @@ public:
     //precompute();
   }
 
-
+  // DEPRECATED
   RemDP(Rcpp::NumericVector times_, 
         Rcpp::IntegerVector sen_,  
         Rcpp::IntegerVector rec_, 
@@ -237,7 +237,7 @@ public:
   }
 
   // Return pointer
-  SEXP ptr() {
+  SEXP get_ptr() {
     return Rcpp::XPtr<RemDP>(this, false);
   }
 
@@ -254,23 +254,28 @@ public:
     }
     return lam;
   }
+
+  double LogLikelihoodByEvent(Rcpp::IntegerVector ix) {
+    return 2.0;
+  }
+
+  double LogLikelihoodByNode() {
+
+  }
+
   double LogLikelihood() {
-
+    return 1.0;
   }
-  double LogLikelihood(Rcpp::IntegerVector ix) {
 
-  }
-  double LogLikelihood(Rcpp::List edgelist) {
+  Rcpp::NumericVector LogIntensityArraySubset(Rcpp::IntegerVector ix) {
 
   }
 
-  Rcpp::List Gradient(int variables, Rcpp::IntegerVector ix) {
+  // Return gradient with respect to a subset of variables and events ix
+  Rcpp::List Gradient(int vx, Rcpp::IntegerVector ix) {
 
   }
 
-  double LogLikelihoodIndiv() {
-
-  }
 
   // Saves probability of each assignment
   void Gibbs() {
@@ -296,6 +301,10 @@ public:
     Rprintf("%i %i %i %i\n",k1,k2,k3,zmax);
 
     return (k1 == k2 && k1 == k3 && (zmax<k1));
+  }
+
+  Rcpp::DataFrame get_edgelist() {
+    return edgelist;
   }
 
   Rcpp::List get_params() {
@@ -358,6 +367,18 @@ RCPP_MODULE(remdp){
                  int,int,int>()
     .method( "precompute", &RemDP::precompute,
              "Precompute the data structure of REM statistics.")
+    .method( "get_s", &RemDP::get_s,
+             "Retrieve statistics vector prior to event m for dyad (i,j)")
+    .method( "get_tau", &RemDP::get_tau,
+             "Retrieve the last time that lambda_(i,j) changed")
+    .method( "get_v", &RemDP::get_v,
+             "vector where element k is the event index of the k'th changepoint for (i,j).  i.e. if w(i,j)[m] = k then v[i,j,k] = m")
+    .method( "get_w", &RemDP::get_w,
+             "vector where element m is the index of the previous changepoint for (i,j).  i.e. if w(i,j)[m] = k then v[i,j,k] = m")
+    .method( "get_ptr", &RemDP::get_ptr,
+             "Get pointer to this object.")
+    .method( "get_edgelist", &RemDP::get_edgelist,
+             "Get edgelist.")
     .method( "get_params", &RemDP::get_params,
              "Get a list of  eta, beta, gamma, and z.")
     .method( "set_params", &RemDP::set_params,
@@ -367,7 +388,13 @@ RCPP_MODULE(remdp){
     .method( "LogLambda", &RemDP::LogLambda,
              "Log(lambda_ij(t_m)) for a particular dyad at event m.")
     .method( "LogLikelihood", &RemDP::LogLikelihood,
-             "Log likelihood on ")
+             "Log likelihood on all observed events.")
+    .method( "LogLikelihoodByEvent", &RemDP::LogLikelihoodByEvent,
+             "Log likelihood for only a subset of events.")
+    .method( "LogLikelihoodByNode", &RemDP::LogLikelihoodByNode,
+             "Log likelihood for a single node.")
+    .method( "LogIntensityArraySubset", &RemDP::LogIntensityArraySubset,
+             "Log intensity array for only a subset of events.")
     ;
 
 }
