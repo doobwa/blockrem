@@ -1,8 +1,8 @@
 context("gradient")
 library(brem)
 set.seed(2)
-M <- 10
-N <- 6
+M <- 2000
+N <- 500
 times <- sort(runif(M,0,1))
 sen <- sample(1:N,M,replace=TRUE)
 rec <- sample(1:N,M,replace=TRUE)
@@ -104,7 +104,16 @@ RRemGradient <- function(lrm,times,sen,rec,N,M,P) {
 M <- length(times)
 s <- new(RemStat,times,sen-1,rec-1,N,M,P)
 s$precompute()
-RemGradientPcSubset(beta,z-1,s$ptr(),K,1:(M-1))
+system.time(RemGradientPcSubset(beta,z-1,s$ptr(),K,1:(M-1)))
+system.time(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
+system.time(RemGibbsPc(beta,z-1,s$ptr(),K))
+  
+  
+  M <- length(times)
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
+  s$precompute()
+  RemGradientPcSubset(beta,z-1,s$ptr(),K,1:(M-1))  
+  
 beta[12]=.5
 RemGradientPcSubset(beta,z-1,s$ptr(),K,1:(M-1))
 
