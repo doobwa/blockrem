@@ -5,7 +5,7 @@ M <- 100
 N <- 10
 P <- 13
 times <- sort(runif(M,0,1))
-sen <- sample(1:N,M,replace=TRUE)
+sen <- sample(1:N,M,replace=TRUE) 
 rec <- sample(1:N,M,replace=TRUE)
 ix <- which(sen==rec)
 times <- times[-ix]
@@ -13,17 +13,17 @@ sen <- sen[-ix]
 rec <- rec[-ix]
 M <- length(times)
 K <- 2
-beta <- matrix(0,K,P)
-gamma <- matrix(0,K,P)
+beta <- matrix(0,K,P-1)
+gamma <- matrix(0,K,P-1)
 eta <- matrix(0,K,K)
 
-colnames(beta) <- colnames(gamma) <- c("intercept","abba","abby","abxa","abxb","abay","abab","sod","rod","sid","rid","dc","cc")
+colnames(beta) <- colnames(gamma) <- c("intercept","abba","abby","abxa","abxb","abay","abab","sod","rod","sid","rid","dc","cc")[-1]
 z <- c(rep(1,N/2),rep(2,N/2))
 
-test_that("RemDP can be initialized and data structure precomputed",{
-  model <- new(RemDP,times,sen-1,rec-1,N,M,P)
-  model$precompute()
-})
+## test_that("RemDP can be initialized and data structure precomputed",{
+##   model <- new(RemDP,times,sen-1,rec-1,N,M,P)
+##   model$precompute()
+## })
 
 test_that("RemDP constructed via edgelist",{
   edgelist <- data.frame(time=times,s=sen-1,r=rec-1)
@@ -37,7 +37,7 @@ test_that("Statistics data structure is accessible",{
   model <- new(RemDP,edgelist,N)
   model$precompute()
 
-  s <- c(1,0,0,0,0,0,1,1,2,1,1,2)
+  s <- c(1,0,0,0,0,0,1,1,0,2,1,1,2)
   expect_that(model$get_s(3,2,5),equals(s))
 })
 
@@ -76,16 +76,31 @@ test_that("Dimension checking works",{
 
 # NB: m,i,j are 0-indexed
 RLogLambda <- function(model,m,i,j) { 
-  s <- model$get_s(m,i,j)
+  s <- model$get_s(m,i,j)[-1]
+  s[7:11] <- log((s[7:11]+1) / (s[12] + N*(N-1)))
   p <- model$get_params()
-  lam <- p$eta[p$z[i+1],p$z[j+1]]
-  
-}
+  lam <- p$eta[p$z[i+1]+1,p$z[j+1]+1]
+  lams <- (p$beta[p$z[i+1]+1,] + p$gamma[p$z[j+1]+1,]) * s
+  return(sum(lams) + lam)
+} 
 
 test_that("LogLambda is correct",{
-  i <- 1
-  j <- 2
-  
+  m <- 3
+  i <- 2
+  j <- 5
+  p <- list(eta=eta,beta=beta,gamma=gamma,z=z)
+  p$beta[1,10] <- 3
+  p$gamma[2,6] <- 3
+  p$eta[1,2] <- -1
+  p$eta[2,1] <- -1
+  p$z <- rep(0,N)
+  edgelist <- data.frame(time=times,s=sen-1,r=rec-1)
+  model <- new(RemDP,edgelist,N)
+  model$precompute()
+  model$set_params(p)
+  lam1 <- RLogLambda(model,m,i,j)
+  lam2 <- model$LogLambda(m,i,j)
+  expect_that(lam1,equals(lam2))
 })
 
 test_that("Likelihood is correct",{

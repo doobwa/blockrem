@@ -246,11 +246,13 @@ public:
     double lam = eta(z[i],z[j]); // intercept
     for (int p = 1; p < 7; p++) {
       lam += s[p] * (beta(z[i],p) + gamma(z[j],p));
+      Rprintf("%i %i %i %f %f\n",z[i],p,s[p],this->beta(z[i],p),lam);
     }
     double numEvents = double(s[12]);
     for (int p = 7; p < 12; p++) {
-      lam += log((s[p]+1)/(numEvents + N*(N-1))) *
+      lam += log((s[p]+1.0)/(numEvents + N*(N-1))) *
         (beta(z[i],p) + gamma(z[j],p));
+      Rprintf("%i %i %i %f %f %f\n",z[i],p,s[p],numEvents,this->beta(z[i],p),lam);
     }
     return lam;
   }
