@@ -104,6 +104,14 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
   }
 }
 
+test_that("Transform works as expected",{
+  s0 <- s1 <- s$get_all_s()[[5]][[3]][[7]]
+  s1[8:12] <- log((s0[8:12]+1) / (s0[13] + N*(N-1)))
+  s$transform()
+  s2 <- s$get_all_s()[[5]][[3]][[7]]
+  expect_that(s1,equals(s2))
+})
+
 test_that("LogLambdaPc uses degree effects properly",{
   s <- new(RemStat,times,sen-1,rec-1,N,M,P)
   s$precompute()
@@ -135,13 +143,15 @@ test_that("LogLambdaPc uses degree effects properly",{
   beta[12,1,1] <- .5
   
   sij <- s$get_s(3,i-1,j-1)
-  lam <- LogLambdaPc(i-1,j-1,zi-1,zj-1,sij,beta,N,K,P)
-  
   sij[8:12] <- log((sij[8:12]+1)/(sij[13] + N*(N-1)))
   sij <- sij[-13]
   b <- beta[-13,zi,zj]
   ans <- as.numeric(b %*% sij)
-  expect_that(lam,equals(ans))
+
+  s$transform()
+  sij <- s$get_s(3,i-1,j-1)
+  lam <- LogLambdaPc(i-1,j-1,zi-1,zj-1,sij,beta,N,K,P)
   
+  expect_that(lam,equals(ans))
 })
 

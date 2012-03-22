@@ -32,7 +32,6 @@ beta <- abind(beta,rev.along=3)
 s <- new(RemStat,times,sen-1,rec-1,N,M,P)
 s$precompute()
 
-
 test_that("Test that statistics the same when updating vs. grabing from precomputed",{
   failed <- FALSE
   r <- InitializeStatisticsArray(N,P)
@@ -54,7 +53,7 @@ test_that("Test that statistics the same when updating vs. grabing from precompu
 })
 
 test_that("Test LogLambda and logLambdaPc the same given same statistics, and intensity arrays match",{
-  
+
   lam1 <- array(0,c(M,N,N))
   lam2 <- array(0,c(M,N,N))
   for (m in 1:M) {
@@ -69,7 +68,7 @@ test_that("Test LogLambda and logLambdaPc the same given same statistics, and in
     }
   }
   expect_that(lam1, equals(lam2))
-  
+   
   
   lrm1 <- LogIntensityArrayPc(beta,z-1,s$ptr(),K)
   expect_that(lam1, equals(lrm1))

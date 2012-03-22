@@ -1,5 +1,5 @@
 context("gradient")
-library(brem)
+
 set.seed(1)
 M <- 100
 N <- 10
@@ -56,63 +56,67 @@ gU <- function(betak1k2) {
   - brem.lpost.block.grad(A,N,K,z,s,beta,k1,k2,px)
 }
 
+## load("data/twitter-small.rdata")
+## M <- nrow(train)
+## s <- new(RemStat,train[,1],train[,2]-1,train[,3]-1,N,nrow(train),P)
+## s$precompute()
+## z <- sample(1:2,N,replace=TRUE)#rep(1,N)
+## ix <- 1:(M-1)
+## system.time(sum(RemLogLikelihoodPcSubset(beta,z-1,s$ptr(),K,ix)))
+## system.time(RemGradientPcSubset(beta,z-1,s$ptr(),K,1:(M-1)))
 
-s <- new(RemStat,times,sen-1,rec-1,N,M,P)
-s$precompute()
-RemGradientPcSubset(beta,z-1,s$ptr(),K,1:(M-1))
+## k1 <- 1
+## k2 <- 1
+## px <- rep(1,P)
+## px[c(7,13)] <- 0
+## px[2:13] <- 0
+## A <- cbind(times,sen,rec)
+## U(beta[which(px==1),1,1])
+## gU(beta[which(px==1),1,1])
+## source("pkg/R/hmc.r")
+## L <- 10
+## eps <- .0001
+## niter <- 100
+## qs <- matrix(0,niter,sum(px))
+## #qs[1,] <- beta[which(px==1),k1,k2]
+## for (i in 2:niter) {
+##   qs[i,] <- HMC(U, gU, eps, L, qs[i-1,])
+##   print(qs[i,])
+## }
 
-k1 <- 1
-k2 <- 1
-px <- rep(1,P)
-px[c(7,13)] <- 0
-px[2:13] <- 0
-A <- cbind(times,sen,rec)
-U(beta[which(px==1),1,1])
-gU(beta[which(px==1),1,1])
-source("pkg/R/hmc.r")
-L <- 10
-eps <- .0001
-niter <- 100
-qs <- matrix(0,niter,sum(px))
-#qs[1,] <- beta[which(px==1),k1,k2]
-for (i in 2:niter) {
-  qs[i,] <- HMC(U, gU, eps, L, qs[i-1,])
-  print(qs[i,])
-}
+## xs <- seq(-3,3,by=.1)
+## plot(xs,sapply(xs,function(x) U(x)),type="l")
 
-xs <- seq(-3,3,by=.1)
-plot(xs,sapply(xs,function(x) U(x)),type="l")
+## library(brem)
+## opts=list(dataset="synthetic",numclusters=2,model.type="full",gibbs=TRUE,numiterations=100,slice=TRUE,initialize=FALSE,fixz=FALSE,skip.intercept=FALSE)
+## priors <- list(beta=list(mu=0,sigma=1))
+## load("results/synthetic/full.2.rdata")
+## load(paste("data/",opts$dataset,".rdata",sep=""))
+## # Check llk functions
+## M <- nrow(A)
+## s <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
+## s$precompute()
+## U(beta[which(px==1),1,1])
+## gU(beta[which(px==1),1,1])
 
-library(brem)
-opts=list(dataset="synthetic",numclusters=2,model.type="full",gibbs=TRUE,numiterations=100,slice=TRUE,initialize=FALSE,fixz=FALSE,skip.intercept=FALSE)
-priors <- list(beta=list(mu=0,sigma=1))
-load("results/synthetic/full.2.rdata")
-load(paste("data/",opts$dataset,".rdata",sep=""))
-# Check llk functions
-M <- nrow(A)
-s <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
-s$precompute()
-U(beta[which(px==1),1,1])
-gU(beta[which(px==1),1,1])
+## xs <- seq(-3,5,by=.2)
+## px <- rep(0,P)
+## px[2] <- 1
+## k1 <- 1
+## k2 <- 1
+## par(mfrow=c(2,1))
+## plot(xs,sapply(xs,function(x) U(x)),type="l")
+## plot(xs,sapply(xs,function(x) gU(x)),type="l")
 
-xs <- seq(-3,5,by=.2)
-px <- rep(0,P)
-px[2] <- 1
-k1 <- 1
-k2 <- 1
-par(mfrow=c(2,1))
-plot(xs,sapply(xs,function(x) U(x)),type="l")
-plot(xs,sapply(xs,function(x) gU(x)),type="l")
+## source("pkg/R/hmc.r")
+## L <- 10
+## eps <- .001
+## niter <- 100
+## qs <- matrix(0,niter,sum(px))
+## #qs[1,] <- beta[which(px==1),k1,k2]
+## for (i in 2:niter) {
+##   qs[i,] <- HMC(U, gU, eps, L, qs[i-1,])
+##   print(qs[i,])
+## }
 
-source("pkg/R/hmc.r")
-L <- 10
-eps <- .001
-niter <- 100
-qs <- matrix(0,niter,sum(px))
-#qs[1,] <- beta[which(px==1),k1,k2]
-for (i in 2:niter) {
-  qs[i,] <- HMC(U, gU, eps, L, qs[i-1,])
-  print(qs[i,])
-}
-
-brem.slice(A,N,2,P,z,s,beta,px)
+## brem.slice(A,N,2,P,z,s,beta,px)
