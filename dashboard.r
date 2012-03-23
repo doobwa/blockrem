@@ -33,6 +33,7 @@ results.dir <- paste("results/",opts$dataset,sep="")
 load(paste("data/",opts$dataset,".rdata",sep=""))
 fs <- list.files(results.dir,full.names=TRUE)
 fs <- fs[-grep("ranks",fs)]
+fs <- fs[-grep("final",fs)]
 fs <- fs[-grep("llks",fs)]
 fs <- fs[-grep("counts",fs)]
 fnames <- unlist(strsplit(fs,".rdata"))
@@ -228,15 +229,20 @@ if (opts$predictions) {
   }
   
   # Make results table
-  r <- cbind(ddply(llks.train,.(L1),summarise,llk=mean(value)),
-             ddply(llks.test,.(L1),summarise,llk=mean(value)),
-             ddply(mllks.train,.(L1),summarise,llk=mean(value)),
-             ddply(mllks.test,.(L1),summarise,llk=mean(value)))
-  r <- r[,c(1,2,4,6,8)]  # remove extraneous columns
-  colnames(r) <- c("method","brem.train","brem.test","multin.train","multin.test")
-  for (i in 2:5) r[,i] <- round(r[,i],2)
-  r
-  print(xtable(r),include.rownames=FALSE,file=paste("figs/",opts$dataset,"/results.tex",sep=""))
+  df <- rbind(
+        cbind(likelihood="rem",type="train",
+              ddply(llks.train,.(L1),summarise,value=mean(value))),
+        cbind(likelihood="rem",type="test",
+              ddply(llks.test,.(L1),summarise,value=mean(value))),
+        cbind(likelihood="mult",type="train",
+              ddply(mllks.train,.(L1),summarise,value=mean(value))),
+        cbind(likelihood="mult",type="test",
+              ddply(mllks.test,.(L1),summarise,value=mean(value)))
+              )
+  df$L1 <- factor(df$L1,c("uniform","marg","online","full.1","full.2","full.3","dp","truth"))
+  df$dataset <- opts$dataset
+  dir.create(paste("results/",opts$dataset,"/final",sep=""))
+  save(df,file=paste("results/",opts$dataset,"/final/results.rdata",sep=""))
 }
 
 cat("Creating dashboard.\n")
