@@ -1,10 +1,10 @@
 context("samplers")
-## library(brem)
-## library(multicore)
-## library(testthat)
-## source("pkg/R/brem.r")
-## source("pkg/R/samplers.r")
-## source("pkg/R/hmc.r")
+library(brem)
+library(multicore)
+library(testthat)
+source("pkg/R/brem.r")
+source("pkg/R/samplers.r")
+source("pkg/R/hmc.r")
 
 set.seed(2)
 M <- 1000
@@ -28,6 +28,7 @@ P <- length(beta)
 beta <- abind(beta,rev.along=3)
 set.seed(1)
 sim <- generate.brem(M,N,beta,z)
+
 A <- sim$edgelist
 px <- rep(1,13)
 px[13] <- 0
@@ -37,11 +38,21 @@ s$transform()
 k1 <- k2 <- 1
 priors <- list(beta=list(mu=0,sigma=1))
 llk <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
-lp <- block(A,s,beta,z,k1,k2,px)
+system.time(lp <- block(A,s,beta,z,k1,k2,px))
+system.time(lg <- block.grad(A,s,beta,z,k1,k2,px))
 
 test_that("Log posterior for single block works",{
   expect_that(lposterior(beta[1:12,k1,k2]), equals(lp))
 })
+
+test_that("Log gradient for single block works",{
+  expect_that(lgrad(beta[1:12,k1,k2]), equals(lg))
+  expect_that(attr(lposterior(beta[1:12,k1,k2],grad=TRUE),"lgrad"), equals(lg))
+})
+
+system.time(q1 <- mh(current,lposterior,sd=.001))
+system.time(q2 <- slice(current,lposterior,m=20))
+system.time(q3 <- hmc(current,lposterior,0.001,5))
 
 test_that("Samplers return new values",{
   px <- c(rep(1,6),rep(0,7))
@@ -49,26 +60,81 @@ test_that("Samplers return new values",{
   set.seed(1)
   q1 <- mh(current,lposterior,sd=.001)
   q2 <- slice(current,lposterior,m=20)
-  q3 <- hmc(current,lposterior,lgrad,eps,L)
+  q3 <- hmc(current,lposterior,0.001,20)
+
+  f <- function(q) {
+    lpq <- attr(q,"log.density")
+    expect_that(length(q), equals(sum(px)))
+    expect_that(abs(lpq - lp) < 20, is_true())
+    expect_that(lpq > lp, is_true())
+  }
+  f(q1)
+  f(q2)
+  f(q3)
 })
 
+test_that("Samplers converge",{
 
-## M <- length(times)
-## s <- new(RemStat,times,sen-1,rec-1,N,M,P)
-## s$precompute()
-## system.time(RemGradientPcSubset(beta,z-1,s$ptr(),K,1:(M-1)))
-## system.time(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
-## system.time(RemGibbsPc(beta,z-1,s$ptr(),K))
+  # TODO: Get HMC working
+  # TODO: try on multiple block example
   
-  
-##   M <- length(times)
-##   s <- new(RemStat,times,sen-1,rec-1,N,M,P)
-##   s$precompute()
-##   RemGradientPcSubset(beta,z-1,s$ptr(),K,1:(M-1))  
-  
-## beta[12]=.5
-## RemGradientPcSubset(beta,z-1,s$ptr(),K,1:(M-1))
+  b <- array(0,c(P,K,K))
+  fit <- mcmc(A,N,K,px,mh,beta=b,z=z,niter=200,sd=.025)
+  plot(fit$lp)
+  fit <- mcmc(A,N,K,px,slice,beta=b,z=z,niter=10)
+  fit <- mcmc(A,N,K,px,hmc,beta=b,z=z,niter=100,eps=.0001,L=5)
 
+  px <- c(rep(1,12),0)
+  b <- array(0,c(P,K,K))
+  b <- beta
+  fit <- mcmc(A,N,K,px,mh,beta=b,z=z,niter=200,sd=.025)
+  fit <- mcmc(A,N,K,px,slice,beta=b,z=z,niter=10)
+  fit <- mcmc(A,N,K,px,hmc,beta=b,z=z,niter=100,eps=.0001,L=5)
+
+})
+
+set.seed(2)
+M <- 1000
+N <- 10
+K <- 2
+beta <- list("intercept"=matrix(-1,K,K),
+             "abba" = matrix(c(1,0,0,2),K,K),
+             "abby"=matrix(0,K,K),
+             "abxa"=matrix(0,K,K),
+             "abxb"=matrix(0,K,K),
+             "abay"=matrix(1,K,K),
+             "abab"=matrix(0,K,K),
+             "sod"=matrix(0,K,K),
+             "rod"=matrix(0,K,K),
+             "sid"=matrix(0,K,K),
+             "rid"=matrix(c(.01,0,.01,0),K,K),
+             "dc"=matrix(c(0,.03,0,0),K,K),
+             "cc"=matrix(0,K,K))
+z <- c(rep(1,N/2),rep(2,N/2))
+P <- length(beta)
+beta <- abind(beta,rev.along=3)
+set.seed(1)
+sim <- generate.brem(M,N,beta,z)
+
+A <- sim$edgelist
+px <- rep(1,13)
+px[13] <- 0
+s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
+s$precompute()
+s$transform()
+k1 <- k2 <- 1
+priors <- list(beta=list(mu=0,sigma=1))
+llk <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
+system.time(lp <- block(A,s,beta,z,k1,k2,px))
+system.time(lg <- block.grad(A,s,beta,z,k1,k2,px))
+
+lp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
+b <- array(0,c(P,K,K))
+lp <- brem.lpost.fast(A,N,K,z,s,b,priors)
+fit <- mcmc(A,N,K,px,mh,beta=b,z=z,niter=200,sd=.025)
+plot(fit$lp)
+fit <- mcmc(A,N,K,px,slice,beta=b,z=z,niter=10)
+fit <- mcmc(A,N,K,px,hmc,beta=b,z=z,niter=100,eps=.0001,L=5)
 
 
 ## k1 <- 1

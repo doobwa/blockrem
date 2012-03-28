@@ -35,8 +35,12 @@ slice <- function(current,lposterior,olp=NULL,m=20) {
   return(current)
 }
 
-hmc <- function (current_q, U, grad_U, epsilon, L) 
+# Changed U and grad_U to not be negative llk, etc.
+# Added log.density attributes
+hmc <- function (current_q, lposterior, epsilon, L) 
 {
+  U      <- function(x) -lposterior(x)
+  grad_U <- function(x) -lposterior(x,lp=FALSE)
     q = current_q
     p = rnorm(length(q), 0, 1)
     current_p = p
@@ -52,8 +56,8 @@ hmc <- function (current_q, U, grad_U, epsilon, L)
     current_K = sum(current_p^2)/2
     proposed_U = U(q)
     proposed_K = sum(p^2)/2
-    attr(current_q,"log.density") <- current_U
-    attr(q,"log.density") <- proposed_U
+    attr(current_q,"log.density") <- -current_U
+    attr(q,"log.density") <- -proposed_U
     if (runif(1) < exp(current_U - proposed_U + current_K - proposed_K)) {
         return(q)
     }
@@ -63,12 +67,18 @@ hmc <- function (current_q, U, grad_U, epsilon, L)
 }
 
 # Requires A, s, priors, z, px, k1, and k2 to be in environment
-lposterior <- function(betak1k2) { 
+lposterior <- function(betak1k2,lp=TRUE,lgrad=FALSE) { 
   beta[which(px==1),k1,k2] <- betak1k2
-  block(A,s,beta,z,k1,k2,px,priors)
+  if (lp) {
+    res <- block(A,s,beta,z,k1,k2,px,priors)
+    if (lgrad) attr(res,"lgrad") <- block.grad(A,s,beta,z,k1,k2,px)
+  } else {
+    res <- block.grad(A,s,beta,z,k1,k2,px)
+  }
+  return(res)
 }
 
-mcmc <- function(A,N,K,px,method,niter=100,beta=NULL,z=NULL,priors=list(beta=list(mu=0,sigma=1))) {
+mcmc <- function(A,N,K,px,method,niter=100,beta=NULL,z=NULL,priors=list(beta=list(mu=0,sigma=1)),verbose=TRUE,...) {
   
   if (sum(px) == 0)
     stop("No parameters selected.")
@@ -77,16 +87,24 @@ mcmc <- function(A,N,K,px,method,niter=100,beta=NULL,z=NULL,priors=list(beta=lis
   s <- new(brem:::RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
   s$precompute()
   s$transform()
-
+  
+  lp <- rep(0,niter)
+  param <- array(0,c(niter,dim(beta)))
   for (iter in 1:niter) {
     ## loop through blocks
     for (k1 in 1:K) {
       for (k2 in 1:K) {
         ## sample new parameter values for this block
-        beta[which(px==1),k1,k2] <- method(beta[which(px==1),k1,k2],lposterior)
+        beta[which(px==1),k1,k2] <- method(beta[which(px==1),k1,k2],lposterior,...)
       }
     }
+    lp[iter] <- brem.lpost.fast(A,N,K,z,s,beta,priors)
+    param[iter,,,] <- beta
+    if (verbose) {
+      cat(lp[iter],"\n")
+    }
   }
+  return(list(param=param,lp=lp))
 }
 
 block <- function(A,s,beta,z,k1,k2,px,priors=list(beta=list(mu=0,sigma=1))) { 
@@ -104,21 +122,18 @@ block <- function(A,s,beta,z,k1,k2,px,priors=list(beta=list(mu=0,sigma=1))) {
   return(llk)
 }
 
-brem.lpost.block.grad <- function(A,N,K,z,s,beta,k1,k2,px,priors=list(beta=list(mu=0,sigma=1))) {   
+block.grad <- function(A,s,beta,z,k1,k2,px,priors=list(beta=list(mu=0,sigma=1))) {   
   M <- nrow(A)
   zs <- z[A[,2]]
   zr <- z[A[,3]]
   ix <- which(zs==k1 | zr==k2) - 1  # 0 based indexing for c++
   if (length(ix) == 0) return(0)
-  - 2 * (beta[which(px==1),k1,k2] - priors$beta$mu)/priors$beta$sigma + RemGradientPcSubset(beta,z-1,s$ptr(),K,ix)[which(px==1)]
-}
-U <- function(betak1k2) {
-  beta[which(px==1),k1,k2] <- betak1k2
-  - brem.lpost.block(A,N,K,z,s,beta,k1,k2,px)
-}
-gU <- function(betak1k2) {
-  beta[which(px==1),k1,k2] <- betak1k2
-  - brem.lpost.block.grad(A,N,K,z,s,beta,k1,k2,px)
+  lg <- RemGradientPcSubset(beta,z-1,s$ptr(),K,ix,which(px==1)-1)
+  lg <- lg[which(px==1)]
+  if (!is.null(priors)) {
+    lg <- lg - 2 * (beta[which(px==1),k1,k2] - priors$beta$mu)/priors$beta$sigma
+  }
+  return(lg)
 }
 ## RRemGradient <- function(lrm,times,sen,rec,N,M,P) {
   
