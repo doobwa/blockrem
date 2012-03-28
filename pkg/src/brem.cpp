@@ -545,7 +545,7 @@ Rcpp::NumericVector RemLogLikelihoodPc(Rcpp::NumericVector beta, Rcpp::IntegerVe
 // Gradient for beta_.,k,l
 // mx: should index the events where either z_i or z_j is k or l.
 
-Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector mx) {
+Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector mx, Rcpp::IntegerVector px) {
   RemStat *s = XPtr<RemStat>(statptr_);
   int N = s->N;
   int P = s->P;
@@ -566,12 +566,10 @@ Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerV
     zi = z[i];
     zj = z[j];
 
-    for (int p = 0; p < 7; p++) {
-      grad[p] += s->get_s(m,i,j)[p];
+    for (int p = 0; p < px.size(); p++) {
+      grad[px[p]] += s->get_s(m,i,j)[px[p]];
     }
-    for (int p = 7; p < 12; p++) {
-      grad[p] -= log((s->get_s(m,i,j)[p] + 1.0) / (s->get_s(m,i,j)[12] + N*(N-1)));
-    }
+
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
     double a,b,c,d;
     for (int r = 0; r < N; r++) {
@@ -587,17 +585,11 @@ Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerV
         lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
         d  = (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
       }
-      for (int p = 0; p < 7; p++) {
-        grad[p] -= a * s->get_s(m,i,r)[p];
-        grad[p] -= b * s->get_s(m,r,i)[p];
-        grad[p] -= c * s->get_s(m,j,r)[p];
-        grad[p] -= d * s->get_s(m,r,j)[p];
-      }
-      for (int p = 7; p < 12; p++) {
-        grad[p] -= a * log((s->get_s(m,i,r)[p] + 1.0) / (s->get_s(m,i,r)[12] + N*(N-1)));
-        grad[p] -= b * log((s->get_s(m,r,i)[p] + 1.0) / (s->get_s(m,r,i)[12] + N*(N-1)));
-        grad[p] -= c * log((s->get_s(m,j,r)[p] + 1.0) / (s->get_s(m,j,r)[12] + N*(N-1)));
-        grad[p] -= d * log((s->get_s(m,r,j)[p] + 1.0) / (s->get_s(m,r,j)[12] + N*(N-1)));
+      for (int p = 0; p < px.size(); p++) {
+        grad[px[p]] -= a * s->get_s(m,i,r)[px[p]];
+        grad[px[p]] -= b * s->get_s(m,r,i)[px[p]];
+        grad[px[p]] -= c * s->get_s(m,j,r)[px[p]];
+        grad[px[p]] -= d * s->get_s(m,r,j)[px[p]];
       }
     }
 
@@ -605,14 +597,9 @@ Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerV
     a    = (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
     lam  = LogLambdaPc(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
     b    = (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
-    for (int p = 0; p < 7; p++) {
-      grad[p] -= a * s->get_s(m,i,j)[p];
-      grad[p] -= b * s->get_s(m,j,i)[p];
-    }
-    for (int p = 7; p < 12; p++) {
-      //      Rprintf("%f %f %i\n",smij,smji,s->get_s(m,i,j)[p]);
-      grad[p] -= a * log((s->get_s(m,i,j)[p] + 1.0) / (s->get_s(m,i,j)[12] + N*(N-1)));
-      grad[p] -= b * log((s->get_s(m,j,i)[p] + 1.0) / (s->get_s(m,j,i)[12] + N*(N-1)));
+    for (int p = 0; p < px.size(); p++) {
+      grad[px[p]] -= a * s->get_s(m,i,j)[px[p]];
+      grad[px[p]] -= b * s->get_s(m,j,i)[px[p]];
     }
   }
 
