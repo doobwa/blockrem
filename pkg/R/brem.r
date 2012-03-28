@@ -1,43 +1,122 @@
-#' Simulate data from the block relational event model
+#' Simulate data from the block relational event model.
 #' @M number of events
 #' @N number of actors
 #' @z latent class assignments
 #' @beta P x K x K array of parameters
-simulate.brem <- function(M,N,z,beta) {
-  
-  # start with a event from 1 to 2
-  time <- 0
-  A <- matrix(c(time,1,2),1,3)
-  lambda <- beta[1,z,z]
-  lrm <- array(0,c(M,N,N))
+#' 
+generate.brem <- function(M,N,beta,z) {
+  edgelist <- matrix(c(0,1,2),nr=1)
+  simulate.brem.cond(beta,z,edgelist,M,N)
+}
+
+simulate.brem <- function(fit,train,M=100,nsim=1) {
+  mclapply(1:nsim,function(i) {
+    beta <- fit$param[fit$niter - i + 1,,,]
+    z <- fit$zs[[fit$niter - i + 1]]
+    simulate.brem.cond(beta,z,train,M,fit$N)
+  })
+}
+simulate.brem.cond <- function(beta,z,train,M=100,N) {
+  K <- dim(beta)[2]
+  P <- dim(beta)[1]
+  edgelist <- train[nrow(train),,drop=FALSE]
+  time <- edgelist[1]
   s <- InitializeStatisticsArray(N,P);
-  z <- z-1
-  for (m in 2:M) {
-    
-    i <- A[m-1,2]
-    j <- A[m-1,3]
-    
+  for (m in 1:nrow(train)) {
+    i <- train[m,2]
+    j <- train[m,3]
     s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
-    # Compute changes to lambda
+  }
+  lambda <- matrix(0,N,N)
+  for (i in 1:N) {
+    for (j in 1:N) {
+      lambda[i,j] <- LogLambda(i-1,j-1,z[i]-1,z[j]-1,s,beta,N,K,P)
+    }
+  }
+  for (m in 1:M) {
     for (r in 1:N) {
-      lambda[r,j] <- LogLambda(r-1,j-1,z[r],z[j],s,beta,N,K,P)
-      lambda[j,r] <- LogLambda(j-1,r-1,z[j],z[r],s,beta,N,K,P)
-      lambda[i,r] <- LogLambda(i-1,r-1,z[i],z[r],s,beta,N,K,P)
-      lambda[r,i] <- LogLambda(r-1,i-1,z[r],z[i],s,beta,N,K,P)
+      lambda[r,j] <- LogLambda(r-1,j-1,z[r]-1,z[j]-1,s,beta,N,K,P)
+      lambda[j,r] <- LogLambda(j-1,r-1,z[j]-1,z[r]-1,s,beta,N,K,P)
+      lambda[i,r] <- LogLambda(i-1,r-1,z[i]-1,z[r]-1,s,beta,N,K,P)
+      lambda[r,i] <- LogLambda(r-1,i-1,z[r]-1,z[i]-1,s,beta,N,K,P)
     }
     diag(lambda) <- -Inf
-    
-    # Draw the next event
     cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
     drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
     i <- cells[drawcell,1]
     j <- cells[drawcell,2]
     time <- time + rexp(1,sum(cells[,3]))
-    A <- rbind(A,c(time,i,j))
-    
-    lrm[m,,] <- lambda
+    edgelist <- rbind(edgelist,c(time,i,j))
+
+    s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
   }
-  return(list(A=A,lrm=lrm,s=s))
+  dimnames(edgelist) <- NULL
+  edgelist <- edgelist[-1,]
+  return(list(edgelist=edgelist,s=s,N=N))
+}
+# TODO: reconcile with above
+simulate.brem2 <- function(fit,nsim=1,return.lrm = FALSE, conditioned = NULL, M = NULL) {
+  z <- fit$z
+  beta <- fit$beta
+  if (is.null(M)) M <- fit$M
+  N <- fit$N
+  K <- fit$K
+  P <- fit$P
+  sims <- mclapply(1:nsim,function(sim) { 
+    cat(".")
+    beta <- fit$param[fit$niter - sim,,,]
+    beta <- array(beta,c(P,K,K))
+    # start with a event from 1 to 2
+    time <- 0
+    lambda <- beta[1,z,z]
+    if (!is.null(conditioned)) {
+      A <- conditioned
+      s <- InitializeStatisticsArray(N,P);
+      for (m in 2:nrow(A)) {
+        i <- A[m-1,2]
+        j <- A[m-1,3]
+        s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
+        ix <- nrow(A):(nrow(A) + M)
+      }
+      time <- A[nrow(A),1]
+    } else {
+      A <- matrix(c(time,1,2),1,3)  # TODO: this should be drawn from baserates
+      s <- InitializeStatisticsArray(N,P);
+      ix <- 2:M
+    } 
+    if (return.lrm) lrm <- array(0,c(M,N,N))
+    else lrm <- NULL
+    
+    for (m in ix) {
+      
+      i <- A[m-1,2]
+      j <- A[m-1,3]
+      
+      s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
+      # Compute changes to lambda
+      for (r in 1:N) {
+        lambda[r,j] <- LogLambda(r-1,j-1,z[r]-1,z[j]-1,s,beta,N,K,P)
+        lambda[j,r] <- LogLambda(j-1,r-1,z[j]-1,z[r]-1,s,beta,N,K,P)
+        lambda[i,r] <- LogLambda(i-1,r-1,z[i]-1,z[r]-1,s,beta,N,K,P)
+        lambda[r,i] <- LogLambda(r-1,i-1,z[r]-1,z[i]-1,s,beta,N,K,P)
+      }
+      diag(lambda) <- -Inf
+      
+      # Draw the next event
+      cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
+      drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
+      i <- cells[drawcell,1]
+      j <- cells[drawcell,2]
+      time <- time + rexp(1,sum(cells[,3]))
+      A <- rbind(A,c(time,i,j))
+      if (m==2010) browser()
+      if (return.lrm) {
+        lrm[m,,] <- lambda
+      }
+    }
+    return(list(edgelist=A,lrm=lrm,s=s,N=N))
+  })
+  return(sims)
 }
 
 brem.lrm <- function(A,N,z,beta) {
@@ -180,6 +259,7 @@ brem.mcmc <- function(A,N,K,niter=5,model.type="full",beta=NULL,z=NULL,px=NULL,p
         if (length(which(z==k))==0) {
           current[,k,] <- current[,,k] <- 0
           current[,k,] <- current[,,k] <- rnorm(P*K,priors$beta$mu,priors$beta$sigma)
+          current[which(px==0),,] <- 0
           cat("sampling empty cluster params\n",current[,k,k],"\n")
         }
       }
@@ -200,12 +280,13 @@ brem.mcmc <- function(A,N,K,niter=5,model.type="full",beta=NULL,z=NULL,px=NULL,p
     if (K>1) cat(current[,2,2],"\n")
     cat("time:",deltas[iter],"\n")
     
-    res <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter,deltas=deltas,priors=priors)
+    fit <- list(z=z,beta=current,llks=llks,param=param,zs=zs,niter=niter,deltas=deltas,priors=priors,N=N,M=M,K=K,P=P)
+    class(fit) <- "brem"
     if (!is.null(outfile)) {
-      save(res,file=outfile)
+      save(fit,file=outfile)
     }
   }
-  return(res)
+  return(fit)
 }
 
 
@@ -311,7 +392,6 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
   
   kx1 <- 1:K
   kx2 <- 1:K
-  if (skip.intercept) beta[1,1,1] <- 0
   if (model.type=="baserates") {
     px <- 1
     beta[-1,,] <- 0
@@ -328,13 +408,13 @@ brem.slice <- function(A,N,K,P,z,s,beta,px,model.type="baserates",priors,olp=NUL
       #olp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
       for (p in which(px==1)) {
         cat(".")
-        if (!(k1==1 & k2==1 & p==1) | !skip.intercept) {  # identifiability
+        #if (!(k1==1 & k2==1 & p==1) | !skip.intercept) {  # identifiability
           newval <- uni.slice.alt(beta[p,k1,k2],slicellk,gx0=olp,m=m)
           beta[p,k1,k2] <- newval
           if (model.type=="shared") beta <- use.first.blocks(beta)
           olp <- attr(newval,"log.density")
           olps <- c(olps,olp)
-        }
+        #}
       }
     }
   }
