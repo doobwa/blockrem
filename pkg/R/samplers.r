@@ -67,8 +67,7 @@ hmc <- function (current_q, lposterior, epsilon, L)
 }
 
 # Requires A, s, priors, z, px, k1, and k2 to be in environment
-lposterior <- function(betak1k2,lp=TRUE,lgrad=FALSE) { 
-  beta[which(px==1),k1,k2] <- betak1k2
+lposterior <- function(A,s,beta,z,px,k1,k2,priors=list(beta=list(mu=0,sigma=1)),lp=TRUE,lgrad=FALSE) { 
   if (lp) {
     res <- block(A,s,beta,z,k1,k2,px,priors)
     if (lgrad) attr(res,"lgrad") <- block.grad(A,s,beta,z,k1,k2,px)
@@ -76,6 +75,49 @@ lposterior <- function(betak1k2,lp=TRUE,lgrad=FALSE) {
     res <- block.grad(A,s,beta,z,k1,k2,px)
   }
   return(res)
+}
+
+gibbs.collapsed <- function(ix,beta,z,s,nextra=0,
+                            priors=list(alpha=1,beta=list(mu=0,sigma=1))) {
+
+  # count number of unused clusters
+  P <- dim(beta)[1]
+  K <- dim(beta)[2]
+  counts <- table(factor(z,1:K))
+
+  # decide which clusters will be resampled (at least empty clusters, at most nextra)
+  tosample <- which(counts==0)
+  nextra <- nextra - length(tosample)
+  if (nextra > 0) {
+    tosample <- c(tosample, (K+1):(K+nextra))
+  }
+  if (length(tosample) == 0) stop("No new clusters proposed")
+  K <- K + nextra
+  counts <- table(factor(z,1:K))
+  
+  # augment beta with draws from prior
+  b <- array(0,c(P,K,K))
+  b[,-tosample,-tosample] <- beta
+  for (k in tosample) {
+    for (l in 1:K) {
+      b[which(px==1),k,l] <- rnorm(sum(px),priors$beta$mu,priors$beta$sigma)
+      b[which(px==1),l,k] <- rnorm(sum(px),priors$beta$mu,priors$beta$sigma)
+    }
+  }
+  
+  ys <- matrix(0,N,K)
+  for (a in 1:N) {
+    counts[z[a]] <- counts[z[a]] - 1
+    for (k in 1:K) {
+      z[a] <- k
+      ys[a,k] <- RemLogLikelihoodActorPc(a-1,b,z-1,s,K) + log(counts[k] + priors$alpha)
+    }
+    z[a] <- rcatlog(ys[a,])
+    counts[z[a]] <- counts[z[a]] + 1
+  }
+
+  newmembers <- sum(table(factor(z,1:K))[tosample])
+  list(beta=b,z=z,probs=ys,newmembers=newmembers)
 }
 
 mcmc <- function(A,N,K,px,method,niter=100,beta=NULL,z=NULL,priors=list(beta=list(mu=0,sigma=1)),verbose=TRUE,...) {
@@ -95,7 +137,8 @@ mcmc <- function(A,N,K,px,method,niter=100,beta=NULL,z=NULL,priors=list(beta=lis
     for (k1 in 1:K) {
       for (k2 in 1:K) {
         ## sample new parameter values for this block
-        beta[which(px==1),k1,k2] <- method(beta[which(px==1),k1,k2],lposterior,...)
+        b <- beta[which(px==1),k1,k2]
+        beta[which(px==1),k1,k2] <- method(b,lposterior,...)
       }
     }
     lp[iter] <- brem.lpost.fast(A,N,K,z,s,beta,priors)

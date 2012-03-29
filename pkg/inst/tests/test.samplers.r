@@ -42,25 +42,27 @@ system.time(lp <- block(A,s,beta,z,k1,k2,px))
 system.time(lg <- block.grad(A,s,beta,z,k1,k2,px))
 
 test_that("Log posterior for single block works",{
-  expect_that(lposterior(beta[1:12,k1,k2]), equals(lp))
+  expect_that(lposterior(A,s,beta,z,px,k1,k2), equals(lp))
 })
 
 test_that("Log gradient for single block works",{
-  expect_that(lgrad(beta[1:12,k1,k2]), equals(lg))
-  expect_that(attr(lposterior(beta[1:12,k1,k2],grad=TRUE),"lgrad"), equals(lg))
+  expect_that(attr(lposterior(A,s,beta,z,px,k1,k2,lgrad=TRUE),"lgrad"), equals(lg))
 })
 
-system.time(q1 <- mh(current,lposterior,sd=.001))
-system.time(q2 <- slice(current,lposterior,m=20))
-system.time(q3 <- hmc(current,lposterior,0.001,5))
 
 test_that("Samplers return new values",{
+
   px <- c(rep(1,6),rep(0,7))
   current <- beta[1:6,k1,k2]
   set.seed(1)
-  q1 <- mh(current,lposterior,sd=.001)
-  q2 <- slice(current,lposterior,m=20)
-  q3 <- hmc(current,lposterior,0.001,20)
+  lpost <- function(x,lp=TRUE,lgrad=FALSE) {
+    beta[which(px==1),k1,k2] <- x
+    lposterior(A,s,beta,z,px,k1,k2,priors,lp=lp,lgrad=lgrad)
+  }
+  lpost(current)
+  q1 <- mh(current,lpost,sd=.001)
+  q2 <- slice(current,lpost,m=20)
+  q3 <- hmc(current,lpost,0.001,20)
 
   f <- function(q) {
     lpq <- attr(q,"log.density")
@@ -127,6 +129,9 @@ priors <- list(beta=list(mu=0,sigma=1))
 llk <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
 system.time(lp <- block(A,s,beta,z,k1,k2,px))
 system.time(lg <- block.grad(A,s,beta,z,k1,k2,px))
+
+gibbs.collapsed(1:N,beta,z,s,nextra=1)
+d
 
 lp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
 b <- array(0,c(P,K,K))

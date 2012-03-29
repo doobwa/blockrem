@@ -1,4 +1,48 @@
 context("gibbs")
+library(brem)
+library(multicore)
+library(testthat)
+source("pkg/R/brem.r")
+source("pkg/R/samplers.r")
+source("pkg/R/hmc.r")
+
+set.seed(2)
+M <- 1000
+N <- 10
+K <- 2
+beta <- list("intercept"=matrix(-1,K,K),
+             "abba" = matrix(c(1,0,0,2),K,K),
+             "abby"=matrix(0,K,K),
+             "abxa"=matrix(0,K,K),
+             "abxb"=matrix(0,K,K),
+             "abay"=matrix(1,K,K),
+             "abab"=matrix(0,K,K),
+             "sod"=matrix(0,K,K),
+             "rod"=matrix(0,K,K),
+             "sid"=matrix(0,K,K),
+             "rid"=matrix(c(.01,0,.01,0),K,K),
+             "dc"=matrix(c(0,.03,0,0),K,K),
+             "cc"=matrix(0,K,K))
+z <- c(rep(1,N/2),rep(2,N/2))
+P <- length(beta)
+beta <- abind(beta,rev.along=3)
+set.seed(1)
+sim <- generate.brem(M,N,beta,z)
+
+A <- sim$edgelist
+px <- rep(1,13)
+px[13] <- 0
+s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
+s$precompute()
+s$transform()
+
+gibbs.collapsed(1:N,beta,z,s$ptr(),nextra=1)
+b <- array(rnorm(P*K*K),c(P,K,K))
+gibbs.collapsed(1:N,b,z,s$ptr(),nextra=1)
+fit <- mcmc(A,N,K,px,slice,beta=b,z=z,niter=1)
+b <- slice(b,lposterior,m=20)
+d
+
 
 require(abind)
 set.seed(1)
