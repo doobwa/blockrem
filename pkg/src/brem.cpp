@@ -380,7 +380,9 @@ double LogLambdaPc(int i, int j, int zi, int zj, vector<double> s, Rcpp::Numeric
 
 // Compute the loglikelihood corresponding to a single actor, a.
 
-double RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, RemStat *s, int K) {
+double RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z,  SEXP statptr_, int K) {
+  RemStat *s = XPtr<RemStat>(statptr_);
+
   int N = s->N;
   int M = s->M;
   int P = s->P;
@@ -449,7 +451,7 @@ Rcpp::List RemGibbsPc(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::In
     // Compute p(z[a] = k | all else) for each k
     for (int k = 0; k < K; k++) {
       z[a] = k;
-      y[k] = RemLogLikelihoodActorPc(a,beta,z,s,K);// + log(counts[k] + alpha) - log(N + alpha);
+      y[k] = RemLogLikelihoodActorPc(a,beta,z,statptr_,K) + log(counts[k] + alpha);
     }
     llks.push_back(y);
     
@@ -888,7 +890,7 @@ RCPP_MODULE(brem){
   function( "RemLogLikelihoodPc", &RemLogLikelihoodPc ) ;
   function( "RemLogLikelihoodPcSubset", &RemLogLikelihoodPcSubset ) ;
   function( "RemGradientPcSubset", &RemGradientPcSubset ) ;
-  //  function( "RemLogLikelihoodActorPc", &RemLogLikelihoodActorPc ) ;
+  function( "RemLogLikelihoodActorPc", &RemLogLikelihoodActorPc ) ;
    function( "RemGibbsPc", &RemGibbsPc ) ;
   // API using full array for statistics
   function( "InitializeStatisticsArray", &InitializeStatisticsArray ) ;
