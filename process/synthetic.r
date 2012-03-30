@@ -25,7 +25,7 @@ M <- 7000
 set.seed(1)
 z <- c(rep(1,5),rep(2,5))
 
-sim <- simulate.brem(M,N,z,beta)
+sim <- generate.brem(M,N,z,beta)
 
 A <- sim$A
 plot(A[,1],type="l")

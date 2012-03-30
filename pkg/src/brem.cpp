@@ -132,9 +132,9 @@ public:
 
     // Current vectors of statistics
     for (int i = 0; i < N; i++) {
-      vector< vector<int> > s_i;
+      vector< vector<double> > s_i;
       for (int j = 0; j < N; j++) {
-        vector<int> s_ij(P);
+        vector<double> s_ij(P);
         s_i.push_back(s_ij);
       }
       s.push_back(s_i);
@@ -159,15 +159,29 @@ public:
     
     // Dyadic level statistics at each changepoing
     for (int i = 0; i < N; i++) {
-      vector< vector< vector<int> > > x_i;
+      vector< vector< vector<double> > > x_i;
       for (int j = 0; j < N; j++) {
-        vector< vector<int> > x_ij;
-        vector<int> x_ijp(P);
+        vector< vector<double> > x_ij;
+        vector<double> x_ijp(P);
         //        x_ijp[0] = 1;
         x_ij.push_back(x_ijp);
         x_i.push_back(x_ij);
       }
       x.push_back(x_i);
+    }
+  }
+
+  void transform() {
+    for (int i = 0; i < N; i++) {
+      for (int j = 0; j < N; j++) {
+        for (int v = 0; v < x[i][j].size(); v++) {
+          for (int p = 7; p < 12; p++) {
+            // Rprintf("befor: %i %i %i %i %i\n",i,j,v,p,x[i][j][v][p]);
+            x[i][j][v][p] = log((x[i][j][v][p] + 1.0)/(x[i][j][v][12] + N*(N-1)));
+            // Rprintf("after: %i %i %i %i %f\n",i,j,v,p,x[i][j][v][p]);
+          }
+        }
+      }
     }
   }
 
@@ -276,7 +290,7 @@ public:
   }
 
   // Get the statistic vector s_(i,j) that is used before event m.
-  vector<int> get_s(int m, int i, int j) {
+  vector<double> get_s(int m, int i, int j) {
     int r = w[i][j][m - 1];
     return x[i][j][r];
   }
@@ -303,7 +317,7 @@ public:
   }
 
   // For each (i,j,v_ij) a vector of P statistics.  First vector for each (i,j) is all 0 (the vector of statistics for that dyad before the first event occurs)
-  vector< vector< vector< vector<int> > > > get_all_s() {
+  vector< vector< vector< vector<double> > > > get_all_s() {
     return x;
   }
 
@@ -338,13 +352,13 @@ public:
 private:
 
   // Temporary stats built up incrementally
-  vector< vector< vector<int> > > s;  
+  vector< vector< vector<double> > > s;  
 
   // Data structure of current u_{ijm} 
   vector< vector< vector<int> > > w;  
 
   // Data structure of stats vectors for each dyad at each of its changepoints
-  vector< vector< vector< vector<int> > > > x;
+  vector< vector< vector< vector<double> > > > x;
 
   // Data structure of event indices for dyad's changepoint.
   vector< vector< vector<int> > > v;
@@ -356,22 +370,19 @@ private:
 
 // Use the precomputed set of statistics to copmute lambda
 
-double LogLambdaPc(int i, int j, int zi, int zj, vector<int> s, Rcpp::NumericVector beta, int N, int K, int P) {
+double LogLambdaPc(int i, int j, int zi, int zj, vector<double> s, Rcpp::NumericVector beta, int N, int K, int P) {
   double lam = beta[threeDIndex(0,zi,zj,P,K,K)]; // intercept
-  for (int p = 1; p < 7; p++) {
+  for (int p = 1; p < 12; p++) {
     lam += s[p] * beta[threeDIndex(p,zi,zj,P,K,K)];
-  }
-  double numEvents = double(s[12]);
-  for (int p = 7; p < 12; p++) {
-    //    lam += s[p]/(numEvents + 1) * beta[threeDIndex(p,zi,zj,P,K,K)];
-    lam += log((s[p]+1)/(numEvents + N*(N-1))) * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
   return lam;
 }
 
 // Compute the loglikelihood corresponding to a single actor, a.
 
-double RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, RemStat *s, int K) {
+double RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z,  SEXP statptr_, int K) {
+  RemStat *s = XPtr<RemStat>(statptr_);
+
   int N = s->N;
   int M = s->M;
   int P = s->P;
@@ -440,7 +451,7 @@ Rcpp::List RemGibbsPc(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::In
     // Compute p(z[a] = k | all else) for each k
     for (int k = 0; k < K; k++) {
       z[a] = k;
-      y[k] = RemLogLikelihoodActorPc(a,beta,z,s,K);// + log(counts[k] + alpha) - log(N + alpha);
+      y[k] = RemLogLikelihoodActorPc(a,beta,z,statptr_,K) + log(counts[k] + alpha);
     }
     llks.push_back(y);
     
@@ -536,7 +547,7 @@ Rcpp::NumericVector RemLogLikelihoodPc(Rcpp::NumericVector beta, Rcpp::IntegerVe
 // Gradient for beta_.,k,l
 // mx: should index the events where either z_i or z_j is k or l.
 
-Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector mx) {
+Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector mx, Rcpp::IntegerVector px) {
   RemStat *s = XPtr<RemStat>(statptr_);
   int N = s->N;
   int P = s->P;
@@ -557,12 +568,10 @@ Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerV
     zi = z[i];
     zj = z[j];
 
-    for (int p = 0; p < 7; p++) {
-      grad[p] += s->get_s(m,i,j)[p];
+    for (int p = 0; p < px.size(); p++) {
+      grad[px[p]] += s->get_s(m,i,j)[px[p]];
     }
-    for (int p = 7; p < 12; p++) {
-      grad[p] -= log((s->get_s(m,i,j)[p] + 1.0) / (s->get_s(m,i,j)[12] + N*(N-1)));
-    }
+
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
     double a,b,c,d;
     for (int r = 0; r < N; r++) {
@@ -578,17 +587,11 @@ Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerV
         lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
         d  = (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
       }
-      for (int p = 0; p < 7; p++) {
-        grad[p] -= a * s->get_s(m,i,r)[p];
-        grad[p] -= b * s->get_s(m,r,i)[p];
-        grad[p] -= c * s->get_s(m,j,r)[p];
-        grad[p] -= d * s->get_s(m,r,j)[p];
-      }
-      for (int p = 7; p < 12; p++) {
-        grad[p] -= a * log((s->get_s(m,i,r)[p] + 1.0) / (s->get_s(m,i,r)[12] + N*(N-1)));
-        grad[p] -= b * log((s->get_s(m,r,i)[p] + 1.0) / (s->get_s(m,r,i)[12] + N*(N-1)));
-        grad[p] -= c * log((s->get_s(m,j,r)[p] + 1.0) / (s->get_s(m,j,r)[12] + N*(N-1)));
-        grad[p] -= d * log((s->get_s(m,r,j)[p] + 1.0) / (s->get_s(m,r,j)[12] + N*(N-1)));
+      for (int p = 0; p < px.size(); p++) {
+        grad[px[p]] -= a * s->get_s(m,i,r)[px[p]];
+        grad[px[p]] -= b * s->get_s(m,r,i)[px[p]];
+        grad[px[p]] -= c * s->get_s(m,j,r)[px[p]];
+        grad[px[p]] -= d * s->get_s(m,r,j)[px[p]];
       }
     }
 
@@ -596,14 +599,9 @@ Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerV
     a    = (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
     lam  = LogLambdaPc(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
     b    = (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
-    for (int p = 0; p < 7; p++) {
-      grad[p] -= a * s->get_s(m,i,j)[p];
-      grad[p] -= b * s->get_s(m,j,i)[p];
-    }
-    for (int p = 7; p < 12; p++) {
-      //      Rprintf("%f %f %i\n",smij,smji,s->get_s(m,i,j)[p]);
-      grad[p] -= a * log((s->get_s(m,i,j)[p] + 1.0) / (s->get_s(m,i,j)[12] + N*(N-1)));
-      grad[p] -= b * log((s->get_s(m,j,i)[p] + 1.0) / (s->get_s(m,j,i)[12] + N*(N-1)));
+    for (int p = 0; p < px.size(); p++) {
+      grad[px[p]] -= a * s->get_s(m,i,j)[px[p]];
+      grad[px[p]] -= b * s->get_s(m,j,i)[px[p]];
     }
   }
 
@@ -690,15 +688,14 @@ Rcpp::NumericVector UpdateStatisticsArray(Rcpp::NumericVector s, int m, int a, i
 // Compute log lambda
 double LogLambda(int i, int j, int zi, int zj, Rcpp::NumericVector s, Rcpp::NumericVector beta, int N, int K, int P) {
   double lam = beta[threeDIndex(0,zi,zj,P,K,K)];//s[threeDIndex(0,i,j,P,N,N)];
-  for (int p = 1; p < 7; p++) {
+  for (int p = 1; p < 12; p++) {
     lam += s[threeDIndex(p,i,j,P,N,N)] * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
-  double numEvents = double(s[threeDIndex(12,i,j,P,N,N)]);//s[12];
-  for (int p = 7; p < 12; p++) {
-    //    lam += s[threeDIndex(p,i,j,P,N,N)]/(numEvents+1) * beta[threeDIndex(p,zi,zj,P,K,K)];
-    lam += log((s[threeDIndex(p,i,j,P,N,N)] + 1)/(numEvents + N*(N-1))) * beta[threeDIndex(p,zi,zj,P,K,K)];
-  }
-
+  // double numEvents = double(s[threeDIndex(12,i,j,P,N,N)]);//s[12];
+  // for (int p = 7; p < 12; p++) {
+  //   //    lam += s[threeDIndex(p,i,j,P,N,N)]/(numEvents+1) * beta[threeDIndex(p,zi,zj,P,K,K)];
+  //   lam += log((s[threeDIndex(p,i,j,P,N,N)] + 1)/(numEvents + N*(N-1))) * beta[threeDIndex(p,zi,zj,P,K,K)];
+  // }
   return lam;
 }
 
@@ -791,7 +788,7 @@ Rcpp::NumericVector LogIntensityArrayPcSubset(Rcpp::NumericVector beta, Rcpp::In
 }
 
 
-// Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).
+// Compute (M,N,N) array of log rates, where the (m,i,j) element is log lambda_{i,j}(t_m) (and is therefore the value of that intensity function since the last time lambda_{i,j} changed).  There is no way to provide transformed statistics here.
 
 Rcpp::NumericVector LogIntensityArray(Rcpp::NumericVector beta, Rcpp::NumericVector times, Rcpp::IntegerVector sen, Rcpp::IntegerVector rec,Rcpp::IntegerVector z, int N, int M,int K, int P){
 
@@ -868,6 +865,8 @@ RCPP_MODULE(brem){
                  int,int,int>()
     .method( "precompute", &RemStat::precompute,
              "Precompute the data structure of REM statistics")
+    .method( "transform", &RemStat::transform,
+             "Transform degree statistics: scale by events and risk set size, then log")
     .method( "get_s", &RemStat::get_s,
              "Retrieve the statistics vector prior to event m for dyad (i,j)")
     .method( "get_tau", &RemStat::get_tau,
@@ -891,7 +890,7 @@ RCPP_MODULE(brem){
   function( "RemLogLikelihoodPc", &RemLogLikelihoodPc ) ;
   function( "RemLogLikelihoodPcSubset", &RemLogLikelihoodPcSubset ) ;
   function( "RemGradientPcSubset", &RemGradientPcSubset ) ;
-  //  function( "RemLogLikelihoodActorPc", &RemLogLikelihoodActorPc ) ;
+  function( "RemLogLikelihoodActorPc", &RemLogLikelihoodActorPc ) ;
    function( "RemGibbsPc", &RemGibbsPc ) ;
   // API using full array for statistics
   function( "InitializeStatisticsArray", &InitializeStatisticsArray ) ;

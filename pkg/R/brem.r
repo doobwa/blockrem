@@ -4,13 +4,20 @@
 #' @z latent class assignments
 #' @beta P x K x K array of parameters
 #' 
+<<<<<<< HEAD
 generate.brem <- function(M,N,z,beta,nsim) {
   param <- do.call(rbind)
   fit <- list(param=0)
+=======
+generate.brem <- function(M,N,beta,z) {
+  edgelist <- matrix(c(0,1,2),nr=1)
+  simulate.brem.cond(beta,z,edgelist,M,N)
+>>>>>>> fixgradient
 }
 
 simulate.brem <- function(fit,train,M=100,nsim=1) {
   mclapply(1:nsim,function(i) {
+<<<<<<< HEAD
     beta <- fit$param[fit$niter - i,,,]
     simulate.brem.cond(beta,train,M)
   })
@@ -22,6 +29,22 @@ simulate.brem.cond <- function(beta,train,M=100) {
   for (m in 2:nrow(train)) {
     i <- train[m-1,2]
     j <- train[m-1,3]
+=======
+    beta <- fit$param[fit$niter - i + 1,,,]
+    z <- fit$zs[[fit$niter - i + 1]]
+    simulate.brem.cond(beta,z,train,M,fit$N)
+  })
+}
+simulate.brem.cond <- function(beta,z,train,M=100,N) {
+  K <- dim(beta)[2]
+  P <- dim(beta)[1]
+  edgelist <- train[nrow(train),,drop=FALSE]
+  time <- edgelist[1]
+  s <- InitializeStatisticsArray(N,P);
+  for (m in 1:nrow(train)) {
+    i <- train[m,2]
+    j <- train[m,3]
+>>>>>>> fixgradient
     s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
   }
   lambda <- matrix(0,N,N)
@@ -44,6 +67,10 @@ simulate.brem.cond <- function(beta,train,M=100) {
     j <- cells[drawcell,2]
     time <- time + rexp(1,sum(cells[,3]))
     edgelist <- rbind(edgelist,c(time,i,j))
+<<<<<<< HEAD
+=======
+
+>>>>>>> fixgradient
     s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
   }
   dimnames(edgelist) <- NULL
