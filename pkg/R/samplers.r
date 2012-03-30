@@ -66,7 +66,6 @@ hmc <- function (current_q, lposterior, epsilon, L)
     }  
 }
 
-# Requires A, s, priors, z, px, k1, and k2 to be in environment
 lposterior <- function(A,s,beta,z,px,k1,k2,priors=list(beta=list(mu=0,sigma=1)),lp=TRUE,lgrad=FALSE) { 
   if (lp) {
     res <- block(A,s,beta,z,k1,k2,px,priors)
