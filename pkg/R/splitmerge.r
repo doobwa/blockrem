@@ -89,18 +89,19 @@ gibbs_restricted <- function(phi,z,S,k,l,llk_node,ztrue=NULL) {
 }
 
 ps2pm <- function(phi.split,phi.merge) {
-  P <- dim(phi.merge)[1]
+  P <- 1#dim(phi.merge)[1]
   K <- dim(phi.merge)[2]
   log(.5^(P*(2*K-3)))
 }
 pm2ps <- function(phi.merge,phi.split,k,l,sigma) {
+  P <- 1
   K <- dim(phi.split)[2]
   rs <- (1:K)[-c(k,l)]
   ps <- lapply(rs,function(r) {
-    c(dnorm(phi.split[,l,r],phi.merge[,k,r],sigma,log=TRUE),
-      dnorm(phi.split[,r,l],phi.merge[,r,k],sigma,log=TRUE))
+    c(dnorm(phi.split[1:P,l,r],phi.merge[1:P,k,r],sigma,log=TRUE),
+      dnorm(phi.split[1:P,r,l],phi.merge[1:P,r,k],sigma,log=TRUE))
   })
-  ps <- c(ps,list(dnorm(phi.split[,l,l],phi.merge[,k,k],sigma,log=TRUE)))
+  ps <- c(ps,list(dnorm(phi.split[1:P,l,l],phi.merge[1:P,k,k],sigma,log=TRUE)))
   ps <- unlist(ps)
   return(sum(ps))
 }
