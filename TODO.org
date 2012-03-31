@@ -125,12 +125,16 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - degree dists
   - [x] time plot
   - [x] pshifts
-- To discuss with Smyth:
+- [x] To discuss with Smyth:
   - plan for sharing parameters better
   - ppc's "need" to condition on prior observations
   - need fewer parameters if we want to do this in any reasonable
     amount of time....  
   - HMC?
+- Sample just one block
+  - with MH
+  - with HMC
+  - compare speeds
 - Fix shared model to have different within block dynamics
 - Implement online prediction that doesn't need to store full log
   intensity arrays (or does it piecemeal)
