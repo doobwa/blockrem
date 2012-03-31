@@ -68,7 +68,7 @@ phi[1,,] <- rnorm(9,0,1)
 sim <- generate.brem(M,N,phi,z)
 table(sim$edgelist[,2],sim$edgelist[,3])
 
-A <- sim$edgelist
+edgelist <- A <- sim$edgelist
 px <- rep(0,13)
 px[1] <- 1
 s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
@@ -93,6 +93,8 @@ llk_node_test<- function(a,phi,z) {
 }
 
 test_that("Gibbs sampling on small example gives true assignments",{
+
+  a <- 1
   truellk <- llk_node(1,phi,z)
   get.ys <- function(phi,z,llk_node) {
     z2 <- z
@@ -113,8 +115,11 @@ test_that("Gibbs sampling on small example gives true assignments",{
   expect_that(apply(ys,1,which.max), equals(z))
 })
 
-g <- gibbs_restricted(phi,z,2,3,llk_node_test)
-g
+test_that("restricted gibbs scan finds correct assignments",{
+  S <- 4:9
+  g <- gibbs_restricted(phi,z,S,2,3,llk_node_test)
+  expect_that(all(g$z==z), is_true())
+})
 
 lposterior_test <- function(phi,z,priors) {
   llk <- llk_node_test(1,phi,z)
@@ -125,14 +130,15 @@ lposterior_test <- function(phi,z,priors) {
   return(llk + pr.phi + pr.z)
 }
 
-priors <- list(alpha=1,phi=list(mu=0,sigma=1))
+priors <- list(alpha=1,phi=list(mu=0,sigma=1),sigma=.1)
 lposterior_test(phi,z,priors)
 
 source("pkg/R/splitmerge.r")
-s <- splitmerge(phi,z,lposterior_test,llk_node_test,priors)
+s <- splitmerge(phi,z,lposterior_test,llk_node_test,priors,verbose=TRUE)
 
 truth <- list(phi=phi,z=z)
-
+phi <- truth$phi
+z <- truth$z
 
 # Still bugs in trying this...
 for (a in 1:3) {
