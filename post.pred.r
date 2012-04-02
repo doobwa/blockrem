@@ -1,12 +1,12 @@
 library(brem)
 source("pkg/R/brem.r")
 require(ggplot2)
-post.pred.times <- function(sims) {
+ppc.times <- function(sims) {
   d <- melt(sapply(sims,function(s) s$edgelist[,1]))
   colnames(d) <- c("event","sim","value")
   return(d)
 }
-post.pred.pshift <- function(sims) {
+ppc.pshift <- function(sims) {
   require(relevent)
   d <- mclapply(1:length(sims), function(i) {
     M <- nrow(sims[[i]]$edgelist)
@@ -17,7 +17,7 @@ post.pred.pshift <- function(sims) {
   rownames(d) <- c()
   return(d)
 }
-post.pred.degree <- function(sims) {
+ppc.degree <- function(sims) {
   require(network)
   require(sna)
   degrees <- mclapply(1:length(sims), function(i) {
@@ -30,11 +30,11 @@ post.pred.degree <- function(sims) {
   })
   do.call(rbind,degrees)
 }
-post.pred.stat <- function(sims,stat) {
+ppc.rem <- function(sims,stat) {
   switch(stat,
-         "global"=post.pred.times(sims),
-         "pshift"=post.pred.pshift(sims),
-         "degree"=post.pred.degree(sims))
+         "global"=ppc.times(sims),
+         "pshift"=ppc.pshift(sims),
+         "degree"=ppc.degree(sims))
 }
 
 
@@ -72,12 +72,12 @@ stats <- list()
 stats$sim <- stats$obs <- list()
 
 # Plot overall event vs. time
-stats$sim$time <- post.pred.stat(sims,"global")
-stats$obs$time <- post.pred.stat(obs,"global")
-stats$sim$pshift <- post.pred.stat(sims,"pshift")
-stats$obs$pshift <- post.pred.stat(obs,"pshift")
-stats$sim$degree <- post.pred.stat(sims,"degree")
-stats$obs$degree <- post.pred.stat(obs,"degree")
+stats$sim$time <- ppc.rem(sims,"global")
+stats$obs$time <- ppc.rem(obs,"global")
+stats$sim$pshift <- ppc.rem(sims,"pshift")
+stats$obs$pshift <- ppc.rem(obs,"pshift")
+stats$sim$degree <- ppc.rem(sims,"degree")
+stats$obs$degree <- ppc.rem(obs,"degree")
 
 ggplot(stats$sim$time) + geom_line(alpha=.3,aes(x=event,y=value,group=sim)) + geom_line(data=stats$obs$time,aes(x=event,y=value),colour="red",size=2) + theme_bw() + labs(y="total elapsed time")
 ggsave(paste("figs/",opts$dataset,"/postpred-time.pdf",sep=""),width=5,height=5)
