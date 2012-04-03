@@ -14,6 +14,7 @@ beta <- list("intercept"=matrix(-1,K,K),
              "abba" = matrix(c(1,0,0,2),K,K),
              "abby"=matrix(0,K,K),
              "abxa"=matrix(0,K,K))
+
 z <- c(rep(1,N/2),rep(2,N/2))
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
@@ -51,9 +52,63 @@ test_that("brem merge makes similar but not equal clusters",{
   expect_that(f(phi.merge[,2,2],phi[,3,3],phi[,2,2]),is_true())
 })
 
+# TODO: Bug in using the ActorPc function like this.
 llk_node <- function(a,phi,z) {
   RemLogLikelihoodActorPc(a-1,phi,z-1,s$ptr(),K)
 }
+
+llk_node_test<- function(a,phi,z) {
+  tb <- table(edgelist[,2],edgelist[,3])
+  tm <- edgelist[nrow(edgelist),1]
+  llk <- 0
+  for (i in 1:N) {
+    for (j in (1:N)[-i]) {
+      lam <- exp(phi[1,z[i],z[j]]) * tm
+      llk <- llk + dpois(tb[i,j], lam, log=TRUE)
+    }
+  }
+  return(llk)
+}
+
+
+lposterior_test <- function(phi,z,priors) {
+  llk <- llk_node_test(1,phi,z)
+  pr.phi <- sum(dnorm(phi[which(phi != 0)],priors$phi$mu,priors$phi$sigma,log=TRUE))
+  tb <- table(factor(z,1:K))
+  tb <- tb[which(tb>0)]
+  pr.z <- sum(log(sapply(tb - 1,factorial)))
+  return(llk + pr.phi + pr.z)
+}
+
+
+## test_that("Gibbs sampling on small example gives true assignments",{
+
+##   a <- 1
+##   truellk <- llk_node(1,phi,z)
+##   get.ys <- function(phi,z,llk_node) {
+##     z2 <- z
+##     ys <- matrix(0,N,K)
+##     for (i in 1:N) {
+##       for (k in 1:K) {
+##         z2 <- z
+##         z2[i] <- k
+##         ys[i,k] <- llk_node(a,phi,z2)
+##       }
+##     }
+##     return(ys)
+##   }
+
+##   ys <- get.ys(phi,z,llk_node)
+##   expect_that(apply(ys,1,which.max), equals(z))
+##   ys <- get.ys(phi,z,llk_node_test)
+##   expect_that(apply(ys,1,which.max), equals(z))
+## })
+
+## test_that("restricted gibbs scan finds correct assignments",{
+##   S <- 4:9
+##   g <- gibbs_restricted(phi,z,S,2,3,llk_node_test)
+##   expect_that(all(g$z==z), is_true())
+## })
 
 
 M <- 5000
@@ -75,63 +130,39 @@ s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
 s$precompute()
 s$transform()
 
-llk_node <- function(a,phi,z) {
-  RemLogLikelihoodActorPc(a-1,phi,z-1,s$ptr(),K)
-}
-
-llk_node_test<- function(a,phi,z) {
-  tb <- table(edgelist[,2],edgelist[,3])
-  tm <- edgelist[nrow(edgelist),1]
-  llk <- 0
-  for (i in 1:N) {
-    for (j in (1:N)[-i]) {
-      lam <- exp(phi[1,z[i],z[j]]) * tm
-      llk <- llk + dpois(tb[i,j], lam, log=TRUE)
-    }
-  }
-  return(llk)
-}
-
-test_that("Gibbs sampling on small example gives true assignments",{
-
-  a <- 1
-  truellk <- llk_node(1,phi,z)
-  get.ys <- function(phi,z,llk_node) {
-    z2 <- z
-    ys <- matrix(0,N,K)
-    for (i in 1:N) {
-      for (k in 1:K) {
-        z2 <- z
-        z2[i] <- k
-        ys[i,k] <- llk_node(a,phi,z2)
-      }
-    }
-    return(ys)
-  }
-
-  ys <- get.ys(phi,z,llk_node)
-  expect_that(apply(ys,1,which.max), equals(z))
-  ys <- get.ys(phi,z,llk_node_test)
-  expect_that(apply(ys,1,which.max), equals(z))
-})
-
-test_that("restricted gibbs scan finds correct assignments",{
-  S <- 4:9
-  g <- gibbs_restricted(phi,z,S,2,3,llk_node_test)
-  expect_that(all(g$z==z), is_true())
-})
-
-lposterior_test <- function(phi,z,priors) {
-  llk <- llk_node_test(1,phi,z)
-  pr.phi <- sum(dnorm(phi[which(phi != 0)],priors$phi$mu,priors$phi$sigma,log=TRUE))
-  tb <- table(factor(z,1:K))
-  tb <- tb[which(tb>0)]
-  pr.z <- sum(log(sapply(tb - 1,factorial)))
-  return(llk + pr.phi + pr.z)
-}
-
 priors <- list(alpha=1,phi=list(mu=0,sigma=1),sigma=.1)
 lposterior_test(phi,z,priors)
+k1 <- k2 <- 1
+lpost(phi[1,1,1])
+r <- sample_phi(phi,z,lpost)
+sample_phi <- function(phi,z,lpost,kx=NULL) {
+  K <- dim(phi)[2]
+  if (is.null(kx)) kx <- 1:K
+  lpost <- function(x,lp=TRUE,lgrad=FALSE) {
+    phi[1,k1,k2] <- x
+    lposterior_test(phi,z,priors)
+  }
+  olp <- nlp <- matrix(0,K,K)
+  for (k1 in kx) {
+    for (k2 in kx) {
+      olp[k1,k2] <- lpost(phi[1,k1,k2])
+      phi[1,k1,k2] <- slice(phi[1,k1,k2],lpost,m=20)
+      nlp[k1,k2] <- lpost(phi[1,k1,k2])
+    }
+  }
+  return(list(phi=phi,olp=olp,nlp=nlp))
+}
+
+
+clusters <- 1:2
+S <- which(z %in% clusters)
+z[S] <- sample(clusters,length(S),replace=TRUE)
+
+phi <- sample_phi(phi,z,lpost,clusters)$phi
+lposterior_test(phi,z,priors)
+r <- gibbs_restricted(phi,z,S,clusters[1],clusters[2],llk_node,ztrue=NULL)
+z <- r$z
+
 
 source("pkg/R/splitmerge.r")
 s <- splitmerge(phi,z,lposterior_test,llk_node_test,priors,verbose=TRUE)
@@ -139,6 +170,13 @@ s <- splitmerge(phi,z,lposterior_test,llk_node_test,priors,verbose=TRUE)
 truth <- list(phi=phi,z=z)
 phi <- truth$phi
 z <- truth$z
+
+  px <- c(rep(1,6),rep(0,7))
+  current <- beta[1:6,k1,k2]
+  set.seed(1)
+  q1 <- mh(current,lpost,sd=.001)
+  
+
 
 # Still bugs in trying this...
 for (a in 1:3) {
