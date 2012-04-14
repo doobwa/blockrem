@@ -1,10 +1,4 @@
 context("samplers")
-library(brem)
-library(multicore)
-library(testthat)
-source("pkg/R/brem.r")
-source("pkg/R/samplers.r")
-source("pkg/R/hmc.r")
 
 set.seed(2)
 M <- 1000
@@ -131,7 +125,6 @@ system.time(lp <- block(A,s,beta,z,k1,k2,px))
 system.time(lg <- block.grad(A,s,beta,z,k1,k2,px))
 
 gibbs.collapsed(1:N,beta,z,s,nextra=1)
-d
 
 lp <- brem.lpost.fast(A,N,K,z,s,beta,priors)
 b <- array(0,c(P,K,K))

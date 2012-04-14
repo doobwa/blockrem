@@ -1,10 +1,4 @@
 context("gibbs")
-library(brem)
-library(multicore)
-library(testthat)
-source("pkg/R/brem.r")
-source("pkg/R/samplers.r")
-source("pkg/R/hmc.r")
 
 set.seed(2)
 M <- 1000
@@ -36,15 +30,12 @@ s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
 s$precompute()
 s$transform()
 
-gibbs.collapsed(1:N,beta,z,s$ptr(),nextra=1)
+#gibbs.collapsed(1:N,beta,z,s$ptr(),px,N,K,nextra=1)
 b <- array(rnorm(P*K*K),c(P,K,K))
-gibbs.collapsed(1:N,b,z,s$ptr(),nextra=1)
-fit <- mcmc(A,N,K,px,slice,beta=b,z=z,niter=1)
-b <- slice(b,lposterior,m=20)
-d
+#gibbs.collapsed(1:N,b,z,s$ptr(),px,N,K,nextra=1)
+#fit <- mcmc(A,N,K,px,slice,beta=b,z=z,niter=1)
+#b <- slice(b,lposterior,m=20)
 
-
-require(abind)
 set.seed(1)
 M <- 7
 N <- 5

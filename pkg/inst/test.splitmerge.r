@@ -1,7 +1,7 @@
 context("splitmerge")
 library(brem)
 library(testthat)
-source("pkg/R/splitmerge.r")
+#source("pkg/R/splitmerge.r")
 ## source("pkg/R/brem.r")
 ## source("pkg/R/samplers.r")
 ## source("pkg/R/hmc.r")

@@ -1,5 +1,6 @@
 
-ppc.rem <- function(sims,obs) {
+ppc.rem <- function(sims,obs,N) {
+  sims <- lapply(sims,function(s) list(edgelist=s,N=N))
   obs <- list(list(edgelist=obs,N=N))
   stats <- list()
   stats$sim <- stats$obs <- list()

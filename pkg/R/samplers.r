@@ -1,71 +1,3 @@
-#' General purpose Metropolis-Hastings sampler
-#' @param current
-#' @param likelihood
-#' @param olp
-#' @param sd
-
-#' @return ...
-mh <- function(current,lposterior,olp=NULL,sd=.1) {
-  if (is.null(olp)) {
-    olp <- attr(current,"log.density") <- lposterior(current)
-  }
-  cand <- current + rnorm(length(current),0,sd)
-  clp <- lposterior(cand)
-  if (clp - olp > log(runif(1))) {
-    current <- cand
-    attr(current,"log.density") <- clp
-  }
-  return(current)
-}
-
-slice <- function(current,lposterior,olp=NULL,m=20) {
-  if (is.null(olp)) {
-    olp <- attr(current,"log.density") <- lposterior(current)
-  }
-  lpost <- function(val) {
-    current[p] <- val
-    lposterior(current)
-  }
-  for (p in 1:length(current)) {
-    val <- uni.slice.alt(current[p],lpost,gx0=olp,m=m)
-    current[p] <- val
-    olp <- attr(val,"log.density")
-  }
-  attr(current,"log.density") <- olp
-  return(current)
-}
-
-# Changed U and grad_U to not be negative llk, etc.
-# Added log.density attributes
-hmc <- function (current_q, lposterior, epsilon, L) 
-{
-  U      <- function(x) -lposterior(x)
-  grad_U <- function(x) -lposterior(x,lp=FALSE)
-    q = current_q
-    p = rnorm(length(q), 0, 1)
-    current_p = p
-    p = p - epsilon * grad_U(q)/2
-    for (i in 1:L) {
-        q = q + epsilon * p
-        if (i != L) 
-            p = p - epsilon * grad_U(q)
-    }
-    p = p - epsilon * grad_U(q)/2
-    p = -p
-    current_U = U(current_q)
-    current_K = sum(current_p^2)/2
-    proposed_U = U(q)
-    proposed_K = sum(p^2)/2
-    attr(current_q,"log.density") <- -current_U
-    attr(q,"log.density") <- -proposed_U
-    if (runif(1) < exp(current_U - proposed_U + current_K - proposed_K)) {
-        return(q)
-    }
-    else {
-        return(current_q)
-    }  
-}
-
 lposterior <- function(A,s,beta,z,px,k1,k2,priors=list(beta=list(mu=0,sigma=1)),lp=TRUE,lgrad=FALSE) { 
   if (lp) {
     res <- block(A,s,beta,z,k1,k2,px,priors)
@@ -76,7 +8,7 @@ lposterior <- function(A,s,beta,z,px,k1,k2,priors=list(beta=list(mu=0,sigma=1)),
   return(res)
 }
 
-gibbs.collapsed <- function(ix,beta,z,s,nextra=0,
+gibbs.collapsed <- function(ix,beta,z,s,px,N,K,nextra=0,
                             priors=list(alpha=1,beta=list(mu=0,sigma=1))) {
 
   # count number of unused clusters
@@ -128,8 +60,13 @@ mcmc <- function(A,N,K,px,method,niter=100,beta=NULL,z=NULL,priors=list(beta=lis
   s <- new(brem:::RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
   s$precompute()
   s$transform()
+
+  lp <- function(val) {
+    beta[which(px==1),k1,k2] <- val
+    lposterior(A,N,K,z,s,beta,priors)
+  }
   
-  lp <- rep(0,niter)
+  lps <- rep(0,niter)
   param <- array(0,c(niter,dim(beta)))
   for (iter in 1:niter) {
     ## loop through blocks
@@ -137,13 +74,13 @@ mcmc <- function(A,N,K,px,method,niter=100,beta=NULL,z=NULL,priors=list(beta=lis
       for (k2 in 1:K) {
         ## sample new parameter values for this block
         b <- beta[which(px==1),k1,k2]
-        beta[which(px==1),k1,k2] <- method(b,lposterior,...)
+        beta[which(px==1),k1,k2] <- method(b,lp,...)
       }
     }
-    lp[iter] <- brem.lpost.fast(A,N,K,z,s,beta,priors)
+    lps[iter] <- lposterior(A,N,K,z,s,beta,priors)
     param[iter,,,] <- beta
     if (verbose) {
-      cat(lp[iter],"\n")
+      cat(lps[iter],"\n")
     }
   }
   return(list(param=param,lp=lp))
@@ -168,6 +105,7 @@ block.grad <- function(A,s,beta,z,k1,k2,px,priors=list(beta=list(mu=0,sigma=1)))
   M <- nrow(A)
   zs <- z[A[,2]]
   zr <- z[A[,3]]
+  K <- dim(beta)[2]
   ix <- which(zs==k1 | zr==k2) - 1  # 0 based indexing for c++
   if (length(ix) == 0) return(0)
   lg <- RemGradientPcSubset(beta,z-1,s$ptr(),K,ix,which(px==1)-1)

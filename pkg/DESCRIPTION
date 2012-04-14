@@ -5,7 +5,7 @@ Version: 0.1
 Date: 2012-02-09
 Maintainer: Chris DuBois <chris.dubois@gmail.com>
 Author: Chris DuBois <chris.dubois@gmail.com>
-Depends: R (>= 2.13.0), Rcpp (>= 0.9.7), methods, inline, optparse, abind, sna, relevent
+Depends: R (>= 2.13.0), Rcpp (>= 0.9.7), abind, methods, inline, optparse, sna, relevent, qmcmc
 Suggests: testthat (>= 0.2)
 LinkingTo: Rcpp
 License: LGPL

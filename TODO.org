@@ -163,7 +163,6 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Try prediction task where the test set is smaller
 - 
 
-  
 * Other
 - Add tests for Gibbs equations.  For example, start with true data
   and learn z's.
@@ -190,9 +189,13 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Initialize with guess at z's, rather than guess at beta.
 - Research maximization of beta rather than sampling.
 
-* 
 * Low priority:
 - Port simulator over to Rcpp.
 
 * Bugs:
 - old likelihood does not use the baserates when computing first event for the likelihood computation
+
+* Restarting
+- [ ] Clean up some files
+- [ ] Shift samplers to use qmcmc package
+- [ ] Get sampler tests and gibbs tests to pass
