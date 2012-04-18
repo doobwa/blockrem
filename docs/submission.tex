@@ -42,7 +42,7 @@ past.  For continuous-time network data, recent methods model the rate of dyadic
 
 \section{Introduction}
 
-Statistical methods for analyzing network data have become increasingly useful for studying  phenomenon ranging from people communicating online to protein interactions \cite{Goldenberg2009}.  One class of statistical models for network data uses latent variables to help model unobserved heterogeneity.  For example, the stochastic blockmodel \cite{Nowicki2001, Kemp} assumes each node in the network belongs to some block (or cluster) and parametrizes the probability of edges between nodes of each block.  % Such approaches are especially useful for large-scale network data where higher-order dependencies can cause models such as exponential random graph models to be too complex to fit.
+Statistical methods for analyzing network data have become increasingly useful for studying  phenomenon ranging from people communicating online to protein interactions \cite{Goldenberg2009}.  One class of statistical models for network data uses latent variables to help model unobserved heterogeneity.  For example, the stochastic blockmodel \cite{Nowicki2001, Kemp, Ishiguro2010} assumes each node in the network belongs to some block (or cluster) and parametrizes the probability of edges between nodes of each block.  % Such approaches are especially useful for large-scale network data where higher-order dependencies can cause models such as exponential random graph models to be too complex to fit.
 
 Network data, however, is often collected as a sequence of events occurring over time.   Recent work leverages  continuous-time models from event history analysis  \cite{AalenOddO.2008} to model network-based event data \cite{Butts2008,Brandes2009,Perry2011,Stadtfeld2010,Stadtfeld2011,Opsahl2011,Vu2011,Vu2011a}.  These models allow one to specify how the process depends on the previous history of events.  In this way one may investigate theories about the underlying processes and make predictions about future data conditioned on the past.
 
@@ -242,35 +242,18 @@ This distribution is sampled using slice sampling.\footnote{We may also use HMC 
 
 \subsection{Split-merge algorithm}
 
-Motivation: simply Gibbs sampling does not seem to mix well.  \footnote{This section is planned future work. In the experiments we evaluate the performance of the model when restricting the number of clusters $K$.  For these chains we do not propose split moves when the number of non-empty clusters is already $K$.}
+%Motivation: simply Gibbs sampling does not seem to mix well.  \footnote{This section is planned future work. In the experiments we evaluate the performance of the model when restricting the number of clusters $K$.  For these chains we do not propose split moves when the number of non-empty clusters is already $K$.}
+
+Here we describe a novel split-merge move for non-conjugate blockmodels.\footnote{IRM (modeling Bernoulli data with a conjugate Beta prior) used a split-merge algorithm \cite{Kempe2006}.}  For illustration, we consider the model
+\begin{align*}
+  y_{ij} & \sim \mbox{Poisson}(\Lambda_{z_i,z_j}) & \Lambda_{ij} &\sim \mbox{Gamma}(\alpha_{\Lambda},\beta_{\Lambda})  & z_i &\sim \mbox{CRP}(\gamma)
+\end{align*}
 
 IDEA: References are Dahl 2003, Wang, Blei 2012, Neal 2000 (alg 8).  A proposed split has REM parameters that are only slightly different than those for the original block.  Merges of two sets of REM parameters are performed by using the parameter for one blocks, and doing so for each dimension independently.  By keeping track of the probability of each of these transitions we can correctly compute the Metropolis-Hastings acceptance probability needed to guarantee we have an MCMC transition that leaves the posterior distribution invariant.
 
-This is a two-stage MH procedure, first picking two nodes at random then creating a new set of parameters.  We also use an auxilary variable to avoid changing dimensionality (similar to Neal 2000, alg. 8).
 
 %$\boldsymbol{\phi}_{l,r}^{split} \sim G_0$, $\boldsymbol{\phi}_{r,l}^{split} \sim G_0$, and $\boldsymbol{\phi}_{l,l}^{split} \sim G_0$ (or actually $N(\mu_{\phi},\Sigma_{\phi})$
 
-Next pick two nodes $i,j$ uniformly.  If they belong to the same block $k$ (i.e. $z_i=z_j=k$), then we call the current state the ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``split'' state $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ by letting $l=K+1$ and for $p \in [1,P], r \in [1,K]$
-\begin{itemize}
-%\item For $p \in [1,P], r \in [1,K]$: let $l=K+1$ sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$
-\item Sample $\phi_{lrp}^{split} \sim N(\phi_{krp}^{merge},\sigma^2)$ and $\phi_{rlp}^{split} \sim N(\phi_{rkp}^{merge},\sigma^2)$ and $\phi_{llp}^{split} \sim N(\phi_{kkp}^{merge}, \sigma^2)$.
-\item Sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$.
-\item Let $S$ be all nodes assigned to $k$.  Randomly assign $z_a^{split}$ and perform restricted Gibbs scan for $\mathbf{z}^{split}$: $$p(z_{a}^{split}=k|\cdot)  \propto m_k p(A|\mathbf{z}^{split}_{-a},\phi^{split})$$
-where $m_k=\sum_{i \in S}I(z_i=k)$ and compute $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})$ to be the product of the probabilities for the sampled assignments.
-\item Accept  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ as the new state with probability $\alpha^*$, defined below.
-\end{itemize}
-
-  If $i$ and $j$ belong to different blocks $k$ and $l$ (i.e. $z_i = k \ne z_j=l$), we define the current state to be the ``split'' state  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as follows:
-\begin{itemize}
-\item For each $p \in [1,P]$ and for all blocks $r \in [1,K], r\ne l$ draw $\phi_{krp}^{merge}$ uniformly from $\{\phi_{krp}^{split}, \phi_{lrp}^{split}\}$,  $\phi_{rkp}^{merge}$ uniformly from $\{\phi_{rkp}^{split}, \phi_{rlp}^{split}\}$
-\item Sample $\phi_{lrp}^{split},\phi_{rlp}^{split}$, and $\phi_{llp}^{split}$ independently from the prior $N(\mu_p,\sigma^2_p)$
-\item Let $S$ be the set of nodes assigned to $k$ or $l$. Let $\mathbf{z}$ be a random assignment for nodes a and compute the probability of sampling $\mathbf{z}^{split}$ during a restricted Gibbs scan as $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split}) = \prod_{s \in S} p(z_{s}=z_s^{split} |\{ z_a^{split},z_{b}: a  < s, s < b\}, \boldsymbol{\phi}^{split})$
-\item Accept $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as the new state with probability $1/\alpha^*$, defined below.
-\end{itemize}
-
-The Metropolis-Hastings acceptance probability for the split move is: $$\alpha^* =\frac{p(\boldsymbol{\phi}^{split})}{p(\boldsymbol{\phi}^{merge})} \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})}\frac{p(A|\boldsymbol{\phi}^{split},\mathbf{z}^{split})}{p(A|\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})}\frac{q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})}{q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})} \frac{q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge})}{q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})}$$
-
-The first two terms represent the prior. For the proposed merge step, note $q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge}) = .5^{P(2K-3)}$ where $K$ is the number of blocks before the move.  We can compute $q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})$ directly as a product of Normal densities.  For the block assignments, $q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})=1$ since  there is only one way of combining two clusters.  $ \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} = \frac{(n_{z_i}^{split} - 1)!(n_{z_j}^{split} - 1)!}{(n_{z_i}^{merge}-1)!}$.  We have avoided the dimensionality of the model during the MH move by creating an empty cluster when merging and filling a (newly created) empty cluster when splitting.  One can return to the previous state with positive probability.
 
 % TODO: Update the following discussion about sampling.
 
@@ -295,7 +278,7 @@ The first two terms represent the prior. For the proposed merge step, note $q(\b
 
 We check our model fitting procedure using a small synthetic data set involving 10 nodes from 2 clusters where 1) the first cluster has an increased tendency for reciprocity, 2) members of the second cluster have an increased tendency to continue speaking, and 3) interactions between groups are more likely to be repeated.  The specification of $\textbf{s}$ is therefore $s(t,i,j) = [s_0, s_{5}(t,i,j), s_{9}(t,i,j)]$.  For the synthetic data set we use parameter vectors $\boldsymbol{\beta}_{1,1} = (0,3,0)$,  $\boldsymbol{\beta}_{1,2} = \boldsymbol{\beta}_{2,1} = (-1,0,0)$, and $\boldsymbol{\beta}_{2,2} = (0,0,2)$.  This is done by sequentially computing $\lambda_{ij}(t_m|\cdot)$ for all $(i,j) \in \mathcal{R}$, drawing $t_{m+1}-t_m \sim \mbox{Exp}(\sum_{ij} \lambda_{ij}(t_m|\cdot))$, and drawing the dyad $(i,j) \sim \mbox{Categorical}(\lambda_{ij}(t_m|\cdot) / \sum_{ij}\lambda_{ij}(t_m|\cdot))$.  
 
-Though the dyad counts for the synthetic data set suggest a stochastic blockmodel (as seen in Figure  \ref{fig:syncounts}),  the center plot shows each block has empirical differences in their dynamics.  Intensities for reciprocal actions among nodes in block 1 are $e^3$ times greater, intensities for turn-taking actions among nodes in group 2 are $e^2$ times greater, and intensities for dyadic interactions between the two groups have a multiplicative effect of $e^{-1}$ and thus occur less often.  Fitting the model with $K=2$ makes the same predictions as the true model (see Table \ref{tab:results}) and the posterior credible intervals of the parameters cover the true parameter values.
+Though the dyad counts for the synthetic data set suggest a stochastic blockmodel (as seen in Figure  \ref{fig:syncounts}),  the center plot shows each block has empirical differences in their dynamics.  Intensities for reciprocal actions among nodes in block 1 are $e^3$ times greater, intensities for turn-taking actions among nodes in group 2 are $e^2$ times greater, and intensities for dyadic interactions between the two groups have a multiplicative effect of $e^{-1}$ and thus occur less often.  Fitting the model with $K=2$ makes the same predictions as the true model (see Table \ref{tab:results}) and the posterior credible intervals of the parameters cover the true parameter values (see Figure \ref{fig:syncounts}c).
 
 \section{Model checking and experiments}
 
@@ -365,6 +348,8 @@ In Section \ref{sec:experiments} we show the model has improved predictive accur
 
 Relational event models \cite{Butts2008} require a knot at each observed event, while other approaches such as \cite{Gunawardana2011} learn the regions where an intensity is constant.  By using decision trees,  \cite{Gunawardana2011} also allow for a nonlinear relationship between statistics and intensity functions, while here we use latent variables to allow for heterogeneity in intensities across possible events.
 
+Trivially extended to co-clustering applications and for directed data.  Also useful for our model when nodes belong to one latent class as a sender but another latent class as a recipient.
+
 Our method learns about event dynamics within latent groups of individuals, but other types of heterogeneity likely exist in some data sets.  For example, dynamics might change over time \cite{Vu2011}.  Alternatively, if nodes change groups.  One approach, analogous to \cite{Airoldi2008}, would allow the latent class $z_i$ to be drawn from node-specific membership vectors $\pi_i$  after each change point.  In some contexts such extensions might be substantively important and warrant future work.
 
 \subsubsection*{Acknowledgements}
@@ -372,11 +357,29 @@ Our method learns about event dynamics within latent groups of individuals, but 
 \bibliographystyle{unsrt}
 \bibliography{refs}
 
-\appendix{Split-merge updates}
+\appendix{\textbf{Split-merge Metropolis-Hastings move for non-conjugate stochastic blockmodels}}
 
-Motivation: simply Gibbs sampling does not seem to mix well.  \footnote{This section is planned future work. In the experiments we evaluate the performance of the model when restricting the number of clusters $K$.  For these chains we do not propose split moves when the number of non-empty clusters is already $K$.}
+This is a two-stage MH procedure.  First, pick two nodes $i,j$ uniformly.  If they belong to the same block $k$ (i.e. $z_i=z_j=k$), then let the ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``split'' state $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ with new cluster $l$:
+\begin{itemize}
+\item For blocks $r \ne l$, sample $\phi_{lr}^{split} \sim N(\phi_{kr}^{merge},\sigma^2)$ and $\phi_{rl}^{split} \sim N(\phi_{rk}^{merge},\sigma^2)$ and $\phi_{ll}^{split} \sim N(\phi_{kk}^{merge}, \sigma^2)$.
+\item For all $a$ such that $z_a^{merge} = k$, randomly initialize $z_a^{split}$ to either $k$ or $l$, then perform a restricted Gibbs scan by sampling $p(z_{a}^{split}=k|\cdot)  \propto n_k p(A|\mathbf{z}^{split}_{-a},\boldsymbol{\phi}^{split})$
+where $n_k=\sum_{i}I(z_i^{split}=k)$.% and compute $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})$ to be the product of the probabilities for the sampled assignments.
+\item Accept  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ as the new state with probability $\alpha^*$, defined below.
+\end{itemize}
 
-IDEA: References are Dahl 2003, Wang, Blei 2012, Neal 2000 (alg 8).  A proposed split has REM parameters that are only slightly different than those for the original block.  Merges of two sets of REM parameters are performed by using the parameter for one blocks, and doing so for each dimension independently.  By keeping track of the probability of each of these transitions we can correctly compute the Metropolis-Hastings acceptance probability needed to guarantee we have an MCMC transition that leaves the posterior distribution invariant.
+ If $i$ and $j$ belong to different blocks $k$ and $l$ (i.e. $z_i = k \ne z_j=l$), we set the ``split'' state  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as follows:
+\begin{itemize}
+\item For all blocks $r \ne k,l$: sample $\phi_{kr}^{merge} \sim \mbox{Unif}(\{\phi_{kr}^{split}, \phi_{lr}^{split}\})$, and $\phi_{rk}^{merge} \sim \mbox{Unif}(\{\phi_{rk}^{split}, \phi_{rl}^{split}\})$.%, and sample $\phi_{lr}^{merge},\phi_{rl}^{merge}$, and $\phi_{ll}^{merge}$ independently from the prior.
+\item Accept $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as the new state with probability $1/\alpha^*$, defined below.
+\end{itemize}
+
+ The Metropolis-Hastings acceptance probability for the split move is: $$\alpha^* =\frac{p(Y|\boldsymbol{\phi}^{split},\mathbf{z}^{split})}{p(Y|\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})}  \frac{p(\boldsymbol{\phi}^{split})}{p(\boldsymbol{\phi}^{merge})} \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} \frac{q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})}{q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})} \frac{q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge})}{q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})}$$
+
+The first term is the likelihood ratio of the two states.  Letting $S$ be the set of nodes assigned to $k$ or $l$ in $\mathbf{z}^{split}$, the probability of sampling $\mathbf{z}^{split}$ during a restricted Gibbs scan from  $\mathbf{z}^{merge}$ is computed as $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split}) = \prod_{s \in S} p(z_{s}=z_s^{split} |\{ z_a^{split},z_{b}^{merge}: a  < s \ \mbox{and} \ s < b\}, \boldsymbol{\phi}^{split})$.  Since there is only one way of combining two clusters we know $q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})=1$.   The transition $q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})$ is a product of proposal densities and
+$q(\boldsymbol{\phi}^{split} \rightarrow
+\boldsymbol{\phi}^{merge}) = \frac{1}{2}\prod_{r \ne k,l}\left(\frac{1}{2}\right)^2$. \footnote{To ensure both states have the same dimensionality, one can optionally sample the parameters empty cluster $l$, though the extra term  in $q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge})$ would cancel with a corresponding term in $p(\boldsymbol{\phi}^{merge})$}  Finally, under this prior $ \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} = \frac{(n_{z_i}^{split} - 1)!(n_{z_j}^{split} - 1)!}{(n_{z_i}^{merge}-1)!}$.   
+
+ \appendix{\textbf{Split-merge Metropolis-Hastings Move for Relational Event Blockmodel}}
 
 This is a two-stage MH procedure, first picking two nodes at random then creating a new set of parameters.  We also use an auxilary variable to avoid changing dimensionality (similar to Neal 2000, alg. 8).
 
@@ -386,7 +389,7 @@ Next pick two nodes $i,j$ uniformly.  If they belong to the same block $k$ (i.e.
 \begin{itemize}
 %\item For $p \in [1,P], r \in [1,K]$: let $l=K+1$ sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$
 \item Sample $\phi_{lrp}^{split} \sim N(\phi_{krp}^{merge},\sigma^2)$ and $\phi_{rlp}^{split} \sim N(\phi_{rkp}^{merge},\sigma^2)$ and $\phi_{llp}^{split} \sim N(\phi_{kkp}^{merge}, \sigma^2)$.
-\item Sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$.
+%\item Sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$.
 \item Let $S$ be all nodes assigned to $k$.  Randomly assign $z_a^{split}$ and perform restricted Gibbs scan for $\mathbf{z}^{split}$: $$p(z_{a}^{split}=k|\cdot)  \propto m_k p(A|\mathbf{z}^{split}_{-a},\phi^{split})$$
 where $m_k=\sum_{i \in S}I(z_i=k)$ and compute $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})$ to be the product of the probabilities for the sampled assignments.
 \item Accept  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ as the new state with probability $\alpha^*$, defined below.
@@ -394,15 +397,47 @@ where $m_k=\sum_{i \in S}I(z_i=k)$ and compute $q( \mathbf{z}^{merge} \rightarro
 
   If $i$ and $j$ belong to different blocks $k$ and $l$ (i.e. $z_i = k \ne z_j=l$), we define the current state to be the ``split'' state  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as follows:
 \begin{itemize}
-\item For each $p \in [1,P]$ and for all blocks $r \in [1,K], r\ne l$ draw $\phi_{krp}^{merge}$ uniformly from $\{\phi_{krp}^{split}, \phi_{lrp}^{split}\}$,  $\phi_{rkp}^{merge}$ uniformly from $\{\phi_{rkp}^{split}, \phi_{rlp}^{split}\}$
-\item Sample $\phi_{lrp}^{split},\phi_{rlp}^{split}$, and $\phi_{llp}^{split}$ independently from the prior $N(\mu_p,\sigma^2_p)$
+\item For each $p \in [1,P]$ and for all blocks $r \in [1,K], r\ne l$ draw $\phi_{krp}^{merge}$ uniformly from $\{\phi_{krp}^{split}, \phi_{lrp}^{split}\}$,  $\phi_{rkp}^{merge}$ uniformly from $\{\phi_{rkp}^{split}, \phi_{rlp}^{split}\}$, and sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$.
+%\item Sample $\phi_{lrp}^{split},\phi_{rlp}^{split}$, and $\phi_{llp}^{split}$ independently from the prior $N(\mu_p,\sigma^2_p)$
 \item Let $S$ be the set of nodes assigned to $k$ or $l$. Let $\mathbf{z}$ be a random assignment for nodes a and compute the probability of sampling $\mathbf{z}^{split}$ during a restricted Gibbs scan as $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split}) = \prod_{s \in S} p(z_{s}=z_s^{split} |\{ z_a^{split},z_{b}: a  < s, s < b\}, \boldsymbol{\phi}^{split})$
 \item Accept $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as the new state with probability $1/\alpha^*$, defined below.
 \end{itemize}
 
-The Metropolis-Hastings acceptance probability for the split move is: $$\alpha^* =\frac{p(\boldsymbol{\phi}^{split})}{p(\boldsymbol{\phi}^{merge})} \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})}\frac{p(A|\boldsymbol{\phi}^{split},\mathbf{z}^{split})}{p(A|\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})}\frac{q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})}{q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})} \frac{q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge})}{q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})}$$
+The Metropolis-Hastings acceptance probability for the split move is: $$\alpha^* =\frac{p(A|\boldsymbol{\phi}^{split},\mathbf{z}^{split})}{p(A|\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})}  \frac{p(\boldsymbol{\phi}^{split})}{p(\boldsymbol{\phi}^{merge})} \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} \frac{q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})}{q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})} \frac{q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge})}{q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})}$$
 
-The first two terms represent the prior. For the proposed merge step, note $q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge}) = .5^{P(2K-3)}$ where $K$ is the number of blocks before the move.  We can compute $q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})$ directly as a product of Normal densities.  For the block assignments, $q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})=1$ since  there is only one way of combining two clusters.  $ \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} = \frac{(n_{z_i}^{split} - 1)!(n_{z_j}^{split} - 1)!}{(n_{z_i}^{merge}-1)!}$.  We have avoided the dimensionality of the model during the MH move by creating an empty cluster when merging and filling a (newly created) empty cluster when splitting.  One can return to the previous state with positive probability.
+For the proposed merge step,
+$$q(\boldsymbol{\phi}^{split} \rightarrow
+\boldsymbol{\phi}^{merge}) = \prod_{q,r \ne l}\frac{1}{2} \prod_r p(\phi_{r,l,p}|\mu_p,\sigma_p^2)p(\phi_{l,r,p}|\mu_p,\sigma_p^2) p(\phi_{l,l,p}|\mu_p,\sigma_p^2)$$ though the latter product cancels with a corresponding term in $p(\boldsymbol{\phi}^{merge})$.  We can compute the transition $q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})$ directly as a product of Normal densities.  For the block assignments, $q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})=1$ since  there is only one way of combining two clusters.  $ \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} = \frac{(n_{z_i}^{split} - 1)!(n_{z_j}^{split} - 1)!}{(n_{z_i}^{merge}-1)!}$.   
+
+% Motivation: simply Gibbs sampling does not seem to mix well.  \footnote{This section is planned future work. In the experiments we evaluate the performance of the model when restricting the number of clusters $K$.  For these chains we do not propose split moves when the number of non-empty clusters is already $K$.}
+
+% IDEA: References are Dahl 2003, Wang, Blei 2012, Neal 2000 (alg 8).  A proposed split has REM parameters that are only slightly different than those for the original block.  Merges of two sets of REM parameters are performed by using the parameter for one blocks, and doing so for each dimension independently.  By keeping track of the probability of each of these transitions we can correctly compute the Metropolis-Hastings acceptance probability needed to guarantee we have an MCMC transition that leaves the posterior distribution invariant.
+
+% This is a two-stage MH procedure, first picking two nodes at random then creating a new set of parameters.  We also use an auxilary variable to avoid changing dimensionality (similar to Neal 2000, alg. 8).
+
+% %$\boldsymbol{\phi}_{l,r}^{split} \sim G_0$, $\boldsymbol{\phi}_{r,l}^{split} \sim G_0$, and $\boldsymbol{\phi}_{l,l}^{split} \sim G_0$ (or actually $N(\mu_{\phi},\Sigma_{\phi})$
+
+% Next pick two nodes $i,j$ uniformly.  If they belong to the same block $k$ (i.e. $z_i=z_j=k$), then we call the current state the ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``split'' state $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ by letting $l=K+1$ and for $p \in [1,P], r \in [1,K]$
+% \begin{itemize}
+% %\item For $p \in [1,P], r \in [1,K]$: let $l=K+1$ sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$
+% \item Sample $\phi_{lrp}^{split} \sim N(\phi_{krp}^{merge},\sigma^2)$ and $\phi_{rlp}^{split} \sim N(\phi_{rkp}^{merge},\sigma^2)$ and $\phi_{llp}^{split} \sim N(\phi_{kkp}^{merge}, \sigma^2)$.
+% \item Sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$.
+% \item Let $S$ be all nodes assigned to $k$.  Randomly assign $z_a^{split}$ and perform restricted Gibbs scan for $\mathbf{z}^{split}$: $$p(z_{a}^{split}=k|\cdot)  \propto m_k p(A|\mathbf{z}^{split}_{-a},\phi^{split})$$
+% where $m_k=\sum_{i \in S}I(z_i=k)$ and compute $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})$ to be the product of the probabilities for the sampled assignments.
+% \item Accept  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ as the new state with probability $\alpha^*$, defined below.
+% \end{itemize}
+
+%   If $i$ and $j$ belong to different blocks $k$ and $l$ (i.e. $z_i = k \ne z_j=l$), we define the current state to be the ``split'' state  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as follows:
+% \begin{itemize}
+% \item For each $p \in [1,P]$ and for all blocks $r \in [1,K], r\ne l$ draw $\phi_{krp}^{merge}$ uniformly from $\{\phi_{krp}^{split}, \phi_{lrp}^{split}\}$,  $\phi_{rkp}^{merge}$ uniformly from $\{\phi_{rkp}^{split}, \phi_{rlp}^{split}\}$
+% %\item Sample $\phi_{lrp}^{split},\phi_{rlp}^{split}$, and $\phi_{llp}^{split}$ independently from the prior $N(\mu_p,\sigma^2_p)$
+% \item Let $S$ be the set of nodes assigned to $k$ or $l$. Let $\mathbf{z}$ be a random assignment for nodes a and compute the probability of sampling $\mathbf{z}^{split}$ during a restricted Gibbs scan as $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split}) = \prod_{s \in S} p(z_{s}=z_s^{split} |\{ z_a^{split},z_{b}: a  < s, s < b\}, \boldsymbol{\phi}^{split})$
+% \item Accept $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as the new state with probability $1/\alpha^*$, defined below.
+% \end{itemize}
+
+% The Metropolis-Hastings acceptance probability for the split move is: $$\alpha^* =\frac{p(\boldsymbol{\phi}^{split})}{p(\boldsymbol{\phi}^{merge})} \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})}\frac{p(A|\boldsymbol{\phi}^{split},\mathbf{z}^{split})}{p(A|\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})}\frac{q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})}{q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})} \frac{q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge})}{q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})}$$
+
+% The first two terms represent the prior. For the proposed merge step, note $q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge}) = .5^{P(2K-3)}$ where $K$ is the number of blocks before the move.  We can compute $q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})$ directly as a product of Normal densities.  For the block assignments, $q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})=1$ since  there is only one way of combining two clusters.  $ \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} = \frac{(n_{z_i}^{split} - 1)!(n_{z_j}^{split} - 1)!}{(n_{z_i}^{merge}-1)!}$.  We have avoided the dimensionality of the model during the MH move by creating an empty cluster when merging and filling a (newly created) empty cluster when splitting.  One can return to the previous state with positive probability.
 
 
 \end{document}
