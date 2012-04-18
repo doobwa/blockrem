@@ -62,7 +62,7 @@ lnormalize <- function(ps) {
 }
 
 
-gibbs_restricted <- function(phi,z,S,k,l,llk_node,ztrue=NULL) {
+gibbs_restricted <- function(phi,z,S,k,l,llk_node,prob.only=FALSE) {
 
   # Randomly assign nodes that are currently either in k or l
   K <- dim(phi)[2]
@@ -78,8 +78,9 @@ gibbs_restricted <- function(phi,z,S,k,l,llk_node,ztrue=NULL) {
       z[a] <- j
       ys[a,j] <- llk_node(a,phi,z) + log(counts[j] + priors$alpha)
     }
-    z[a] <- sample(clusters,1,prob=lnormalize(ys[a,clusters])) #rcatlog(ys[a,])
-    if (!is.null(ztrue)) z[a] <- ztrue[a]
+    if (!prob.only) {
+      z[a] <- sample(clusters,1,prob=lnormalize(ys[a,clusters])) #rcatlog(ys[a,])
+    }
     counts[z[a]] <- counts[z[a]] + 1
   }
 #  browser()
@@ -109,54 +110,49 @@ pm2ps <- function(phi.merge,phi.split,k,l,sigma) {
 splitmerge <- function(phi,z,lposterior,llk_node,priors,verbose=TRUE) {
   N <- length(z)
   K <- dim(phi)[2]
+  init <- split <- merge <- list(z=z,phi=phi)
   ij <- sample(1:N,2,replace=FALSE)
   i <- ij[1]; j <- ij[2]
+  k <- init$z[i]
+  l <- init$z[j]
   S <- which(z %in% z[ij])
-  z <- list(init=z)
-  phi <- list(init=phi)
   q <- list()
-  if (z$init[i] == z$init[j]) {
-    phi$merge <- add_cluster(phi$init)
-    phi$merge <- sample_cluster_from_prior(phi$merge,K+1,priors)
-    z$merge <- z$init
-    phi$split <- split_phi(phi$merge,z$init[i],K+1,priors$sigma)
-    h <- gibbs_restricted(phi$split,z$merge,S,z$init[i],K+1,llk_node)
-    z$split <- h$z
-    q$zm2zs <- h$transition
-    q$pm2ps <- pm2ps(phi$merge,phi$split,z$init[i],K+1,priors$sigma)
+  if (k == l) {
+    l <- K+1
+    split$phi <- add_cluster(split$phi)
+    split$phi <- split_phi(split$phi,k,l,priors$sigma)
+    h <- gibbs_restricted(split$phi,merge$z,S,k,l,llk_node,prob.only=FALSE)
   } else {
-    phi$split <- phi$init
-    z$split <- z$merge <- z$init
-    z$merge[S] <- z$init[i]
-    phi$merge <- merge_phi(phi$split,z$init[i],z$init[j])
-    #phi$merge <- sample_cluster_from_prior(phi$merge,z$init[j],priors)
-    #phi$split <- sample_cluster_from_prior(phi$split,z$init[j],priors)
-    g <- gibbs_restricted(phi$split,z$merge,S,z$init[i],z$init[j],llk_node,ztrue=z$split)
-    q$zm2zs <- g$transition
-    if (q$zm2zs == -Inf) browser()
-    q$pm2ps <- pm2ps(phi$merge,phi$split,z$init[i],z$init[j],priors$sigma)
+    merge$z[S] <- k
+    merge$phi <- merge_phi(split$phi,k,l)
+    h <- gibbs_restricted(split$phi,merge$z,S,k,l,llk_node,prob.only=TRUE)
   }
-  if (any(is.nan(unlist(q)))) browser()
-  q$ps2pm <- ps2pm(phi$split,phi$merge)
+  split$z <- h$z
+  q$zm2zs <- h$transition
+  q$pm2ps <- pm2ps(merge$phi,split$phi,k,l,priors$sigma)
+  q$ps2pm <- ps2pm(split$phi,merge$phi)
   q$zs2zm <- 0
-  lp.split <- lposterior(phi$split,z$split,priors)
-  lp.merge <- lposterior(phi$merge,z$merge,priors)
+  lp.split <- lposterior(split$phi,split$z,priors)
+  lp.merge <- lposterior(merge$phi,merge$z,priors)
   alpha <- lp.split - lp.merge + q$zs2zm - q$zm2zs + q$ps2pm - q$pm2ps
   
-  if (z$init[i] == z$init[j]) {
-    final <- list(type="split",phi=phi$split,z=z$split,prob=exp(alpha))
+  if (any(is.nan(unlist(q)))) browser()
+  if (init$z[i] == init$z[j]) {
+    final <- list(type="split",phi=split$phi,z=split$z,prob=exp(alpha))
   } else {
-    final <- list(type="merge",phi=phi$merge,z=z$merge,prob=1/exp(alpha))
+    final <- list(type="merge",phi=merge$phi,z=merge$z,prob=1/exp(alpha))
   }
   if (verbose) {
-    type <- ifelse(z$init[i] == z$init[j],"split","merge") 
-    cat("move:",type," clusters:",z$init[ij],"\n")
-    cat("initial z:",z$init,", K:",dim(phi$init)[2],"\n")
-    cat("merge z:",z$merge,", K:",dim(phi$merge)[2],"\n")
-    cat("split z:",z$split,", K:",dim(phi$split)[2],"\n")
+    type <- ifelse(init$z[i] == init$z[j],"split","merge") 
+    cat("move:",type," clusters:",init$z[ij],"\n")
+    cat("initial z:",init$z,", K:",dim(init$phi)[2],"\n")
+    cat("merge z:",merge$z,", K:",dim(merge$phi)[2],"\n")
+    cat("split z:",split$z,", K:",dim(split$phi)[2],"\n")
     cat("prob:",final$prob,"\n")
-    print(lapply(phi[c("init","merge","split")],function(p) p[1,,]))
+    #print(lapply(phi[c("init","merge","split")],function(p) p[1,,]))
+    cat("split",lp.split,"\n")
+    cat("merge",lp.merge,"\n")
     print(unlist(q))
   }
-  list(phi=phi,chosen=c(i,j),alpha=alpha,z=z,q=q,final=final,ys=g$ys)
+  list(phi=phi,chosen=c(i,j),alpha=alpha,z=z,q=q,final=final,ys=h$ys)
 }

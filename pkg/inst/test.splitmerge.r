@@ -1,7 +1,7 @@
 context("splitmerge")
 library(brem)
 library(testthat)
-#source("pkg/R/splitmerge.r")
+source("pkg/R/splitmerge.r")
 ## source("pkg/R/brem.r")
 ## source("pkg/R/samplers.r")
 ## source("pkg/R/hmc.r")
@@ -70,6 +70,26 @@ llk_node_test<- function(a,phi,z) {
   return(llk)
 }
 
+# Sample the first dimension of phi
+sample_phi <- function(phi,z,lpost,kx=NULL) {
+  K <- dim(phi)[2]
+  if (is.null(kx)) kx <- 1:K
+  lpost <- function(x,lp=TRUE,lgrad=FALSE) {
+    phi[1,k1,k2] <- x
+    lposterior_test(phi,z,priors)
+  }
+  olp <- nlp <- matrix(0,K,K)
+  ratios <- c(); r <- 0
+  for (k1 in kx) {
+    for (k2 in kx) {
+      olp[k1,k2] <- lpost(phi[1,k1,k2])
+      phi[1,k1,k2] <- slice(phi[1,k1,k2],lpost,m=20)
+      nlp[k1,k2] <- lpost(phi[1,k1,k2])
+      ratios[r <- r+1] <- nlp - olp
+    }
+  }
+  return(list(phi=phi,olp=olp,nlp=nlp,ratios=ratios))
+}
 
 lposterior_test <- function(phi,z,priors) {
   llk <- llk_node_test(1,phi,z)
@@ -111,12 +131,13 @@ lposterior_test <- function(phi,z,priors) {
 ## })
 
 
-M <- 5000
+M <- 1000
 N <- 9
 K <- 3
 P <- 13
 phi <- array(0,c(P,K,K))
 z <- c(1,1,1,2,2,2,3,3,3)
+truth <- list(phi=phi,z=z)
 
 set.seed(2)
 phi[1,,] <- rnorm(9,0,1)
@@ -133,26 +154,9 @@ s$transform()
 priors <- list(alpha=1,phi=list(mu=0,sigma=1),sigma=.1)
 lposterior_test(phi,z,priors)
 k1 <- k2 <- 1
-lpost(phi[1,1,1])
 r <- sample_phi(phi,z,lpost)
-sample_phi <- function(phi,z,lpost,kx=NULL) {
-  K <- dim(phi)[2]
-  if (is.null(kx)) kx <- 1:K
-  lpost <- function(x,lp=TRUE,lgrad=FALSE) {
-    phi[1,k1,k2] <- x
-    lposterior_test(phi,z,priors)
-  }
-  olp <- nlp <- matrix(0,K,K)
-  for (k1 in kx) {
-    for (k2 in kx) {
-      olp[k1,k2] <- lpost(phi[1,k1,k2])
-      phi[1,k1,k2] <- slice(phi[1,k1,k2],lpost,m=20)
-      nlp[k1,k2] <- lpost(phi[1,k1,k2])
-    }
-  }
-  return(list(phi=phi,olp=olp,nlp=nlp))
-}
 
+r$phi[1,,]
 
 clusters <- 1:2
 S <- which(z %in% clusters)
@@ -160,16 +164,32 @@ z[S] <- sample(clusters,length(S),replace=TRUE)
 
 phi <- sample_phi(phi,z,lpost,clusters)$phi
 lposterior_test(phi,z,priors)
-r <- gibbs_restricted(phi,z,S,clusters[1],clusters[2],llk_node,ztrue=NULL)
+r <- gibbs_restricted(phi,z,S,clusters[1],clusters[2],llk_node_test,prob.only=FALSE)
 z <- r$z
 
-
 source("pkg/R/splitmerge.r")
-s <- splitmerge(phi,z,lposterior_test,llk_node_test,priors,verbose=TRUE)
 
-truth <- list(phi=phi,z=z)
 phi <- truth$phi
 z <- truth$z
+
+phi[1,,] <- rnorm(9)
+z <- sample(1:(dim(phi)[2]),9,rep=T)
+
+for (i in 1:100) {
+  cat("logpost",lposterior_test(phi,z,priors),"\n")
+  s <- splitmerge(phi,z,lposterior_test,llk_node_test,priors,verbose=TRUE)
+  if (runif(1) < .5) {#s$final$prob) {
+    z <- s$final$z
+    phi <- s$final$phi
+  }
+  phi <- sample_phi(phi,z,lpost,clusters)$phi
+  r <- gibbs_restricted(phi,z,S,clusters[1],clusters[2],llk_node_test,prob.only=FALSE)
+  z <- r$z
+  K <- dim(phi)[2]
+  empty <- which(table(factor(z,1:K)) == 0)
+  for (k in empty) phi <- remove_cluster(phi,k)
+}
+
 
   px <- c(rep(1,6),rep(0,7))
   current <- beta[1:6,k1,k2]
