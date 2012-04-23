@@ -199,8 +199,6 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [X] Clean up some files
 - [ ] Shift samplers to use qmcmc package
 - [ ] Get sampler tests and gibbs tests to pass
-- [ ] Possible bug in split merge:  shouldn't split look like initial?
-move: merge  clusters: 2 1 
-initial z: 2 2 2 1 1 2 3 1 1 , K: 3 
-merge z: 2 2 2 2 2 2 3 2 2 , K: 3 
-split z: 1 1 1 1 1 1 3 1 1 , K: 3 
+- [X] Possible bug in split merge:  shouldn't split look like initial?
+- [ ] Bug in sample_phi: restricted range for k1 and k2
+

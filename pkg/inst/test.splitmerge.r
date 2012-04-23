@@ -70,6 +70,15 @@ llk_node_test<- function(a,phi,z) {
   return(llk)
 }
 
+
+lposterior_test <- function(phi,z,priors) {
+  llk <- llk_node_test(1,phi,z)
+  pr.phi <- sum(dnorm(phi[which(phi != 0)],priors$phi$mu,priors$phi$sigma,log=TRUE))
+  tb <- table(factor(z,1:K))
+  tb <- tb[which(tb>0)]
+  pr.z <- sum(log(sapply(tb - 1,factorial)))
+  return(llk + pr.phi + pr.z)
+}
 # Sample the first dimension of phi
 sample_phi <- function(phi,z,lpost,kx=NULL) {
   K <- dim(phi)[2]
@@ -85,19 +94,9 @@ sample_phi <- function(phi,z,lpost,kx=NULL) {
       olp[k1,k2] <- lpost(phi[1,k1,k2])
       phi[1,k1,k2] <- slice(phi[1,k1,k2],lpost,m=20)
       nlp[k1,k2] <- lpost(phi[1,k1,k2])
-      ratios[r <- r+1] <- nlp - olp
     }
   }
   return(list(phi=phi,olp=olp,nlp=nlp,ratios=ratios))
-}
-
-lposterior_test <- function(phi,z,priors) {
-  llk <- llk_node_test(1,phi,z)
-  pr.phi <- sum(dnorm(phi[which(phi != 0)],priors$phi$mu,priors$phi$sigma,log=TRUE))
-  tb <- table(factor(z,1:K))
-  tb <- tb[which(tb>0)]
-  pr.z <- sum(log(sapply(tb - 1,factorial)))
-  return(llk + pr.phi + pr.z)
 }
 
 
@@ -144,6 +143,7 @@ phi[1,,] <- rnorm(9,0,1)
 sim <- generate.brem(M,N,phi,z)
 table(sim$edgelist[,2],sim$edgelist[,3])
 
+# Get edgelist and precompute datastructures
 edgelist <- A <- sim$edgelist
 px <- rep(0,13)
 px[1] <- 1
@@ -151,11 +151,49 @@ s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
 s$precompute()
 s$transform()
 
+# Set priors and test lposterior, sampler
 priors <- list(alpha=1,phi=list(mu=0,sigma=1),sigma=.1)
 lposterior_test(phi,z,priors)
 k1 <- k2 <- 1
 r <- sample_phi(phi,z,lpost)
 
+## Debug split merge
+
+mcmc.blockmodel <- function(lposterior,llk_node,priors) {
+  phi <- array(0,c(P,K,K))
+  phi[1,,] <- rnorm(9)
+  z <- sample(1:(dim(phi)[2]),9,rep=T)
+
+  niter <- 20
+  samples <- list()
+  lps <- rep(0,niter)
+  for (iter in 1:niter) {
+
+    ## Split merge move
+    sm <- splitmerge(phi,z,lposterior_test,llk_node_test,priors)
+    phi <- sm$final$phi
+    z <- sm$final$z
+
+    ## remove empty clusters
+    iz <- which(table(factor(z,1:dim(phi)[2]))==0)
+    for (l in iz) {
+      phi <- remove_cluster(phi,l)
+      z[which(z > l)] <- z[which(z > l)] - 1
+    }
+
+    ## Sample phi and z
+    phi <- sample_phi(phi,z,lposterior_test)$phi
+    h <- gibbs(phi,z,S,llk_node,prob.only=FALSE)
+    z <- h$z
+
+    ## Save progress
+    lps[iter] <- lposterior_test(phi,z,priors)
+    samples[[iter]] <- list(phi=phi,z=z)
+  }
+  return(list(lps=lps,samples=samples))
+}
+
+# old
 r$phi[1,,]
 
 clusters <- 1:2
@@ -166,6 +204,14 @@ phi <- sample_phi(phi,z,lpost,clusters)$phi
 lposterior_test(phi,z,priors)
 r <- gibbs_restricted(phi,z,S,clusters[1],clusters[2],llk_node_test,prob.only=FALSE)
 z <- r$z
+
+## Get a good split and good merge state
+r <- sample_phi(phi,z,lposterior_test)
+sum(r$nlp-r$olp)
+merge <- split <- list(z=z,phi=phi)
+k <- 2; l <- 3
+merge$phi <- merge_phi(split$phi,k,l)
+
 
 source("pkg/R/splitmerge.r")
 
