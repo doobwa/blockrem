@@ -89,15 +89,16 @@ gibbs <- function(phi,z,S,llk_node,prob.only=FALSE) {
 
 ##' If prob.only, computes the probability of a restricted Gibbs scan
 ##' p(z|phi) = \prod_{a in S} p(z_a|z_prev, phi).
-##' Otherwise, Gibbs sample p(z|phi) and return z and the transition prob.
+##' Randomly initializes z_a's.  If prob. only, set z_a to provided z.
+##' Otherwise, Gibbs sample p(z|phi). Returns z and the transition prob.
 gibbs_restricted <- function(phi,z,S,k,l,llk_node,prob.only=FALSE) {
 
   # Randomly assign nodes that are currently either in k or l
   K <- dim(phi)[2]
   clusters <- c(k,l)
 #  S <- which(z %in% clusters)
-  z[S] <- sample(clusters,length(S),replace=TRUE)
   z.init <- z
+  z[S] <- sample(clusters,length(S),replace=TRUE)
   counts <- table(factor(z,1:K))
   ys <- matrix(0,N,K)
   for (a in S) {
@@ -108,6 +109,8 @@ gibbs_restricted <- function(phi,z,S,k,l,llk_node,prob.only=FALSE) {
     }
     if (!prob.only) {
       z[a] <- sample(clusters,1,prob=lnormalize(ys[a,clusters])) #rcatlog(ys[a,])
+    } else {
+      z[a] <- z.init[a]
     }
     counts[z[a]] <- counts[z[a]] + 1
   }
@@ -177,6 +180,7 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
   lp$split <- lposterior(split$phi,split$z,priors)
   lp$merge <- lposterior(merge$phi,merge$z,priors)
   lp$zm2zs <- h$transition
+#  if (lp$zm2zs < -200) browser()
   lp$pm2ps <- pm2ps(merge$phi,split$phi,k,l,K,priors)
   lp$ps2pm <- ps2pm(split$phi,merge$phi,k,l,K,priors)
   lp$pzs2pzm <- log(factorial(sum(split$z[S] == k) ) * # TODO: Fix -1 issue
@@ -185,12 +189,12 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
   
   initial <- list(type="nomove",phi=init$phi,z=init$z)
   if (init$z[i] == init$z[j]) {
-    proposed <- list(type="split",phi=split$phi,z=split$z,prob=exp(alpha))
+    proposed <- list(type="split",phi=split$phi,z=split$z,lprob=alpha)
   } else {
-    proposed <- list(type="merge",phi=merge$phi,z=merge$z,prob=1/exp(alpha))
+    proposed <- list(type="merge",phi=merge$phi,z=merge$z,lprob=-alpha)
   }
   
-  if (runif(1) < proposed$prob) {
+  if (runif(1) < exp(proposed$lprob)) {
     final <- proposed
     final$accepted <- TRUE
     cat("move accepted\n")
@@ -203,10 +207,10 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
   if (verbose) {
     type <- ifelse(init$z[i] == init$z[j],"split","merge") 
     cat("move:",type," clusters:",init$z[ij],"\n")
-    cat("initial z:",init$z,", K:",dim(init$phi)[2],"\n")
-    cat("merge z:",merge$z,", K:",dim(merge$phi)[2],"\n")
-    cat("split z:",split$z,", K:",dim(split$phi)[2],"\n")
-    cat("prob:",log(proposed$prob),"\n")
+    cat("initial z:",init$z,"\n")
+    cat("merge z:",merge$z,"\n")
+    cat("split z:",split$z,"\n")
+    cat("lprob:",proposed$lprob,"\n")
     #print(lapply(phi[c("init","merge","split")],function(p) p[1,,]))
     ## cat("split",lp$split,"\n")
     ## cat("merge",lp$merge,"\n")
@@ -218,26 +222,29 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
 
 
 ## Sketch out mcmc routine
-mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K) {
+mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE,verbose=FALSE,sigma=.1) {
+  priors$sigma <- sigma
   phi <- array(0,c(P,K,K))
   phi[1,,] <- rnorm(K^2)
   z <- sample(1:(dim(phi)[2]),K^2,rep=T)
 
-  niter <- 20
   samples <- list()
   lps <- acc <- rep(0,niter)
   for (iter in 1:niter) {
 
     ## Split merge move
-    sm <- splitmerge(phi,z,lposterior,llk_node,priors)
-    phi <- sm$final$phi
-    z <- sm$final$z
+    if (do.sm) {
+      sm <- splitmerge(phi,z,lposterior,llk_node,priors,verbose=verbose)
+      phi <- sm$final$phi
+      z <- sm$final$z
+      acc[iter] <- sm$final$accepted
+    }
 
     ## remove empty clusters
     iz <- which(table(factor(z,1:dim(phi)[2]))==0)
-    for (l in iz) {
-      phi <- remove_cluster(phi,l)
+    for (l in rev(iz)) {  # fixed bug in how these are deleted?
       z[which(z > l)] <- z[which(z > l)] - 1
+      phi <- remove_cluster(phi,l)
     }
     K <- max(z)
 
@@ -250,7 +257,6 @@ mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K) {
     lps[iter] <- lposterior(phi,z,priors)
     cat(iter,":",lps[iter],"\n")
     samples[[iter]] <- list(phi=phi,z=z)
-    acc[iter] <- sm$final$accepted
   }
   return(list(lps=lps,samples=samples,acc=acc))
 }
