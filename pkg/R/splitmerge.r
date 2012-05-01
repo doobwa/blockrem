@@ -1,30 +1,32 @@
 
 
 ##' Split phi for cluster k into k and l
-split_phi <- function(phi.merge,k,l,sigma=.1) {
+split_phi <- function(phi.merge,k,l,priors) {
   P <- dim(phi.merge)[1]
   K <- dim(phi.merge)[2]
   phi.split <- phi.merge
   for (r in 1:K) {
-    phi.split[,l,r] <- rnorm(P,phi.merge[,k,r],sigma)
-    phi.split[,r,l] <- rnorm(P,phi.merge[,r,k],sigma)
+    phi.split[,l,r] <- rnorm(P,phi.merge[,k,r],priors$sigma)
+    phi.split[,r,l] <- rnorm(P,phi.merge[,r,k],priors$sigma)
   }
-  phi.split[,l,l] <- rnorm(P,phi.merge[,k,k],sigma)
+  phi.split[,l,l] <- rnorm(P,phi.merge[,k,k],priors$sigma)
+  phi.split[,k,k] <- rnorm(P,phi.merge[,k,k],priors$sigma)
   return(phi.split)
 }
 
 ##' Merge cluster l into k
-merge_phi <- function(phi,k,l) {
+merge_phi <- function(phi,k,l,priors) {
   P <- dim(phi)[1]
   K <- dim(phi)[2]
-  rs <- (1:K)[-c(k,l)]
-  for (p in 1:P) {
+  phi[,k,k] <- rnorm(P,.5 * (phi[,k,k] + phi[,l,l]),priors$sigma)
+  if (K > 2) {
+    rs <- (1:K)[-c(k,l)]
     for (r in rs) {
-      phi[p,r,k] <- sample(phi[p,r,c(k,l)],1)
-      phi[p,k,r] <- sample(phi[p,c(k,l),r],1)
+      phi[,k,r] <- rnorm(P,.5 * (phi[,k,r] + phi[,l,r]),priors$sigma)
+      phi[,r,k] <- rnorm(P,.5 * (phi[,r,k] + phi[,r,l]),priors$sigma)
     }
-    phi[p,k,k] <- sample(c(phi[p,k,k],phi[p,l,l]),1)
   }
+  phi <- sample_cluster_from_prior(phi,l,priors)
   return(phi)
 }
 
@@ -84,6 +86,10 @@ gibbs <- function(phi,z,S,llk_node,prob.only=FALSE) {
   list(z=z,transition=q,ys=ys,z.init=z.init)
 }
 
+
+##' If prob.only, computes the probability of a restricted Gibbs scan
+##' p(z|phi) = \prod_{a in S} p(z_a|z_prev, phi).
+##' Otherwise, Gibbs sample p(z|phi) and return z and the transition prob.
 gibbs_restricted <- function(phi,z,S,k,l,llk_node,prob.only=FALSE) {
 
   # Randomly assign nodes that are currently either in k or l
@@ -111,44 +117,41 @@ gibbs_restricted <- function(phi,z,S,k,l,llk_node,prob.only=FALSE) {
   list(z=z,transition=q,ys=ys,z.init=z.init)
 }
 
-## ps2pm <- function(phi.split,phi.merge) {
-##   P <- 1#dim(phi.merge)[1]
-##   K <- dim(phi.merge)[2]
-##   log(.5^(P*(2*K-3)))
-## }
-## pm2ps <- function(phi.merge,phi.split,k,l,sigma) {
-##   P <- 1
-##   K <- dim(phi.split)[2]
-##   rs <- (1:K)[-c(k,l)]
-##   ps <- lapply(rs,function(r) {
-##     c(dnorm(phi.split[1:P,l,r],phi.merge[1:P,k,r],sigma,log=TRUE),
-##       dnorm(phi.split[1:P,r,l],phi.merge[1:P,r,k],sigma,log=TRUE))
-##   })
-##   ps <- c(ps,list(dnorm(phi.split[1:P,l,l],phi.merge[1:P,k,k],sigma,log=TRUE)))
-##   ps <- unlist(ps)
-##   return(sum(ps))
-## }
 
+##' Computes the ratio q(phi^m -> phi^s)/p(phi^s)
+pm2ps <- function(phi.merge,phi.split,k,l,K,priors) {
+  q <-
+    dnorm(phi.split[,k,k],phi.merge[,k,k],priors$sigma,log=TRUE) +
+    dnorm(phi.split[,l,l],phi.merge[,k,k],priors$sigma,log=TRUE) +
+    dnorm(phi.split[,k,l],phi.merge[,k,k],priors$sigma,log=TRUE) +
+    dnorm(phi.split[,l,k],phi.merge[,k,k],priors$sigma,log=TRUE) -
+    dnorm(phi.split[,k,k],priors$phi$mu,priors$phi$sigma,log=TRUE) -
+    dnorm(phi.split[,l,l],priors$phi$mu,priors$phi$sigma,log=TRUE) -
+    dnorm(phi.split[,k,l],priors$phi$mu,priors$phi$sigma,log=TRUE) -
+    dnorm(phi.split[,l,k],priors$phi$mu,priors$phi$sigma,log=TRUE)
 
-ps2pm <- function(phi.split,phi.merge) {
-  P <- 1#dim(phi.merge)[1]
-  K <- dim(phi.merge)[2]
-  log(.5^(P*(2*K-3)))
-}
-pm2ps <- function(phi.merge,phi.split,k,l,sigma) {
-  P <- 1
-  K <- dim(phi.split)[2]
-  rs <- (1:K)[-c(k,l)]
-  ps <- lapply(rs,function(r) {
-    c(dnorm(phi.split[1:P,l,r],phi.merge[1:P,k,r],sigma,log=TRUE),
-      dnorm(phi.split[1:P,r,l],phi.merge[1:P,r,k],sigma,log=TRUE))
-  })
-  ps <- c(ps,list(dnorm(phi.split[1:P,l,l],phi.merge[1:P,k,k],sigma,log=TRUE)))
-  ps <- unlist(ps)
-  return(sum(ps))
+  if (K > 2) {
+    rs <- (1:K)[-c(k,l)]
+    for (r in rs) {
+      q <- q +
+        dnorm(phi.split[,r,l],phi.merge[,r,k],priors$sigma,log=TRUE) +
+        dnorm(phi.split[,l,r],phi.merge[,k,r],priors$sigma,log=TRUE) -
+        dnorm(phi.split[,r,l],priors$phi$mu,priors$phi$sigma,log=TRUE) -
+        dnorm(phi.split[,l,r],priors$phi$mu,priors$phi$sigma,log=TRUE)
+    }
+  }
+  return(sum(q))
 }
 
-splitmerge <- function(phi,z,lposterior,llk_node,priors,verbose=TRUE) {
+##' Computes the ratio q(phi^s -> phi^m)/p(phi^m)
+ps2pm <- function(phi.split,phi.merge,k,l,K,priors) {
+  q <-
+    dnorm(phi.merge[,k,k],.5*(phi.split[,k,k] + phi.split[,l,l]),priors$sigma,log=TRUE) -
+  dnorm(phi.merge[,k,k],priors$phi$mu,priors$phi$sigma,log=TRUE)
+  return(sum(q))
+}
+
+splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
   N <- length(z)
   K <- dim(phi)[2]
   init <- split <- merge <- list(z=z,phi=phi)
@@ -162,32 +165,24 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,verbose=TRUE) {
 #    browser()
     l <- K+1
     split$phi <- add_cluster(split$phi)
-    K <- max(split$z)
-    split$z[S] <- sample(c(k,l),length(S),replace=TRUE)
-    split$phi <- split_phi(split$phi,k,l)
-    for (iter in 1:3) {
-      split$phi <- sample_phi(split$phi,split$z,lposterior,kx=1:K)$phi #fix kx
-      h <- gibbs_restricted(split$phi,split$z,S,k,l,llk_node,prob.only=FALSE)
-      split$z <- h$z
-    }
+    split$phi <- split_phi(split$phi,k,l,priors)
+    h <- gibbs_restricted(split$phi,split$z,S,k,l,llk_node,prob.only=FALSE)
+    split$z <- h$z    
   } else {
     merge$z[S] <- k
-    merge$phi <- remove_cluster(merge$phi,l)
-    merge$z[which(merge$z > l)] <- merge$z[which(merge$z > l)] - 1
-    K <- max(merge$z)
-    for (iter in 1:3) {
-      merge$phi <- sample_phi(merge$phi,merge$z,lposterior,kx=1:K)$phi #fix kx
-    }
+    merge$phi <- merge_phi(split$phi,k,l,priors)
+    h <- gibbs_restricted(merge$phi,split$z,S,k,l,llk_node,prob.only=TRUE)
   }
-  lp.split <- lposterior(split$phi,split$z,priors)
-  lp.merge <- lposterior(merge$phi,merge$z,priors)
-  zm2zs <- .5*length(S)
-  pzs2pzm <- factorial(sum(split$z[S] == k) ) *
-    factorial(sum(split$z[S] == l) ) / factorial(length(S) )
-  alpha <- lp.split - lp.merge - log(zm2zs) + log(pzs2pzm)
+  lp <- list()
+  lp$split <- lposterior(split$phi,split$z,priors)
+  lp$merge <- lposterior(merge$phi,merge$z,priors)
+  lp$zm2zs <- h$transition
+  lp$pm2ps <- pm2ps(merge$phi,split$phi,k,l,K,priors)
+  lp$ps2pm <- ps2pm(split$phi,merge$phi,k,l,K,priors)
+  lp$pzs2pzm <- log(factorial(sum(split$z[S] == k) ) * # TODO: Fix -1 issue
+    factorial(sum(split$z[S] == l) ) / factorial(length(S) ))
+  alpha <- lp$split - lp$merge + 0 - lp$zm2zs + lp$pzs2pzm + lp$ps2pm - lp$pm2ps
   
-  if (any(is.nan(unlist(q)))) browser()
-
   initial <- list(type="nomove",phi=init$phi,z=init$z)
   if (init$z[i] == init$z[j]) {
     proposed <- list(type="split",phi=split$phi,z=split$z,prob=exp(alpha))
@@ -197,9 +192,11 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,verbose=TRUE) {
   
   if (runif(1) < proposed$prob) {
     final <- proposed
+    final$accepted <- TRUE
     cat("move accepted\n")
   } else {
     final <- initial
+    final$accepted <- FALSE
     cat("move rejected\n")
   }
 
@@ -209,62 +206,51 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,verbose=TRUE) {
     cat("initial z:",init$z,", K:",dim(init$phi)[2],"\n")
     cat("merge z:",merge$z,", K:",dim(merge$phi)[2],"\n")
     cat("split z:",split$z,", K:",dim(split$phi)[2],"\n")
-    cat("prob:",final$prob,"\n")
+    cat("prob:",log(proposed$prob),"\n")
     #print(lapply(phi[c("init","merge","split")],function(p) p[1,,]))
-    cat("split",lp.split,"\n")
-    cat("merge",lp.merge,"\n")
-    #print(unlist(q))
+    ## cat("split",lp$split,"\n")
+    ## cat("merge",lp$merge,"\n")
+    print(unlist(lp))
   }
   list(phi=phi,chosen=c(i,j),alpha=alpha,z=z,q=q,final=final)
 }
 
 
-splitmerge_old <- function(phi,z,lposterior,llk_node,priors,verbose=TRUE) {
-  N <- length(z)
-  K <- dim(phi)[2]
-  init <- split <- merge <- list(z=z,phi=phi)
-  ij <- sample(1:N,2,replace=FALSE)
-  i <- ij[1]; j <- ij[2]
-  k <- init$z[i]
-  l <- init$z[j]
-  S <- which(z %in% z[ij])
-  q <- list()
-  if (k == l) {
-    l <- K+1
-    split$phi <- add_cluster(split$phi)
-    split$phi <- split_phi(split$phi,k,l,priors$sigma)
-    h <- gibbs_restricted(split$phi,merge$z,S,k,l,llk_node,prob.only=FALSE)
-  } else {
-    merge$z[S] <- k
-    merge$phi <- merge_phi(split$phi,k,l)
-    h <- gibbs_restricted(split$phi,merge$z,S,k,l,llk_node,prob.only=TRUE)
+
+## Sketch out mcmc routine
+mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K) {
+  phi <- array(0,c(P,K,K))
+  phi[1,,] <- rnorm(K^2)
+  z <- sample(1:(dim(phi)[2]),K^2,rep=T)
+
+  niter <- 20
+  samples <- list()
+  lps <- acc <- rep(0,niter)
+  for (iter in 1:niter) {
+
+    ## Split merge move
+    sm <- splitmerge(phi,z,lposterior,llk_node,priors)
+    phi <- sm$final$phi
+    z <- sm$final$z
+
+    ## remove empty clusters
+    iz <- which(table(factor(z,1:dim(phi)[2]))==0)
+    for (l in iz) {
+      phi <- remove_cluster(phi,l)
+      z[which(z > l)] <- z[which(z > l)] - 1
+    }
+    K <- max(z)
+
+    ## Sample phi and z
+    phi <- sample_phi(phi,z,lposterior)$phi
+    h <- gibbs(phi,z,1:N,llk_node)
+    z <- h$z
+
+    ## Save progress
+    lps[iter] <- lposterior(phi,z,priors)
+    cat(iter,":",lps[iter],"\n")
+    samples[[iter]] <- list(phi=phi,z=z)
+    acc[iter] <- sm$final$accepted
   }
-  split$z <- h$z
-  q$zm2zs <- h$transition
-  q$pm2ps <- pm2ps(merge$phi,split$phi,k,l,priors$sigma)
-  q$ps2pm <- ps2pm(split$phi,merge$phi)
-  q$zs2zm <- 0
-  lp.split <- lposterior(split$phi,split$z,priors)
-  lp.merge <- lposterior(merge$phi,merge$z,priors)
-  alpha <- lp.split - lp.merge + q$zs2zm - q$zm2zs + q$ps2pm - q$pm2ps
-  
-  if (any(is.nan(unlist(q)))) browser()
-  if (init$z[i] == init$z[j]) {
-    final <- list(type="split",phi=split$phi,z=split$z,prob=exp(alpha))
-  } else {
-    final <- list(type="merge",phi=merge$phi,z=merge$z,prob=1/exp(alpha))
-  }
-  if (verbose) {
-    type <- ifelse(init$z[i] == init$z[j],"split","merge") 
-    cat("move:",type," clusters:",init$z[ij],"\n")
-    cat("initial z:",init$z,", K:",dim(init$phi)[2],"\n")
-    cat("merge z:",merge$z,", K:",dim(merge$phi)[2],"\n")
-    cat("split z:",split$z,", K:",dim(split$phi)[2],"\n")
-    cat("prob:",final$prob,"\n")
-    #print(lapply(phi[c("init","merge","split")],function(p) p[1,,]))
-    cat("split",lp.split,"\n")
-    cat("merge",lp.merge,"\n")
-    print(unlist(q))
-  }
-  list(phi=phi,chosen=c(i,j),alpha=alpha,z=z,q=q,final=final,ys=h$ys)
+  return(list(lps=lps,samples=samples,acc=acc))
 }
