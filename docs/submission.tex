@@ -381,7 +381,10 @@ $$\alpha^* =\frac{p(Y|\boldsymbol{\phi}^{s},\mathbf{z}^{s})}{p(Y|\boldsymbol{\ph
 
 The first term is the likelihood ratio of the two states.  Letting $S$ be the set of nodes assigned to $k$ or $l$ in $\mathbf{z}^{s}$, the probability of sampling $\mathbf{z}^{s}$ during a restricted Gibbs scan from  $\mathbf{z}^{m}$ is computed as $q( \mathbf{z}^{m} \rightarrow \mathbf{z}^{s}) = \prod_{s \in S} p(z_{s}=z_s^{s} |\{ z_a^{s},z_{b}^{m}: a  < s \ \mbox{and} \ s < b\}, \boldsymbol{\phi}^{s})$.  Since there is only one way of combining two clusters, we know $q(\mathbf{z}^{s} \rightarrow \mathbf{z}^{m})=1$.   The transition $q(\boldsymbol{\phi}^{m} \rightarrow \boldsymbol{\phi}^{s})$ and 
 $q(\boldsymbol{\phi}^{s} \rightarrow
-\boldsymbol{\phi}^{m})$ are products of Normal densities. \footnote{To ensure both states have the same dimensionality, one can optionally sample the parameters empty cluster $l$, though the extra term  in $q(\boldsymbol{\phi}^{s} \rightarrow \boldsymbol{\phi}^{m})$ would cancel with a corresponding term in $p(\boldsymbol{\phi}^{m})$}  Finally, under this prior $ \frac{p(\mathbf{z}^{s})}{p(\mathbf{z}^{m})} = \frac{(n_{z_i}^{s} - 1)!(n_{z_j}^{s} - 1)!}{(n_{z_i}^{m}-1)!}$.   
+\boldsymbol{\phi}^{m})$ are products of Normal densities. \footnote{To ensure both states have the same dimensionality, one can optionally sample the parameters empty cluster $l$, though the extra term  in $q(\boldsymbol{\phi}^{s} \rightarrow \boldsymbol{\phi}^{m})$ would cancel with a corresponding term in $p(\boldsymbol{\phi}^{m})$}  Finally, under this prior $ \frac{p(\mathbf{z}^{s})}{p(\mathbf{z}^{m})} = \frac{(n_{z_i}^{s} - 1)!(n_{z_j}^{s} - 1)!}{(n_{z_i}^{m}-1)!}$.  
+
+Since the proposed split vectors $\phi^s$ are close the $\phi^m$, this has a higher probability than the split states having arisen from the proposed merge state, which is closer to the midpoint between the two $\phi^s$ vectors.  This increases the acceptance probability for splits (and decreases the probability of merges).  However, the probability of getting assigned to each cluster (through the restricted Gibbs scan) might balance things out.
+
 
 %  \appendix{\textbf{Split-merge Metropolis-Hastings Move for Relational Event Blockmodel}}
 
