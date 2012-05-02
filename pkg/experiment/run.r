@@ -26,24 +26,22 @@ lposterior(phi,z,priors)
 options(cores=8)
 s <- expand.grid(do.sm = c(TRUE,FALSE),
                  case  = 1:20,
-                 sig   = c(.1,.5))#c(.1,.3,.5,.8,1,1.2))
+                 sig   = c(.25,.5,.75,1))#c(.1,.3,.5,.8,1,1.2))
 s <- s[-which(s$do.sm == FALSE & s$sig != .1)]
 
 source("pkg/R/splitmerge.r")
 set.seed(2)
 niter <- 50
-#res <- mclapply(1:nrow(s),function(i) {
-res <- list()
-for (i in 1:nrow(s)) {
-  #priors$sigma <- s$sig[i]
+res <- mclapply(1:nrow(s),function(i) {
+  priors$sigma <- s$sig[i]
   mcmc.blockmodel(lposterior,llk_node,priors,N,P,K,do.sm=s$do.sm[i],niter=niter,sigma=s$sig[i])
-}
+})
 ix <- which(sapply(res,is.character))
 
-x <- 0
+## x <- 0
 
-x <- x+1
-set.seed(x)
-a <- mcmc.blockmodel(lposterior,llk_node,priors,N,P,K,do.sm=s$do.sm[i],niter=niter)
+## x <- x+1
+## set.seed(x)
+## a <- mcmc.blockmodel(lposterior,llk_node,priors,N,P,K,do.sm=s$do.sm[i],niter=niter)
 
 save(res,ix,s,file="pkg/experiment/res.rdata")

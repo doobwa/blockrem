@@ -65,7 +65,7 @@ lnormalize <- function(ps) {
 }
 
 
-gibbs <- function(phi,z,S,llk_node,prob.only=FALSE) {
+gibbs <- function(phi,z,S,llk_node,N) {
 
   # Randomly assign nodes that are currently either in k or l
   K <- dim(phi)[2]
@@ -81,7 +81,7 @@ gibbs <- function(phi,z,S,llk_node,prob.only=FALSE) {
     z[a] <- sample(1:K,1,prob=lnormalize(ys[a,])) #rcatlog(ys[a,])
     counts[z[a]] <- counts[z[a]] + 1
   }
-  ys[S,] <- t(apply(ys[S,],1,lnormalize))
+  ys[S,] <- t(apply(ys[S,,drop=FALSE],1,lnormalize))
   q <- sum(log(ys[cbind(S,z[S])]))
   list(z=z,transition=q,ys=ys,z.init=z.init)
 }
@@ -250,7 +250,7 @@ mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE
 
     ## Sample phi and z
     phi <- sample_phi(phi,z,lposterior)$phi
-    h <- gibbs(phi,z,1:N,llk_node)
+    h <- gibbs(phi,z,1:N,llk_node,N)
     z <- h$z
 
     ## Save progress
