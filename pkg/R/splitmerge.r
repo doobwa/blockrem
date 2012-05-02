@@ -65,7 +65,7 @@ lnormalize <- function(ps) {
 }
 
 
-gibbs <- function(phi,z,S,llk_node,N) {
+gibbs <- function(phi,z,S,llk_node,N,priors) {
 
   # Randomly assign nodes that are currently either in k or l
   K <- dim(phi)[2]
@@ -76,7 +76,7 @@ gibbs <- function(phi,z,S,llk_node,N) {
     counts[z[a]] <- counts[z[a]] - 1
     for (j in 1:K) {
       z[a] <- j
-      ys[a,j] <- llk_node(a,phi,z) + log(counts[j] + priors$alpha)
+      ys[a,j] <- llk_node(a,phi,z,priors) + log(counts[j] + priors$alpha)
     }
     z[a] <- sample(1:K,1,prob=lnormalize(ys[a,])) #rcatlog(ys[a,])
     counts[z[a]] <- counts[z[a]] + 1
@@ -91,7 +91,7 @@ gibbs <- function(phi,z,S,llk_node,N) {
 ##' p(z|phi) = \prod_{a in S} p(z_a|z_prev, phi).
 ##' Randomly initializes z_a's.  If prob. only, set z_a to provided z.
 ##' Otherwise, Gibbs sample p(z|phi). Returns z and the transition prob.
-gibbs_restricted <- function(phi,z,S,k,l,llk_node,prob.only=FALSE) {
+gibbs_restricted <- function(phi,z,S,k,l,llk_node,priors,prob.only=FALSE) {
 
   # Randomly assign nodes that are currently either in k or l
   K <- dim(phi)[2]
@@ -105,7 +105,7 @@ gibbs_restricted <- function(phi,z,S,k,l,llk_node,prob.only=FALSE) {
     counts[z[a]] <- counts[z[a]] - 1
     for (j in clusters) {
       z[a] <- j
-      ys[a,j] <- llk_node(a,phi,z) + log(counts[j] + priors$alpha)
+      ys[a,j] <- llk_node(a,phi,z,priors) + log(counts[j] + priors$alpha)
     }
     if (!prob.only) {
       z[a] <- sample(clusters,1,prob=lnormalize(ys[a,clusters])) #rcatlog(ys[a,])
@@ -169,12 +169,12 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
     l <- K+1
     split$phi <- add_cluster(split$phi)
     split$phi <- split_phi(split$phi,k,l,priors)
-    h <- gibbs_restricted(split$phi,split$z,S,k,l,llk_node,prob.only=FALSE)
+    h <- gibbs_restricted(split$phi,split$z,S,k,l,llk_node,priors,prob.only=FALSE)
     split$z <- h$z    
   } else {
     merge$z[S] <- k
     merge$phi <- merge_phi(split$phi,k,l,priors)
-    h <- gibbs_restricted(merge$phi,split$z,S,k,l,llk_node,prob.only=TRUE)
+    h <- gibbs_restricted(merge$phi,split$z,S,k,l,llk_node,priors,prob.only=TRUE)
   }
   lp <- list()
   lp$split <- lposterior(split$phi,split$z,priors)
@@ -222,11 +222,11 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
 
 
 ## Sketch out mcmc routine
-mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE,verbose=FALSE,sigma=.1) {
+mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE,do.extra=FALSE,verbose=FALSE,sigma=.1) {
   priors$sigma <- sigma
   phi <- array(0,c(P,K,K))
   phi[1,,] <- rnorm(K^2)
-  z <- sample(1:(dim(phi)[2]),K^2,rep=T)
+  z <- sample(1:K,N,rep=T)
 
   samples <- list()
   lps <- acc <- rep(0,niter)
@@ -240,18 +240,28 @@ mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE
       acc[iter] <- sm$final$accepted
     }
 
-    ## remove empty clusters
+    ## Sample phi
+    phi <- sample_phi(phi,z,lposterior,priors)$phi
+
+    ## Add clusters from prior (Neal 2000)
+    if (do.extra) {
+      for (j in 1:3) {
+        phi <- add_cluster(phi)
+        phi <- sample_cluster_from_prior(phi,dim(phi)[2],priors)
+      }
+    }
+
+    ## Gibbs sample assignments
+    h <- gibbs(phi,z,1:N,llk_node,N,priors)
+    z <- h$z
+
+    ## Remove empty clusters
     iz <- which(table(factor(z,1:dim(phi)[2]))==0)
-    for (l in rev(iz)) {  # fixed bug in how these are deleted?
+    for (l in rev(iz)) {  
       z[which(z > l)] <- z[which(z > l)] - 1
       phi <- remove_cluster(phi,l)
     }
     K <- max(z)
-
-    ## Sample phi and z
-    phi <- sample_phi(phi,z,lposterior)$phi
-    h <- gibbs(phi,z,1:N,llk_node,N)
-    z <- h$z
 
     ## Save progress
     lps[iter] <- lposterior(phi,z,priors)

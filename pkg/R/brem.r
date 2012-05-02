@@ -41,6 +41,9 @@ simulate.brem.cond <- function(beta,z,train,M=100,N) {
     }
     diag(lambda) <- -Inf
     cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
+    if (any(is.nan(cells[,3]))) {
+      stop("Intensity explosion: infinite lambda_ij present")
+    }
     drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
     i <- cells[drawcell,1]
     j <- cells[drawcell,2]
