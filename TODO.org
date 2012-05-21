@@ -201,4 +201,4 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [ ] Get sampler tests and gibbs tests to pass
 - [X] Possible bug in split merge:  shouldn't split look like initial?
 - [ ] Bug in sample_phi: restricted range for k1 and k2
-
+- [ ] 

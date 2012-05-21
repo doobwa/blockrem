@@ -22,8 +22,8 @@ University of California, Irvine
 Department of Computer Science \\
 University of California, Irvine
 }
-\date[Sunbelt 2012] % (optional)
-{Sunbelt 2012}
+\date[Department Update 2012] % (optional)
+{UC Irvine Department of Statistics, 2012}
 
 
 \renewcommand\footnotemark{}
@@ -71,8 +71,10 @@ $$\log \lambda_{ij}(t | \cdot) = \boldsymbol{\beta}' \mathbf{s}(t,i,j)$$
 
 \begin{frame}{Relational event models: Likelihood}
 
+Assuming piecewise constant hazards:
+
 \begin{align}
-\mathcal{L}(\mathcal{A}|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}}\exp\{ - (t_m - t_{m-1}) \lambda_{ij}(t_m | .) \}
+\mathcal{L}(\mathcal{A}_{t_M}|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}}\exp\{ - (t_m - t_{m-1}) \lambda_{ij}(t_m | .) \}
 \end{align}
 
 \begin{itemize}
