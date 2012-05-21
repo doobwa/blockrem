@@ -37,13 +37,20 @@ priors <- list(alpha=1,phi=list(mu=0,sigma=2),sigma=.1)
 truth <- list(phi=phi,z=z)
 llk <- sum(RemLogLikelihoodPc(phi,z-1,s$ptr(),K))
 
+px <- c(1,2,6)
 system.time(lp(phi,z,priors))
-
 lp(phi,z,priors)
-phi <- sample_phi(phi,z,lp,priors,px=c(1,2,6,12))
+phi <- sample_phi(phi,z,lp,priors,px=c(1,2,6,12))$phi
 lp(phi,z,priors)
 
-fit <- mcmc.blockmodel(lp,lp_node,priors,N,P,K,do.sm=FALSE,do.extra=FALSE,niter=20,sigma=1,verbose=TRUE)
+priors$sigma <- .5
+fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,px=c(1,2,6),do.sm=TRUE,do.extra=FALSE,niter=20,sigma=.1,verbose=TRUE)
+
+phi[c(1,2,6,12),1:2,1:2]
+split$phi[c(1,2,6,12),1:2,1:2]
+merge$phi[c(1,2,6,12),1:2,1:2]
+lp(split$phi,split$z,priors)
+lp(merge$phi,merge$z,priors)
   
 options(cores=8)
 s <- expand.grid(do.sm = c(TRUE,FALSE),

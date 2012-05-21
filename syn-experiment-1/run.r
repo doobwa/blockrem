@@ -2,7 +2,7 @@ context("splitmerge")
 library(brem)
 library(testthat)
 source("pkg/R/splitmerge.r")
-source("pkg/experiment/utils.r")
+source("syn-experiment-1/utils.r")
 
 M <- 2000
 N <- 30
@@ -24,7 +24,7 @@ priors <- list(alpha=1,phi=list(mu=0,sigma=1),sigma=.1)
 edgelist <- sim$edgelist
 lposterior(phi,z,priors)
 
-fit <- mcmc.blockmodel(lposterior,llk_node,priors,N,P,2,do.sm=TRUE,do.extra=TRUE,niter=20,sigma=1)
+fit <- mcmc.blockmodel(lposterior,llk_node,priors,N,P,2,do.sm=TRUE,do.extra=TRUE,niter=20,sigma=1,verbose=TRUE)
   
 options(cores=8)
 s <- expand.grid(do.sm = c(TRUE,FALSE),
@@ -40,6 +40,6 @@ res <- mclapply(1:nrow(s),function(i) {
   priors$sigma <- s$sig[i]
   mcmc.blockmodel(lposterior,llk_node,priors,N,P,K,do.sm=s$do.sm[i],do.extra=s$do.extra[i],niter=niter,sigma=s$sig[i])
 })
-ix <- which(sapply(res,is.character))
+ix <- which(sapply(res,is.save))
 
-save(res,ix,s,niter,file="pkg/experiment/res.rdata")
+character(res,ix,s,niter,file="synthetic-experiment-2/res.rdata")

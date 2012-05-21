@@ -1,5 +1,7 @@
 
+##' Needs s and px to be in environment
 lp <- function(phi,z,priors) {
+  phi[-px,,] <- 0
   K <- dim(phi)[2]
   pr.y <- sum(RemLogLikelihoodPc(phi,z-1,s$ptr(),K))
   pr.phi <- sum(dnorm(unlist(phi),priors$phi$mu,priors$phi$sigma,log=TRUE))
@@ -8,8 +10,10 @@ lp <- function(phi,z,priors) {
   pr.z <- sum(log(sapply(tb - 1,factorial)))
   return(pr.y + pr.phi + pr.z)
 }
-lp_node <- function(a,phi,z,priors) {
-  lp(phi,z,priors)
+llk_node <- function(a,phi,z,priors) {
+  phi[-px,,] <- 0
+  K <- dim(phi)[2]
+  sum(RemLogLikelihoodPc(phi,z-1,s$ptr(),K))
 }
 
 # Sample the first dimension of phi

@@ -1,4 +1,4 @@
-load("pkg/experiment/res.rdata")
+load("syn-experiment-2/res.rdata")
 
 niter <- 100
 ix <- (1:nrow(s))#[-ix]
@@ -8,6 +8,7 @@ lps <- lapply(ix,function(i) {
 })
 df <- do.call(rbind,lps)
 df$case <- factor(df$case)
+
 qplot(iter,lps,data=df,geom="line",colour=case)+facet_grid(sig~do.sm + do.extra)
 
 df <- subset(df,sig==1)

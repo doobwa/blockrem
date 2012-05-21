@@ -1,4 +1,4 @@
-load("pkg/experiment/res.rdata")
+load("syn-experiment-1/res.rdata")
 
 niter <- 100
 ix <- (1:nrow(s))#[-ix]
