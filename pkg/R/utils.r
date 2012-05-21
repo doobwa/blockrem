@@ -1,4 +1,39 @@
 
+##' Compute log likelihood of train and test events using a fitted BREM model.
+##' 
+eval.online <- function(train,A,test.ix,fit) {
+  P <- 13
+  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
+  strain$precompute()
+  stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
+  stest$precompute()
+
+##   for (i in test.ix) {
+    
+##   }
+  
+##   lrm <- list()
+##   lrm$train <- brem.lrm.fast(strain, fit$z, fit$beta)
+##   lrm$test  <- brem.lrm.fast(stest, fit$z, fit$beta)
+##   lrm$test  <- lrm$test[test.ix,,]
+
+##   K <- dim(beta)[2]
+##   ix <- as.integer(ix)
+##   lrm <- LogIntensityArrayPcSubset(beta,z-1,s$ptr(),K,ix-1)
+##   for (i in 1:(dim(lrm)[1])) diag(lrm[i,,]) <- -Inf
+
+
+##   # Compute multinomial likelihood
+## llkm.train <- log(multinomial.score(pred$m$train,train))
+## llkm.test  <- log(multinomial.score(pred$m$test, test))
+
+## # Compute loglikelihood of each observation
+## llk.train <- RemLogLikelihoodVecFromArray(pred$lrm$train,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train))
+## llk.test <- RemLogLikelihoodVecFromArray(pred$lrm$test,test[,1],as.integer(test[,2])-1,as.integer(test[,3])-1,N,nrow(test))
+
+}
+
+
 #' Compute log intensity arrays for a particular baseline for the training set and test set
 #' @train training event history
 #' @A entire event history
@@ -40,11 +75,11 @@ get.pred.baseline <- function(train,A,test.ix,model="online") {
   return(list(lrm=list(train=lrm.train,test=lrm.test),m=list(train=m.train,test=m.test)))
 }
 
-#' Compute log intensity arrays for the given REM fit for the training set and test set
-#' @train training event history
-#' @A entire event history
-#' @test.ix indices of A that represent the test set
-#' @fit object as returned by brem.mcmc
+##' Compute log intensity arrays for the given REM fit for the training set and test set
+##' @param train training event history
+##' @param A entire event history
+##' @param test.ix indices of A that represent the test set
+##' @param fit object as returned by brem.mcmc
 get.pred <- function(train,A,test.ix,fit) {
   cat("precomputing\n")
   P <- 13
@@ -70,9 +105,9 @@ get.pred <- function(train,A,test.ix,fit) {
   list(lrm=lrm,m=list(train=m.train,test=m.test))
 }
 
-#' Compute the multinomial likelihood for the given array and event history
-#' @p M x N x N array where each slice m is a matrix of probabilities of each dyad
-#' @x M x 3 event history
+##' Compute the multinomial likelihood for the given array and event history
+##' @param p M x N x N array where each slice m is a matrix of probabilities of each dyad
+##' @param x M x 3 event history
 multinomial.score <- function(p,x) {
   M <- nrow(x)
   r <- rep(0, M)

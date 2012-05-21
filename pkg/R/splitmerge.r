@@ -56,14 +56,14 @@ sample_cluster_from_prior <- function(phi,l,priors) {
   return(phi)
 }
 
-##' @return new z and the transition probabilities
-
+##' Return normalized vector of probabilities of log values
+##' @param ps log values
+##' @return normalized probabilities
 lnormalize <- function(ps) {
   ps <- ps - max(ps)
   ps <- exp(ps)
   return(ps/sum(ps))
 }
-
 
 gibbs <- function(phi,z,S,llk_node,N,priors) {
 
@@ -88,7 +88,7 @@ gibbs <- function(phi,z,S,llk_node,N,priors) {
 
 
 ##' If prob.only, computes the probability of a restricted Gibbs scan
-##' p(z|phi) = \prod_{a in S} p(z_a|z_prev, phi).
+##' p(z|phi) = prod_{a in S} p(z_a|z_prev, phi).
 ##' Randomly initializes z_a's.  If prob. only, set z_a to provided z.
 ##' Otherwise, Gibbs sample p(z|phi). Returns z and the transition prob.
 gibbs_restricted <- function(phi,z,S,k,l,llk_node,priors,prob.only=FALSE) {
@@ -222,7 +222,7 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
 
 
 ## Sketch out mcmc routine
-mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE,do.extra=FALSE,verbose=FALSE,sigma=.1) {
+mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,px=1,niter=20,do.sm=TRUE,do.extra=FALSE,verbose=FALSE,sigma=.1) {
   priors$sigma <- sigma
   phi <- array(0,c(P,K,K))
   phi[1,,] <- rnorm(K^2)
@@ -241,7 +241,7 @@ mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE
     }
 
     ## Sample phi
-    phi <- sample_phi(phi,z,lposterior,priors)$phi
+    phi <- sample_phi(phi,z,lposterior,priors,px=px)$phi
 
     ## Add clusters from prior (Neal 2000)
     if (do.extra) {
@@ -265,7 +265,9 @@ mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE
 
     ## Save progress
     lps[iter] <- lposterior(phi,z,priors)
+#    browser()
     cat(iter,":",lps[iter],"\n")
+    if (verbose) cat(z,"\n")
     samples[[iter]] <- list(phi=phi,z=z)
   }
   return(list(lps=lps,samples=samples,acc=acc))
