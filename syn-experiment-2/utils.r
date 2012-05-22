@@ -10,6 +10,7 @@ lp <- function(phi,z,priors) {
   pr.z <- sum(log(sapply(tb - 1,factorial)))
   return(pr.y + pr.phi + pr.z)
 }
+
 llk_node <- function(a,phi,z,priors) {
   phi[-px,,] <- 0
   K <- dim(phi)[2]

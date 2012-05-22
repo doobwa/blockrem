@@ -20,14 +20,14 @@ beta <- list("intercept"=matrix(-1,K,K),
              "rod"=matrix(0,K,K),
              "sid"=matrix(0,K,K),
              "rid"=matrix(0,K,K),
-             "dc"=matrix(.11,K,K),
+             "dc"=matrix(0,K,K),
              "cc"=matrix(0,K,K))
 z <- c(rep(1,N/2),rep(2,N/2))
 P <- length(beta)
 phi <- abind(beta,rev.along=3)
 
-A <- generate.brem(M,N,phi,z)
-s <- new(RemStat,A$edgelist[,1],A$edgelist[,2]-1,A$edgelist[,3]-1,N,M,P)
+sim <- generate.brem(M,N,phi,z)
+s <- new(RemStat,sim$edgelist[,1],sim$edgelist[,2]-1,sim$edgelist[,3]-1,N,M,P)
 s$precompute()
 
 # Set priors
@@ -43,8 +43,13 @@ lp(phi,z,priors)
 phi <- sample_phi(phi,z,lp,priors,px=c(1,2,6,12))$phi
 lp(phi,z,priors)
 
+phi <- sample_phi(phi,z,lp,priors,px=px)$phi
+
+## phi <- truth$phi
+## z <- RemGibbsPc(1:N-1,phi,z-1,s$ptr(),K)$z + 1
+
 priors$sigma <- .5
-fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,px=c(1,2,6),do.sm=TRUE,do.extra=FALSE,niter=20,sigma=.1,verbose=TRUE)
+fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,px=c(1,2,6),do.sm=FALSE,num.extra=3,niter=20,sigma=.1,verbose=TRUE)
 
 phi[c(1,2,6,12),1:2,1:2]
 split$phi[c(1,2,6,12),1:2,1:2]
