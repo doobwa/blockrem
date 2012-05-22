@@ -202,3 +202,9 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [X] Possible bug in split merge:  shouldn't split look like initial?
 - [ ] Bug in sample_phi: restricted range for k1 and k2
 - [ ] 
+
+* Final week
+- [ ] get synthetic example working again with new sampler
+  - [ ] later fix sample_phi to use block() for computing lposterior
+- [ ] why does lposterior not have alpha in it?
+

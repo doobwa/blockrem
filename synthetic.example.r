@@ -3,13 +3,15 @@ opts <- list(dataset="synthetic",numclusters=1,model.type="full",gibbs="fast",nu
 load(paste("data/",opts$dataset,".rdata",sep=""))
 library(brem)
 source("pkg/R/brem.r")
+source("pkg/R/splitmerge.r")
+source("pkg/R/brem.alt.r")
 
 # Precompute data structures
 N <- max(c(train[,2],train[,3]))
 M <- nrow(train)
 P <- 13
 K <- opts$numclusters
-s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
+s <- new(brem:::RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
 s$precompute()
 
 # Degree vs. no degree effects, slice sampling, K=1 full
@@ -17,9 +19,18 @@ s$precompute()
 px <- rep(1,13)
 px[8:13] <- 0
 px[7] <- 0
-fit <- brem.mcmc(train,N,K,s,model.type=opts$model.type,mh=!opts$slice,
-                 niter=opts$numiterations,gibbs=opts$gibbs,px=px,
-                 outfile=NULL)
+
+K <- 2
+k1 <- k2 <- 1
+priors <- list(alpha=1,sigma=.1,phi=list(mu=0,sigma=1))
+llk <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
+current <- array(rnorm(P*K^2,priors$phi$mu,priors$phi$sigma),c(P,K,K))
+olp <- brem.lpost.fast(A,N,K,z,s,current)
+
+# Fit model
+priors <- list(alpha=1,sigma=.1,phi=list(mu=0,sigma=1))
+fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,px=c(1,2,6),do.sm=FALSE,num.extra=3,niter=10,sigma=.1,verbose=TRUE)
+
 fit1 <- fit
 
 px <- rep(1,13)

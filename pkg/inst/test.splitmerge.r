@@ -2,9 +2,6 @@ context("splitmerge")
 library(brem)
 library(testthat)
 source("pkg/R/splitmerge.r")
-## source("pkg/R/brem.r")
-## source("pkg/R/samplers.r")
-## source("pkg/R/hmc.r")
 
 set.seed(2)
 M <- 1000
@@ -21,7 +18,7 @@ beta <- abind(beta,rev.along=3)
 dimnames(beta) <- NULL
 
 # Test simple adding, removing and sampling of priors
-priors <- list(phi=list(mu=0,sigma=.1),alpha=1)
+priors <- list(phi=list(mu=0,sigma=.1),alpha=1,sigma=.1)
 phi <- add_cluster(beta)
 expect_that(dim(phi),equals(c(P,3,3)))
 phi <- sample_cluster_from_prior(phi,3,priors)
@@ -34,8 +31,9 @@ expect_that(sample_cluster_from_prior(phi,5,priors), throws_error())
 expect_that(sample_cluster_from_prior(phi,0,priors), throws_error())
 
 test_that("brem split makes similar but not equal clusters",{
+  phi <- add_cluster(beta)
   phi.split <- split_phi(phi,2,3,priors)
-  f <- function(x,y) { all(x!=y & cor(x,y) > .99) }
+  f <- function(x,y) { all(x!=y & cor(x,y) > .95) }
   expect_that(f(phi[,1,2],phi.split[,1,3]),is_true())
   expect_that(f(phi[,2,1],phi.split[,3,1]),is_true())
   expect_that(f(phi[,2,2],phi.split[,2,3]),is_true())
@@ -46,9 +44,10 @@ test_that("brem split makes similar but not equal clusters",{
 
 test_that("brem merge makes similar but not equal clusters",{
   sigma <- .01
-  phi.merge <- merge_phi(phi,2,3,sigma,priors)
-  f <- function(x,y) { all(x!=y & cor(x,y) > .99) }
-  ## expect_that(f(phi.merge[,1,2],phi[,1,3]),is_true())
+  phi.merge <- merge_phi(phi,2,3,priors)
+  f <- function(x,y) { all(x!=y & cor(x,y) > .95) }
+  a <- (phi.merge[,1,2] + phi.merge[,1,3])/2  # center for new location
+  expect_that(f(phi.merge[,1,2],a),is_true())
   ## expect_that(f(phi.merge[,2,1],phi[,3,1]),is_true())
   ## expect_that(f(phi.merge[,2,2],phi[,3,3]),is_true())
 })
@@ -73,9 +72,12 @@ test_that("transition probabilities for phi work",{
 
 
 ## # TODO: Bug in using the ActorPc function like this.
-## llk_node <- function(a,phi,z) {
-##   RemLogLikelihoodActorPc(a-1,phi,z-1,s$ptr(),K)
-## }
+llk_node <- function(a,phi,z) {
+  RemLogLikelihoodActorPc(a-1,phi,z-1,s$ptr(),K)
+}
+lposterior <- function( ) {
+  RemLogLikelihoodPc(phi,z-1,s$ptr(),K)
+}
 
 M <- 1000
 N <- 9

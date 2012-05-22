@@ -1,9 +1,9 @@
-#' Simulate data from the block relational event model.
-#' @M number of events
-#' @N number of actors
-#' @z latent class assignments
-#' @beta P x K x K array of parameters
-#' 
+##' Simulate data from the block relational event model.
+##' @param M number of events
+##' @param N number of actors
+##' @param z latent class assignments
+##' @param beta P x K x K array of parameters
+##' @export
 generate.brem <- function(M,N,beta,z) {
   edgelist <- matrix(c(0,1,2),nr=1)
   simulate.brem.cond(beta,z,edgelist,M,N)
@@ -183,9 +183,9 @@ brem.lpost.fast <- function(A,N,K,z,s,beta,priors=list(beta=list(mu=0,sigma=1)))
   N * log(1/K)
 }
 
-#' Compute loglikelihood pertaining to the (k1,k2) block.
-#' @A event history matrix
-#' @z cluster assignments (1-based)
+##' Compute loglikelihood pertaining to the (k1,k2) block.
+##' @param A event history matrix
+##' @param z cluster assignments (1-based)
 brem.lpost.fast.block <- function(A,N,K,z,s,beta,k1,k2,priors=list(beta=list(mu=0,sigma=1))) {   
   M <- nrow(A)
   zs <- z[A[,2]]

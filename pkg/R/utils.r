@@ -1,44 +1,61 @@
 
-##' Compute log likelihood of train and test events using a fitted BREM model.
+event.llk <- function(A,N,fit,i,s) {
+  if (i==1) stop("llk of first event not implemented")
+  if (i > nrow(A)) stop("index out of bounds")
+  lrm <- brem.lrm.fast.subset(s, fit$z, fit$beta, (i-1):i)
+  # Currently written to account for how the following function
+  # deals with the first event
+  llks <- RemLogLikelihoodVecFromArray(lrm,A[(i-1):i,1],as.integer(A[(i-1):i,2])-1,as.integer(A[(i-1):i,3])-1,N,2)
+  return(llks[2])
+}
+
+##' Compute log likelihood of train and test events using a fitted BREM model in an online fashion.
 ##' 
-eval.online <- function(train,A,test.ix,fit) {
+eval.online <- function(A,N,train.ix,test.ix,fit,...) {
+  train <- A[train.ix,]
+  test  <- A[test.ix,]
   P <- 13
   strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
   strain$precompute()
   stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
   stest$precompute()
 
-##   for (i in test.ix) {
-    
-##   }
+  # Compute loglikelihoods
+  rks <- mllk <- list(train = rep(0,nrow(train)),
+                      test  = rep(0,length(test.ix)))
+  for (i in 1:nrow(train)) {
+    lrm <- brem.lrm.fast.subset(strain, fit$z, fit$beta, i)
+    lrm <- lrm[1,,]
+    m <- exp(lrm)
+    m <- m/sum(m)
+    mllk$train[i] <- log(m[train[i,2],train[i,3]])
+    rk <- matrix(rank(-lrm,...),N,N)
+    rks$train[i] <- rk[train[i,2],train[i,3]]
+  }
+  for (i in 1:length(test.ix)) {
+    lrm <- brem.lrm.fast.subset(stest, fit$z, fit$beta, test.ix[i])
+    lrm <- lrm[1,,]
+    m <- exp(lrm)
+    m <- m/sum(m)
+    mllk$test[i] <- log(m[A[test.ix[i],2],A[test.ix[i],3]])
+    rk <- matrix(rank(-lrm,...),N,N)
+    rks$test[i] <- rk[A[test.ix[i],2],A[test.ix[i],3]]
+  }
+  return(list(mllk=mllk,rks=rks))
+}
   
-##   lrm <- list()
-##   lrm$train <- brem.lrm.fast(strain, fit$z, fit$beta)
-##   lrm$test  <- brem.lrm.fast(stest, fit$z, fit$beta)
-##   lrm$test  <- lrm$test[test.ix,,]
-
-##   K <- dim(beta)[2]
-##   ix <- as.integer(ix)
-##   lrm <- LogIntensityArrayPcSubset(beta,z-1,s$ptr(),K,ix-1)
-##   for (i in 1:(dim(lrm)[1])) diag(lrm[i,,]) <- -Inf
-
-
 ##   # Compute multinomial likelihood
-## llkm.train <- log(multinomial.score(pred$m$train,train))
-## llkm.test  <- log(multinomial.score(pred$m$test, test))
 
 ## # Compute loglikelihood of each observation
 ## llk.train <- RemLogLikelihoodVecFromArray(pred$lrm$train,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train))
 ## llk.test <- RemLogLikelihoodVecFromArray(pred$lrm$test,test[,1],as.integer(test[,2])-1,as.integer(test[,3])-1,N,nrow(test))
 
-}
-
-
-#' Compute log intensity arrays for a particular baseline for the training set and test set
-#' @train training event history
-#' @A entire event history
-#' @test.ix indices of A that represent the test set
-#' @fit object as returned by brem.mcmc
+##' Compute log intensity arrays for a particular baseline for the training set and test set
+##' @param train training event history
+##' @param A entire event history
+##' @param test.ix indices of A that represent the test set
+##' @param fit object as returned by brem.mcmc
+##' @export
 get.pred.baseline <- function(train,A,test.ix,model="online") {
   get.ms <- switch(model,
                    "uniform" = function(x) array(1,c(nrow(x),N,N)),
@@ -80,6 +97,7 @@ get.pred.baseline <- function(train,A,test.ix,model="online") {
 ##' @param A entire event history
 ##' @param test.ix indices of A that represent the test set
 ##' @param fit object as returned by brem.mcmc
+##' @export
 get.pred <- function(train,A,test.ix,fit) {
   cat("precomputing\n")
   P <- 13
@@ -89,9 +107,8 @@ get.pred <- function(train,A,test.ix,fit) {
   stest$precompute()
   lrm <- list()
   lrm$train <- brem.lrm.fast(strain, fit$z, fit$beta)
-  lrm$test  <- brem.lrm.fast(stest, fit$z, fit$beta)
+  lrm$test  <- brem.lrm.fast(stest,  fit$z, fit$beta)
   lrm$test  <- lrm$test[test.ix,,]
-  
   
   # Compute multinomial likelihoods
   m.train <- exp(lrm$train)

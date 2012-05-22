@@ -222,7 +222,25 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
 
 
 ## Sketch out mcmc routine
-mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,px=1,niter=20,do.sm=TRUE,do.extra=FALSE,verbose=FALSE,sigma=.1) {
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title 
+##' @param lposterior function taking phi, z, and priors
+##' @param llk_node function taking a, phi, z, and priors
+##' @param priors list of priors for phi, sigma, alpha
+##' @param N number of actors
+##' @param P number of parameters
+##' @param K number of clusters
+##' @param px binary vector of which effects to fit
+##' @param niter 
+##' @param do.sm perform split-merge moves
+##' @param num.extra propose extra clusters at each iteration
+##' @param verbose 
+##' @param sigma proposal distribution variance parameter
+##' @return 
+##' @author chris
+mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,px=1,niter=20,do.sm=TRUE,num.extra=0,verbose=FALSE,sigma=.1) {
   priors$sigma <- sigma
   phi <- array(0,c(P,K,K))
   phi[1,,] <- rnorm(K^2)
@@ -244,8 +262,8 @@ mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,px=1,niter=20,do.sm
     phi <- sample_phi(phi,z,lposterior,priors,px=px)$phi
 
     ## Add clusters from prior (Neal 2000)
-    if (do.extra) {
-      for (j in 1:3) {
+    if (num.extra > 0) {
+      for (j in 1:num.extra) {
         phi <- add_cluster(phi)
         phi <- sample_cluster_from_prior(phi,dim(phi)[2],priors)
       }
