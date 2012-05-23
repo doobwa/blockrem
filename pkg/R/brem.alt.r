@@ -10,8 +10,8 @@ lp <- function(phi,z,priors) {
 
 llk_node <- function(a,phi,z,priors) {
   K <- dim(phi)[2]
-#  sum(RemLogLikelihoodActorPc(a-1,phi,z-1,s$ptr(),K))
-  sum(RemLogLikelihoodPc(phi,z-1,s$ptr(),K))
+  sum(RemLogLikelihoodActorPc(a-1,phi,z-1,s$ptr(),K))
+#  sum(RemLogLikelihoodPc(phi,z-1,s$ptr(),K))
 }
 
 # Requires s, train to be in environment
