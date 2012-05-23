@@ -3,7 +3,7 @@ context("gibbs")
 set.seed(2)
 M <- 1000
 N <- 10
-K <- 2
+K <- 3
 beta <- list("intercept"=matrix(-1,K,K),
              "abba" = matrix(c(1,0,0,2),K,K),
              "abby"=matrix(0,K,K),
@@ -28,7 +28,53 @@ px <- rep(1,13)
 px[13] <- 0
 s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
 s$precompute()
-s$transform()
+
+set.seed(1)
+N <- 10
+P <- 13
+times <- c(.1,1,1.5,2,2.1)#seq(.1,.5,by=.1)
+sen <- c(1,2,7,3,3)
+rec <- c(3,4,8,2,1)
+A <- cbind(times,sen,rec)
+M <- length(times)
+K <- 3
+z <- c(1,1,1,2,2,2,3,3,3,3)
+s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
+s$precompute()
+
+a <- 1
+z[1] <- 1
+RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+z[1] <- 2
+RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+
+lrm <- LogIntensityArrayPc(beta,z-1,s$ptr(),K)
+lrm2 <- LogIntensityArray(beta,times,sen-1,rec-1,z-1,N,M,K,P)
+
+ix <- which(z[A[,2]] == z[a] | z[A[,3]] == z[a])-1
+RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+#RemLogLikelihoodPcSubset(beta,z-1,s$ptr(),K,ix)
+z[1] <- 2
+ix <- which(z[A[,2]] == z[a] | z[A[,3]] == z[a])-1
+RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+#RemLogLikelihoodPcSubset(beta,z-1,s$ptr(),K,ix)
+
+
+## Check ActorPc agrees with using entire dataset
+a <- 1
+z[a] <- 1
+ma <- which(A[,2] == a | A[,3] == a)-1
+olp1 <- RemLogLikelihoodActorPc(a-1,beta,z-1,s$ptr(),K)$llk
+olp2 <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
+olp3 <- sum(RemLogLikelihoodPcSubset(beta,z-1,s$ptr(),K,ma))
+z[a] <- 2
+clp1 <- RemLogLikelihoodActorPc(a-1,beta,z-1,s$ptr(),K)$llk
+clp2 <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
+clp3 <- sum(RemLogLikelihoodPcSubset(beta,z-1,s$ptr(),K,ma))
+
+olp1-clp1
+olp2-clp2
+olp3-clp3
 
 #gibbs.collapsed(1:N,beta,z,s$ptr(),px,N,K,nextra=1)
 b <- array(rnorm(P*K*K),c(P,K,K))
@@ -63,6 +109,7 @@ beta <- abind(beta,rev.along=3)
 z <- c(rep(1,N-1),2)
 s <- new(RemStat,times,sen-1,rec-1,N,M,P)
 s$precompute()
+
 
 test_that("gibbs runs on small example",{
   b <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
