@@ -205,6 +205,21 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 
 * Final week
 - [ ] get synthetic example working again with new sampler
-  - [ ] later fix sample_phi to use block() for computing lposterior
-- [ ] why does lposterior not have alpha in it?
-
+- [X] fix sample_phi to use block() for computing lposterior
+- [X] why does lposterior not have alpha in it?
+- [ ] Speed up synthetic data example
+  K=2, 3 extra.  N=10.  M=2000
+  - w/ block phi:   8-12 secs for 5 iterations
+  - w/ actor gibbs:
+- [ ] Incorporate SNRG notes
+  - send to padhraic
+- [ ] Pipeline on synthetic data set with online prediction
+- [ ] Fixed K vs DP option
+- [ ] Double check pshift implementation; is it global?
+- [ ] Set up reality mining, classroom, and radio?
+- [ ] implement recency stats
+- [ ] Fit Eckmann and Twitter (w/o pshifts)
+- [ ] Compare llk timing to Carter's code
+** Paper
+- [ ] Fix up notation borrowing notation from HierRelEvent paper.
+- [ ] Fix Gibbs sampling equation, e.g. z_{i_m} instead of i_m
