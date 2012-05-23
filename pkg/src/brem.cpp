@@ -380,54 +380,77 @@ double LogLambdaPc(int i, int j, int zi, int zj, vector<double> s, Rcpp::Numeric
 
 // Compute the loglikelihood corresponding to a single actor, a.
 
-double RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z,  SEXP statptr_, int K) {
+Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
   RemStat *s = XPtr<RemStat>(statptr_);
-
   int N = s->N;
-  int M = s->M;
   int P = s->P;
-  int i,j,zi,zj,m,t,v;
-  double llk;
-  double total = 0;
-  vector<int> smij;
-  vector<int> ma = s->get_u(a);
-  Rcpp::NumericVector llks(ma.size());
-  for (int ix = 0; ix < ma.size(); ix++) {
-    m = ma[ix];
-    i = s->sen[m];
-    j = s->rec[m];
-    llk = 0;
+  int M = s->M;
+
+  double llk = 0.0; 
+  double lam;
+  int i,j,r,zi,zj;
+  Rcpp::NumericVector llks(M);
+  Rcpp::IntegerVector sen = s->sen;
+  Rcpp::IntegerVector rec = s->rec;
+
+  for (int m = 0; m < M; m++) {
+    i = sen[m];
+    j = rec[m];
     zi = z[i];
     zj = z[j];
-    llk += LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+    llk = 0;
 
-    // #pragma omp parallel reduction(+:llk)
-    // {
-    // #pragma omp for
-
+    // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
     for (int r = 0; r < N; r++) {
-      double lam;
+      double lambda;
       int zr = z[r];
-      if (r != i && r !=j) {
-        lam  = LogLambdaPc(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
-        llk -= (s->times[m] - s->get_tau(m,i,r)) * exp(lam);
-        lam  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
-        llk -= (s->times[m] - s->get_tau(m,r,i)) * exp(lam);
-        lam  = LogLambdaPc(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
-        llk -= (s->times[m] - s->get_tau(m,j,r)) * exp(lam);
-        lam  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
-        llk -= (s->times[m] - s->get_tau(m,r,j)) * exp(lam);
+      if (r != i && r != j) {
+        if (a == i || a == r) {
+          lambda  = LogLambdaPc(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
+          llk  = llk - (s->times[m] - s->get_tau(m,i,r)) * exp(lambda);
+          lambda  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
+          llk  = llk - (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
+        }
+        if (a == j || a == r) {
+          lambda  = LogLambdaPc(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
+          llk  = llk - (s->times[m] - s->get_tau(m,j,r)) * exp(lambda);
+          lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
+          llk  = llk - (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
+        } 
       }
     }
+    if (a == i || a == j) {
+      lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+      llk -= (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
+      lam  = LogLambdaPc(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
+      llk -= (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
+    } 
 
-    //    } // openmp
-
-    llks(ix) = llk;
-    total += llk;
+    // observed event
+    llk += LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+    llks[m] = llk;
   }
-  return total;
-}
 
+  // All intensities assumed to change at the last event
+  int m = M-1;
+  i = sen[m];
+  j = rec[m];
+  zi = z[i];
+  zj = z[j];
+  llk = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+  for (int i = 0; i < N; i++) {
+   for (int j = 0; j < N; j++) {
+     zi = z[i];
+     zj = z[j];
+     if (i != j) {
+       lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+       llk -= (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
+     }
+   }
+  }
+  llks[M-1] = llk;
+  return llks;
+}
 // Sample class assignments for each actor using RemLogLikelihoodActorPc
 
 Rcpp::List RemGibbsPc(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
@@ -451,7 +474,7 @@ Rcpp::List RemGibbsPc(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::In
     // Compute p(z[a] = k | all else) for each k
     for (int k = 0; k < K; k++) {
       z[a] = k;
-      y[k] = RemLogLikelihoodActorPc(a,beta,z,statptr_,K) + log(counts[k] + alpha);
+      //y[k] = RemLogLikelihoodActorPc(a,beta,z,statptr_,K) + log(counts[k] + alpha);  // TODO:Make compatible with new ActorPc return value
     }
     llks.push_back(y);
     
