@@ -488,6 +488,112 @@ Rcpp::List RemGibbsPc(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::In
 
 
 
+// Compute prod_{(i',j') in R_{i,j} : i' in knodes, j' in lnodes} exp{-(t_m - t_m,i',j') lambda_{i',j'}(t_m | .)}
+//Rcpp::NumericVector
+double LogNormalizing(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, int m, int i, int j, Rcpp::IntegerVector knodes, Rcpp::IntegerVector lnodes) {
+  RemStat *s = XPtr<RemStat>(statptr_);
+  int N = s->N;
+  int P = s->P;
+  int M = s->M;
+
+  double llk = 0.0; 
+  double lam = 0.0;
+  int r,zi,zj,zr;
+  double lambda;
+  zi = z[i];
+  zj = z[j];
+
+  // Iterate through other nodes in sender block
+  for (int lx = 0; lx < lnodes.size(); lx++) {
+    r = lnodes[lx];
+    zr = z[r];
+    if (r != i && r != j) {
+      lambda  = LogLambdaPc(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
+      llk  = llk - (s->times[m] - s->get_tau(m,i,r)) * exp(lambda);
+      lambda  = LogLambdaPc(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
+      llk  = llk - (s->times[m] - s->get_tau(m,j,r)) * exp(lambda);
+    }
+  }
+
+  // Iterate through other nodes in receiver block
+  for (int kx = 0; kx < knodes.size(); kx++) {
+    r = knodes[kx];
+    zr = z[r];
+    if (r != i && r != j) {
+      lambda  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
+      llk  = llk - (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
+      lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
+      llk  = llk - (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
+    }
+  }
+
+  lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+  llk -= (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
+  lam  = LogLambdaPc(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
+  llk -= (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
+    
+  return llk;
+}
+
+
+Rcpp::NumericVector RemLogLikelihoodBlockPc(int k, int l, Rcpp::IntegerVector knodes, Rcpp::IntegerVector lnodes, Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
+  RemStat *s = XPtr<RemStat>(statptr_);
+  int N = s->N;
+  int P = s->P;
+  int M = s->M;
+
+  double llk = 0.0; 
+  double lam;
+  int i,j,r,zi,zj;
+  Rcpp::NumericVector llks(M);
+  Rcpp::IntegerVector sen = s->sen;
+  Rcpp::IntegerVector rec = s->rec;
+  Rcpp::IntegerVector mx = Rcpp::seq(0,M-1);
+  Rcpp::IntegerVector nodes = Rcpp::seq(0,N-1);
+
+  for (int v = 0; v < mx.size(); v++) {
+    int m = mx[v];
+    i = sen[m];
+    j = rec[m];
+    zi = z[i];
+    zj = z[j];
+
+    // observed event
+    llk = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+
+    //llk += LogNormalizing(beta, z, statptr_, K, m, i, j, nodes, nodes);
+
+    if (zi == k && zj == l) {
+       llk += LogNormalizing(beta,z,statptr_,K,m,i,j,nodes,nodes);
+    } else {
+       llk += LogNormalizing(beta,z,statptr_,K,m,i,j,knodes,lnodes);
+    }
+
+    llks[m] = llk;
+  }
+
+  // All intensities assumed to change at the last event
+  int m = M-1;
+  i = sen[m];
+  j = rec[m];
+  zi = z[i];
+  zj = z[j];
+  llk = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+  for (int i = 0; i < N; i++) {
+   for (int j = 0; j < N; j++) {
+     zi = z[i];
+     zj = z[j];
+     if (i != j) {
+       lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+       llk -= (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
+     }
+   }
+  }
+  llks[M-1] = llk;
+  return llks;
+}
+
+
 /*
  Use the precomputed statistics s to compute the likelihood
  mx: vector of events to compute by default be a vector of 0 to M-1 (inclusive)
@@ -890,7 +996,7 @@ RCPP_MODULE(brem){
     .method( "precompute", &RemStat::precompute,
              "Precompute the data structure of REM statistics")
     .method( "transform", &RemStat::transform,
-             "Transform degree statistics: scale by events and risk set size, then log")
+             "Transform degree statistics by events and risk set size, then log")
     .method( "get_s", &RemStat::get_s,
              "Retrieve the statistics vector prior to event m for dyad (i,j)")
     .method( "get_tau", &RemStat::get_tau,
@@ -906,16 +1012,18 @@ RCPP_MODULE(brem){
     .method( "get_w", &RemStat::get_w,
              "vector where element m is the index of the previous changepoint for (i,j).  i.e. if w(i,j)[m] = k then v[i,j,k] = m")
     .method( "ptr", &RemStat::ptr,
-             "")
+             "get pointer to object in memory")
     ;
 
   // API using precomputed statistics via a RemStats object
   function( "LogLambdaPc", &LogLambdaPc);
+  function( "LogNormalizing", &LogNormalizing ) ;
   function( "RemLogLikelihoodPc", &RemLogLikelihoodPc ) ;
   function( "RemLogLikelihoodPcSubset", &RemLogLikelihoodPcSubset ) ;
   function( "RemGradientPcSubset", &RemGradientPcSubset ) ;
   function( "RemLogLikelihoodActorPc", &RemLogLikelihoodActorPc ) ;
-   function( "RemGibbsPc", &RemGibbsPc ) ;
+  function( "RemLogLikelihoodBlockPc", &RemLogLikelihoodBlockPc ) ;
+  function( "RemGibbsPc", &RemGibbsPc ) ;
   // API using full array for statistics
   function( "InitializeStatisticsArray", &InitializeStatisticsArray ) ;
   function( "UpdateStatisticsArray", &UpdateStatisticsArray ) ;
