@@ -220,13 +220,13 @@ public:
 
 
   void precompute() {
-    // Save nothing to v or x (as they were anlready initalized with 0)
 
     for (int m = 0; m < (M-1); m++) {
       //      Rprintf(".");
 
       int i = sen[m];
       int j = rec[m];
+
      // Update statistics for those affected by previous event
       for (int r = 0; r < N; r++) {
         if (r!=j && r!=i) {
@@ -453,41 +453,6 @@ Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcp
   llks[M-1] = llk;
   return llks;
 }
-// Sample class assignments for each actor using RemLogLikelihoodActorPc
-
-Rcpp::List RemGibbsPc(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
-  Rcpp::List llks;
-  // RemStat *s = XPtr<RemStat>(statptr_);
-  // int N = s->N;
-  // int a;
-  // Rcpp::IntegerVector counts(N);
-  // double alpha = 1.0;
-
-  // // Get counts for the number assigned each class
-  // for (int i = 0; i < N; i++) {
-  //   counts[z[i]] += 1;
-  // }
-
-  // for (int i = 0; i < ix.size(); i++) {
-  //   a = ix[i];
-
-  //   counts[z[a]] -= 1;
-  //   Rcpp::NumericVector y(K);
-  //   // Compute p(z[a] = k | all else) for each k
-  //   for (int k = 0; k < K; k++) {
-  //     z[a] = k;
-  //     //y[k] = RemLogLikelihoodActorPc(a,beta,z,statptr_,K) + log(counts[k] + alpha);  // TODO:Make compatible with new ActorPc return value
-  //   }
-  //   llks.push_back(y);
-    
-  //   // Sample z[a]
-  //   z[a] = rcategorical(y);
-  //   counts[z[a]] += 1;
-  // }
-  return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("z") = z);
-}
-
-
 
 // Compute prod_{(i',j') in R_{i,j} : i' in knodes, j' in lnodes} exp{-(t_m - t_m,i',j') lambda_{i',j'}(t_m | .)}
 //Rcpp::NumericVector
@@ -674,82 +639,10 @@ Rcpp::NumericVector RemLogLikelihoodPc(Rcpp::NumericVector beta, Rcpp::IntegerVe
   return RemLogLikelihoodPcSubset(beta,z,statptr_,K,mx);
 }
 
-// Gradient for beta_.,k,l
-// mx: should index the events where either z_i or z_j is k or l.
-// [STUB]
-
-Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector mx, Rcpp::IntegerVector px) {
-  RemStat *s = XPtr<RemStat>(statptr_);
-  // int N = s->N;
-  int P = s->P;
-  // int M = s->M;
-
-  // double lam;
-  // int i,j,r,zi,zj;
-  Rcpp::NumericVector grad(P);
-  // Rcpp::NumericVector llks(M);
-  // Rcpp::IntegerVector sen = s->sen;
-  // Rcpp::IntegerVector rec = s->rec;
-
-  // for (int v = 0; v < mx.size(); v++) {
-  //   int m = mx[v];
-  //   i = sen[m];
-  //   j = rec[m];
-  //   zi = z[i];
-  //   zj = z[j];
-
-  //   for (int p = 0; p < px.size(); p++) {
-  //     grad[px[p]] += s->get_s(m,i,j)[px[p]];
-  //   }
-
-  //   // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
-  //   double a = 0.0;
-  //   double b = 0.0;
-  //   double c = 0.0;
-  //   double d = 0.0;
-  //   for (int r = 0; r < N; r++) {
-  //     double lambda;
-  //     int zr = z[r];
-  //     if (r != i && r != j) {
-  //       lambda  = LogLambdaPc(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
-  //       a = (s->times[m] - s->get_tau(m,i,r)) * exp(lambda);
-  //       lambda  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
-  //       b  = (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
-  //       lambda  = LogLambdaPc(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
-  //       c  = (s->times[m] - s->get_tau(m,j,r)) * exp(lambda);
-  //       lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
-  //       d  = (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
-  //     }
-  //     for (int p = 0; p < px.size(); p++) {
-  //       grad[px[p]] -= a * s->get_s(m,i,r)[px[p]];
-  //       grad[px[p]] -= b * s->get_s(m,r,i)[px[p]];
-  //       grad[px[p]] -= c * s->get_s(m,j,r)[px[p]];
-  //       grad[px[p]] -= d * s->get_s(m,r,j)[px[p]];
-  //     }
-  //   }
-
-  //   lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
-  //   a    = (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
-  //   lam  = LogLambdaPc(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
-  //   b    = (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
-  //   for (int p = 0; p < px.size(); p++) {
-  //     grad[px[p]] -= a * s->get_s(m,i,j)[px[p]];
-  //     grad[px[p]] -= b * s->get_s(m,j,i)[px[p]];
-  //   }
-  // }
-
-  return grad;
-}
-
 
 // Create numeric array with dimensions P x N x N
 Rcpp::NumericVector InitializeStatisticsArray(int N, int P) {
   Rcpp::NumericVector s = Rcpp::NumericVector(Dimension(P,N,N));
-  // for (int i = 0; i < N; i++) {
-  //   for (int j = 0; j < N; j++) {
-  //     s[0,i,j] = 1;
-  //   }
-  // }
   return s;
 }
 
@@ -1001,16 +894,16 @@ RCPP_MODULE(brem){
              "Retrieve the statistics vector prior to event m for dyad (i,j)")
     .method( "get_tau", &RemStat::get_tau,
              "Retrieve the last time that lambda_(i,j) changed")
-    .method( "get_all_s", &RemStat::get_all_s,
-             "")
-    .method( "get_all_v", &RemStat::get_all_v,
-             "")
-    .method( "get_all_u", &RemStat::get_all_u,
-             "")
     .method( "get_v", &RemStat::get_v,
              "vector where element k is the event index of the k'th changepoint for (i,j).  i.e. if w(i,j)[m] = k then v[i,j,k] = m")
     .method( "get_w", &RemStat::get_w,
              "vector where element m is the index of the previous changepoint for (i,j).  i.e. if w(i,j)[m] = k then v[i,j,k] = m")
+    .method( "get_all_s", &RemStat::get_all_s,
+             "u vectors for all dyads")
+    .method( "get_all_v", &RemStat::get_all_v,
+             "v vectors for all dyads")
+    .method( "get_all_u", &RemStat::get_all_u,
+             "u vectors for all dyads")
     .method( "ptr", &RemStat::ptr,
              "get pointer to object in memory")
     ;
@@ -1020,24 +913,19 @@ RCPP_MODULE(brem){
   function( "LogNormalizing", &LogNormalizing ) ;
   function( "RemLogLikelihoodPc", &RemLogLikelihoodPc ) ;
   function( "RemLogLikelihoodPcSubset", &RemLogLikelihoodPcSubset ) ;
-  function( "RemGradientPcSubset", &RemGradientPcSubset ) ;
   function( "RemLogLikelihoodActorPc", &RemLogLikelihoodActorPc ) ;
   function( "RemLogLikelihoodBlockPc", &RemLogLikelihoodBlockPc ) ;
-  function( "RemGibbsPc", &RemGibbsPc ) ;
   // API using full array for statistics
   function( "InitializeStatisticsArray", &InitializeStatisticsArray ) ;
   function( "UpdateStatisticsArray", &UpdateStatisticsArray ) ;
   function( "LogLambda", &LogLambda);
   function( "RemLogLikelihood", &RemLogLikelihood ) ;
-  //  function( "MultLogLikelihood", &MultLogLikelihood ) ;
   // // Create or use full log intensity array
   function( "LogIntensityArray", &LogIntensityArray ) ;
   function( "LogIntensityArrayPc", &LogIntensityArrayPc ) ;
   function( "LogIntensityArrayPcSubset", &LogIntensityArrayPcSubset ) ;
   function( "RemLogLikelihoodFromArray", &RemLogLikelihoodFromArray ) ;
   function( "RemLogLikelihoodVecFromArray", &RemLogLikelihoodVecFromArray ) ;
-  //  function( "MultLogLikelihoodFromArray", &RemLogLikelihoodFromArray ) ;
-  //  function( "MultLogLikelihoodVecFromArray", &RemLogLikelihoodVecFromArray ) ;
   // Utilities
   function( "rcategorical", &rcategorical);
 }
