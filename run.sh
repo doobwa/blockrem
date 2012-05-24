@@ -1,14 +1,16 @@
 #opts=list(dataset="synthetic",numclusters=2,model.type="full",gibbs=TRUE,numiterations=100,slice=TRUE,mh=FALSE,initialize=FALSE,fixz=FALSE,skip.intercept=FALSE)
+#opts=list(dataset="synthetic",numclusters=2,numiterations=20,splitmerge=FALSE,numextra=2,model.type="full")
 
 # Fit models
-./parallel --sshlogin 4/d6 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -t {3} -s TRUE' ::: "irvine" ::: 2 4 ::: "shared" "full"
+./parallel --sshlogin 4/d6 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s TRUE' ::: "synthetic" ::: 2
+./parallel --sshlogin 4/d6 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s FALSE' ::: "eckmann-small" ::: 2
+./parallel --sshlogin 4/d7 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s FALSE' ::: "twitter-small" ::: 10
 
-./parallel --sshlogin 6/d5,6/m 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 200 -t {3} -s TRUE' ::: "eckmann-small" ::: 1 2 3 ::: "full"
+./parallel --sshlogin 6/d5,6/m 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 200 -t {3} -s TRUE' ::: "eckmann-small" ::: 3 ::: "full"
 
 ./parallel --sshlogin 6/d5,6/m 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 200 -t {3} -s TRUE --initialize TRUE' ::: "eckmann-small" ::: 2 3 ::: "full"
 
 ./parallel --sshlogin 6/d12,6/m 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -t {3} -s TRUE' ::: "synthetic"  ::: 1 2 :::  "full"
-
 
 ./parallel --sshlogin 3/d7,3/d8 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 200 -t {3} -s TRUE' ::: "twitter-small" ::: 2 3 4 ::: "shared" "full"
 

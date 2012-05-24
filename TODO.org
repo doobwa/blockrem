@@ -209,14 +209,19 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [X] why does lposterior not have alpha in it?
 - [X] Correctness of Gibbs sampler and ActorPc function
 Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
-- [ ] Speed up synthetic data example
+- [X] Speed up synthetic data example
   K=2, 3 extra.  N=10.  M=2000
   - w/ block phi:   8-12 secs for 5 iterations
   - w/ actor gibbs: 8 secs now.  
   - appears that slice sampling is the majority of the time.
-  - [ ] use precomputed llk as input to slice sampling
+  - [ ] use precomputed llk as input to slice sampling.
+  (seems to cause problems with slice sampler... probably not correct)
+  starting llk)
 - [ ] Pipeline on synthetic data set with online prediction
+- [ ] Role of priors?  Hierarchical portion?
+- [ ] Learn mu and sigma?
 - [ ] Fixed K vs DP option
+- [ ] Allow different priors on different effects p
 - [ ] Double check pshift implementation; is it global? fix
   description in paper
 - [ ] Set up reality mining, classroom, and radio?

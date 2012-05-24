@@ -1,4 +1,4 @@
-opts <- list(dataset="synthetic",numclusters=1,model.type="full",gibbs="fast",numiterations=20,slice=TRUE)
+opts <- list(dataset="synthetic",numclusters=2,model.type="full",numiterations=20)
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
 library(brem)
@@ -11,27 +11,45 @@ N <- max(c(train[,2],train[,3]))
 M <- nrow(train)
 P <- 13
 K <- opts$numclusters
-s <- new(brem:::RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
+s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
 s$precompute()
 
-# Degree vs. no degree effects, slice sampling, K=1 full
-
+## Set priors
+priors <- list(alpha=1,sigma=.1,phi=list(mu=0,sigma=1))
 px <- rep(1,13)
 px[8:13] <- 0
 px[7] <- 0
 
+## Test basic likelihood functions
 K <- 2
 k1 <- k2 <- 1
+current <- array(rnorm(P*K^2,priors$phi$mu,priors$phi$sigma),c(P,K,K))
+olp <- brem.lpost.fast(A,N,K,z,s,current*0)
+
 priors <- list(alpha=1,sigma=.1,phi=list(mu=0,sigma=1))
 llk <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
-current <- array(rnorm(P*K^2,priors$phi$mu,priors$phi$sigma),c(P,K,K))
-olp <- brem.lpost.fast(A,N,K,z,s,current)
+llk <- sum(RemLogLikelihoodPcSubset(beta,z-1,s$ptr(),K,1:5))
+llk <- sum(RemLogLikelihoodActorPc(3,beta,z-1,s$ptr(),K))
+k1nodes <- which(z==k1)
+k2nodes <- which(z==k2)
+llk <- sum(RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,beta,z-1,s$ptr(),K))
 
 # Fit model
-priors <- list(alpha=1,sigma=.1,phi=list(mu=0,sigma=1))
-fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,px=c(1,2,6),do.sm=FALSE,num.extra=3,niter=10,sigma=.1,verbose=TRUE)
+source("pkg/R/brem.alt.r")
+px <- c(1,2,3,4,5,6)
+fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,5,do.sm=FALSE,num.extra=10,niter=20,verbose=TRUE)
 
-fit1 <- fit
+fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,10,do.sm=TRUE,num.extra=10,niter=20,verbose=TRUE)
+
+# Profile model fitting
+Rprof()
+fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,px=c(1,2,3,4,5,6),do.sm=FALSE,num.extra=2,niter=20,verbose=TRUE)
+Rprof(NULL)
+summaryRprof()
+
+#fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,px=px,do.sm=opts$splitmerge,num.extra=opts$numextra,niter=as.numeric(opts$numiterations),verbose=TRUE,outfile=outfile)
+Rprof(NULL)
+summaryRprof()
 
 px <- rep(1,13)
 px[13] <- 0
