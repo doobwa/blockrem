@@ -1,4 +1,4 @@
-context("gibbs")
+context("likelihoods for gibbs sampling")
 
 set.seed(1)
 M <- 100
@@ -71,9 +71,9 @@ test_that("Functions run",{
 
 test_that("Block version is faster", {
   library(rbenchmark)
+  k <- l <- 2
   knodes <- which(z==k)
   lnodes <- which(z==l)
-  k <- l <- 2
   b <- benchmark(block = RemLogLikelihoodBlockPc(k-1,l-1,knodes-1,lnodes-1,beta,z-1,s$ptr(),K),
                  full  = RemLogLikelihoodPc(beta,z-1,s$ptr(),K),
                  replications = 10)

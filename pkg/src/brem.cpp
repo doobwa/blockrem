@@ -191,12 +191,12 @@ public:
     s[i][j][0] = 1;
     if (i != j) { 
       // P-shifts
-      s[i][j][1] = (i!=a & i==b & j==a & j!=b); // abba
-      s[i][j][2] = (i!=a & i==b & j!=a & j!=b); // abby
-      s[i][j][3] = (i!=a & i!=b & j==a & j!=b); // abxa
-      s[i][j][4] = (i!=a & i!=b & j!=a & j==b); // abxb
-      s[i][j][5] = (i==a & i!=b & j!=a & j!=b); // abay
-      s[i][j][6] = (i==a & i!=b & j!=a & j==b); // abab
+      s[i][j][1] = (i!=a && i==b && j==a && j!=b); // abba
+      s[i][j][2] = (i!=a && i==b && j!=a && j!=b); // abby
+      s[i][j][3] = (i!=a && i!=b && j==a && j!=b); // abxa
+      s[i][j][4] = (i!=a && i!=b && j!=a && j==b); // abxb
+      s[i][j][5] = (i==a && i!=b && j!=a && j!=b); // abay
+      s[i][j][6] = (i==a && i!=b && j!=a && j==b); // abab
 
       // Degree effects
       if (a==i) {// && b!=j) {
@@ -388,7 +388,9 @@ Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcp
 
   double llk = 0.0; 
   double lam;
-  int i,j,r,zi,zj,za,zr;
+  int i,j,zi,zj,za,zr;
+  za = z[a];
+
   Rcpp::NumericVector llks(M);
   Rcpp::IntegerVector sen = s->sen;
   Rcpp::IntegerVector rec = s->rec;
@@ -398,7 +400,6 @@ Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcp
     j = rec[m];
     zi = z[i];
     zj = z[j];
-    za = z[a];
     llk = 0;
 
     // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
@@ -456,33 +457,33 @@ Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcp
 
 Rcpp::List RemGibbsPc(Rcpp::IntegerVector ix, Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K) {
   Rcpp::List llks;
-  RemStat *s = XPtr<RemStat>(statptr_);
-  int N = s->N;
-  int a;
-  Rcpp::IntegerVector counts(N);
-  double alpha = 1.0;
+  // RemStat *s = XPtr<RemStat>(statptr_);
+  // int N = s->N;
+  // int a;
+  // Rcpp::IntegerVector counts(N);
+  // double alpha = 1.0;
 
-  // Get counts for the number assigned each class
-  for (int i = 0; i < N; i++) {
-    counts[z[i]] += 1;
-  }
+  // // Get counts for the number assigned each class
+  // for (int i = 0; i < N; i++) {
+  //   counts[z[i]] += 1;
+  // }
 
-  for (int i = 0; i < ix.size(); i++) {
-    a = ix[i];
+  // for (int i = 0; i < ix.size(); i++) {
+  //   a = ix[i];
 
-    counts[z[a]] -= 1;
-    Rcpp::NumericVector y(K);
-    // Compute p(z[a] = k | all else) for each k
-    for (int k = 0; k < K; k++) {
-      z[a] = k;
-      //y[k] = RemLogLikelihoodActorPc(a,beta,z,statptr_,K) + log(counts[k] + alpha);  // TODO:Make compatible with new ActorPc return value
-    }
-    llks.push_back(y);
+  //   counts[z[a]] -= 1;
+  //   Rcpp::NumericVector y(K);
+  //   // Compute p(z[a] = k | all else) for each k
+  //   for (int k = 0; k < K; k++) {
+  //     z[a] = k;
+  //     //y[k] = RemLogLikelihoodActorPc(a,beta,z,statptr_,K) + log(counts[k] + alpha);  // TODO:Make compatible with new ActorPc return value
+  //   }
+  //   llks.push_back(y);
     
-    // Sample z[a]
-    z[a] = rcategorical(y);
-    counts[z[a]] += 1;
-  }
+  //   // Sample z[a]
+  //   z[a] = rcategorical(y);
+  //   counts[z[a]] += 1;
+  // }
   return Rcpp::List::create(Rcpp::Named("llks") = llks,Rcpp::Named("z") = z);
 }
 
@@ -494,7 +495,6 @@ double LogNormalizing(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP stat
   RemStat *s = XPtr<RemStat>(statptr_);
   int N = s->N;
   int P = s->P;
-  int M = s->M;
 
   double llk = 0.0; 
   double lam = 0.0;
@@ -544,7 +544,7 @@ Rcpp::NumericVector RemLogLikelihoodBlockPc(int k, int l, Rcpp::IntegerVector kn
 
   double llk = 0.0; 
   double lam;
-  int i,j,r,zi,zj;
+  int i,j,zi,zj;
   Rcpp::NumericVector llks(M);
   Rcpp::IntegerVector sen = s->sen;
   Rcpp::IntegerVector rec = s->rec;
@@ -607,7 +607,7 @@ Rcpp::NumericVector RemLogLikelihoodPcSubset(Rcpp::NumericVector beta, Rcpp::Int
 
   double llk = 0.0; 
   double lam;
-  int i,j,r,zi,zj;
+  int i,j,zi,zj;
   Rcpp::NumericVector llks(M);
   Rcpp::IntegerVector sen = s->sen;
   Rcpp::IntegerVector rec = s->rec;
@@ -676,64 +676,67 @@ Rcpp::NumericVector RemLogLikelihoodPc(Rcpp::NumericVector beta, Rcpp::IntegerVe
 
 // Gradient for beta_.,k,l
 // mx: should index the events where either z_i or z_j is k or l.
+// [STUB]
 
 Rcpp::NumericVector RemGradientPcSubset(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP statptr_, int K, Rcpp::IntegerVector mx, Rcpp::IntegerVector px) {
   RemStat *s = XPtr<RemStat>(statptr_);
-  int N = s->N;
+  // int N = s->N;
   int P = s->P;
-  int M = s->M;
+  // int M = s->M;
 
-  double llk = 0.0; 
-  double lam;
-  int i,j,r,zi,zj;
+  // double lam;
+  // int i,j,r,zi,zj;
   Rcpp::NumericVector grad(P);
-  Rcpp::NumericVector llks(M);
-  Rcpp::IntegerVector sen = s->sen;
-  Rcpp::IntegerVector rec = s->rec;
+  // Rcpp::NumericVector llks(M);
+  // Rcpp::IntegerVector sen = s->sen;
+  // Rcpp::IntegerVector rec = s->rec;
 
-  for (int v = 0; v < mx.size(); v++) {
-    int m = mx[v];
-    i = sen[m];
-    j = rec[m];
-    zi = z[i];
-    zj = z[j];
+  // for (int v = 0; v < mx.size(); v++) {
+  //   int m = mx[v];
+  //   i = sen[m];
+  //   j = rec[m];
+  //   zi = z[i];
+  //   zj = z[j];
 
-    for (int p = 0; p < px.size(); p++) {
-      grad[px[p]] += s->get_s(m,i,j)[px[p]];
-    }
+  //   for (int p = 0; p < px.size(); p++) {
+  //     grad[px[p]] += s->get_s(m,i,j)[px[p]];
+  //   }
 
-    // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
-    double a,b,c,d;
-    for (int r = 0; r < N; r++) {
-      double lambda;
-      int zr = z[r];
-      if (r != i && r != j) {
-        lambda  = LogLambdaPc(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
-        a = (s->times[m] - s->get_tau(m,i,r)) * exp(lambda);
-        lambda  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
-        b  = (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
-        lambda  = LogLambdaPc(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
-        c  = (s->times[m] - s->get_tau(m,j,r)) * exp(lambda);
-        lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
-        d  = (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
-      }
-      for (int p = 0; p < px.size(); p++) {
-        grad[px[p]] -= a * s->get_s(m,i,r)[px[p]];
-        grad[px[p]] -= b * s->get_s(m,r,i)[px[p]];
-        grad[px[p]] -= c * s->get_s(m,j,r)[px[p]];
-        grad[px[p]] -= d * s->get_s(m,r,j)[px[p]];
-      }
-    }
+  //   // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
+  //   double a = 0.0;
+  //   double b = 0.0;
+  //   double c = 0.0;
+  //   double d = 0.0;
+  //   for (int r = 0; r < N; r++) {
+  //     double lambda;
+  //     int zr = z[r];
+  //     if (r != i && r != j) {
+  //       lambda  = LogLambdaPc(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
+  //       a = (s->times[m] - s->get_tau(m,i,r)) * exp(lambda);
+  //       lambda  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
+  //       b  = (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
+  //       lambda  = LogLambdaPc(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
+  //       c  = (s->times[m] - s->get_tau(m,j,r)) * exp(lambda);
+  //       lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
+  //       d  = (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
+  //     }
+  //     for (int p = 0; p < px.size(); p++) {
+  //       grad[px[p]] -= a * s->get_s(m,i,r)[px[p]];
+  //       grad[px[p]] -= b * s->get_s(m,r,i)[px[p]];
+  //       grad[px[p]] -= c * s->get_s(m,j,r)[px[p]];
+  //       grad[px[p]] -= d * s->get_s(m,r,j)[px[p]];
+  //     }
+  //   }
 
-    lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
-    a    = (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
-    lam  = LogLambdaPc(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
-    b    = (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
-    for (int p = 0; p < px.size(); p++) {
-      grad[px[p]] -= a * s->get_s(m,i,j)[px[p]];
-      grad[px[p]] -= b * s->get_s(m,j,i)[px[p]];
-    }
-  }
+  //   lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+  //   a    = (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
+  //   lam  = LogLambdaPc(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
+  //   b    = (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
+  //   for (int p = 0; p < px.size(); p++) {
+  //     grad[px[p]] -= a * s->get_s(m,i,j)[px[p]];
+  //     grad[px[p]] -= b * s->get_s(m,j,i)[px[p]];
+  //   }
+  // }
 
   return grad;
 }
@@ -761,17 +764,17 @@ Rcpp::NumericVector UpdateStatisticsArray(Rcpp::NumericVector s, int m, int a, i
       for (int k = 0; k < sen.size(); k++) {
         int i = sen[k];
         int j = rec[k];
-        if (!(i==a && j==b) & i!=j) {  // deal with (a,b) at the end
+        if (!(i==a && j==b) && i!=j) {  // deal with (a,b) at the end
           // intercept
           s[threeDIndex(0,i,j,P,N,N)] = 1;
 
           // P-shifts
-          s[threeDIndex(1,i,j,P,N,N)] = (i!=a & i==b & j==a & j!=b);
-          s[threeDIndex(2,i,j,P,N,N)] = (i!=a & i==b & j!=a & j!=b);
-          s[threeDIndex(3,i,j,P,N,N)] = (i!=a & i!=b & j==a & j!=b);
-          s[threeDIndex(4,i,j,P,N,N)] = (i!=a & i!=b & j!=a & j==b);
-          s[threeDIndex(5,i,j,P,N,N)] = (i==a & i!=b & j!=a & j!=b);
-          s[threeDIndex(6,i,j,P,N,N)] = (i==a & i!=b & j!=a & j==b);
+          s[threeDIndex(1,i,j,P,N,N)] = (i!=a && i==b && j==a && j!=b);
+          s[threeDIndex(2,i,j,P,N,N)] = (i!=a && i==b && j!=a && j!=b);
+          s[threeDIndex(3,i,j,P,N,N)] = (i!=a && i!=b && j==a && j!=b);
+          s[threeDIndex(4,i,j,P,N,N)] = (i!=a && i!=b && j!=a && j==b);
+          s[threeDIndex(5,i,j,P,N,N)] = (i==a && i!=b && j!=a && j!=b);
+          s[threeDIndex(6,i,j,P,N,N)] = (i==a && i!=b && j!=a && j==b);
 
           // Degree effects
           if (a==i && b!=j) {
@@ -838,7 +841,7 @@ Rcpp::NumericVector RemLogLikelihood(Rcpp::NumericVector beta, Rcpp::NumericVect
   Rcpp::NumericVector llks(M);
   llks[0] = llk;
 
-  int i,j,r;
+  int i,j;
 
   Rcpp::IntegerMatrix mp = Rcpp::IntegerMatrix(N,N);
   Rcpp::NumericVector s  = InitializeStatisticsArray(N,P);
@@ -900,7 +903,6 @@ Rcpp::NumericVector LogIntensityArrayPcSubset(Rcpp::NumericVector beta, Rcpp::In
   RemStat *s = XPtr<RemStat>(statptr_);
   int N = s->N;
   int P = s->P;
-  int M = s->M;
   Rcpp::NumericVector lrmat = Rcpp::NumericVector(Dimension(ix.size(),N,N));
   for (int k = 0; k < ix.size(); k++) {
     int m = ix[k];
@@ -943,7 +945,6 @@ double RemLogLikelihoodFromArray(Rcpp::NumericVector lrm, Rcpp::NumericVector ti
   double llk = 0;
   double den;
   double delta = 0;
-  int i,j;
   llk = lrm[threeDIndex(0,sen[0],rec[0],M,N,N)];
   for (int m = 1; m < M; m++) {
     den = 0.0;
@@ -965,7 +966,6 @@ Rcpp::NumericVector RemLogLikelihoodVecFromArray(Rcpp::NumericVector lrm, Rcpp::
   double llk = 0;
   double den;
   double delta = 0;
-  int i,j;
   llk = lrm[threeDIndex(0,sen[0],rec[0],M,N,N)];
   Rcpp::NumericVector llks(M);
   llks[0] = llk;
