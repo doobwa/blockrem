@@ -14,30 +14,27 @@ llk_node <- function(a,phi,z,priors) {
 #  sum(RemLogLikelihoodPc(phi,z-1,s$ptr(),K))
 }
 
-# Requires s, train to be in environment
-sample_phi <- function(phi,z,lpost,priors,kx=NULL,px=1:13) {
+# Requires s, train, and px to be in environment
+sample_phi <- function(phi,z,lpost,priors,kx=NULL) {
   K <- dim(phi)[2]
+  olp <- NULL
   if (is.null(kx)) kx <- 1:K
-  for (p in px) {
-    lpost <- function(x,lp=TRUE) {
-      M <- nrow(A)
-      zs <- z[train[,2]]
-      zr <- z[train[,3]]
-      ix <- which(zs==k1 | zr==k2) - 1  # 0 based indexing for c++
-      ## Skip first and last events. TODO: Why?
-      if (length(ix) > 0) {
-        ix <- setdiff(ix,c(0,M-1))
-      }
-      
-      phi[p,k1,k2] <- x
-      pr.y <- sum(RemLogLikelihoodPcSubset(phi,z-1,s$ptr(),K,ix))
-      if (0 %in% ix | M %in% ix) stop("out of bounds")
-      pr.phi <- sum(dnorm(unlist(phi),priors$phi$mu,priors$phi$sigma,log=TRUE))     
-      return(pr.y + pr.phi)
-    }
-    for (k1 in kx) {
-      for (k2 in kx) {
-        phi[p,k1,k2] <- slice(phi[p,k1,k2],lpost,m=20)
+  for (k1 in kx) {
+    for (k2 in kx) {
+      cat(".")
+      for (p in px) {
+        brem.lpost.pk1k2 <- function(x,lp=TRUE) {
+          k1nodes <- which(z==k1)
+          k2nodes <- which(z==k2)
+          phi[p,k1,k2] <- x
+          pr.y <- sum(RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,phi,z-1,s$ptr(),K))
+#          pr.y <- sum(RemLogLikelihoodPc(phi,z-1,s$ptr(),K))
+          pr.phi <- sum(dnorm(unlist(phi),priors$phi$mu,priors$phi$sigma,log=TRUE))     
+          return(pr.y + pr.phi)
+        }
+        res <- slice(phi[p,k1,k2],brem.lpost.pk1k2,m=20,olp=olp)
+#        olp <- attr(res,"log.density")
+        phi[p,k1,k2] <- res
       }
     }
   }
