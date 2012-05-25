@@ -24,15 +24,19 @@ beta <- list("intercept"=matrix(-1,K,K),
              "sid"=matrix(0,K,K),
              "rid"=matrix(0,K,K),
              "dc"=matrix(1,K,K),
-             "cc"=matrix(0,K,K))
+             "cc"=matrix(0,K,K),
+             "rrs"=matrix(0,K,K),
+             "rss"=matrix(0,K,K))
 z <- c(rep(1,N/2),rep(2,N/2))
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
+A <- cbind(times,sen,rec)
 
-s <- new(RemStat,times,sen-1,rec-1,N,M,P)
+ego <- 0
+s <- new(RemStat,times,sen-1,rec-1,N,M,ego)
 s$precompute()
 
-test_that("Test that statistics the same when updating vs. grabing from precomputed",{
+test_that("Test that statistics the same when updating vs. grabbing from precomputed",{
   failed <- FALSE
   r <- InitializeStatisticsArray(N,P)
   for (m in 0:(M-1)) {
@@ -41,8 +45,8 @@ test_that("Test that statistics the same when updating vs. grabing from precompu
     for (i in 0:(N-1)) {
       for (j in 0:(N-1)) {
         if (i != j) {
-          x <- s$get_s(m,i,j)
-          y <- r[,i+1,j+1]
+          x <- s$get_s(m,i,j)[1:13]  # TODO: Include recency in this test
+          y <- r[,i+1,j+1][1:13]
           if (!all.equal(x,y)) failed <- TRUE
         }
       }
@@ -107,4 +111,65 @@ test_that("Different ways of computing the loglikelihood agree",{
   
   expect_that(sum(llk4),equals(sum(llk2)))
   
+})
+
+
+
+test_that("Check ActorPc agrees with using entire dataset", {
+  for (a in 1:N) {
+    z[a] <- 1
+    o1 <- RemLogLikelihoodActorPc(a-1,beta,z-1,s$ptr(),K)
+    o2 <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+    z[a] <- 2
+    c1 <- RemLogLikelihoodActorPc(a-1,beta,z-1,s$ptr(),K)
+    c2 <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+    o1-c1
+    o2-c2
+    expect_that(o1-c1, equals(o2-c2))
+  }
+})
+
+test_that("Precomputed likelihoods and normalizing function run",{
+  m <- 3
+  k <- 1
+  l <- 2
+
+  knodes <- which(z==k)
+  lnodes <- which(z==l)
+  m <- 3
+  LogNormalizing(beta,z-1,s$ptr(),K,5-1,sen[m]-1,rec[m]-1,1:N-1,1:N-1)
+  RemLogLikelihoodBlockPc(k-1,l-1,knodes-1,lnodes-1,beta,z-1,s$ptr(),K)
+  RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+  RemLogLikelihoodPcSubset(beta,z-1,s$ptr(),K,m-1)
+})
+
+test_that("Block version is faster", {
+  library(rbenchmark)
+  k <- l <- 2
+  knodes <- which(z==k)
+  lnodes <- which(z==l)
+  b <- benchmark(block = RemLogLikelihoodBlockPc(k-1,l-1,knodes-1,lnodes-1,beta,z-1,s$ptr(),K),
+                 full  = RemLogLikelihoodPc(beta,z-1,s$ptr(),K),
+                 replications = 10)
+  expect_that(b$elapsed[1] < b$elapsed[2], is_true())
+})
+
+
+test_that("Check BlockPc agrees with using entire dataset", {
+  for (k in 1:K) {
+    for (l in 1:K) {
+      beta[1:3,k,l] <- c(2,1,0)
+      knodes <- which(z==k)
+      lnodes <- which(z==l)
+      o1 <- RemLogLikelihoodBlockPc(k-1,l-1,knodes-1,lnodes-1,beta,z-1,s$ptr(),K)
+      o2 <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+      beta[1:3,k,l] <- c(0,0,0)
+      c1 <- RemLogLikelihoodBlockPc(k-1,l-1,knodes-1,lnodes-1,beta,z-1,s$ptr(),K)
+      c2 <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+                                        #    o1-c1
+                                        #    o2-c2
+      cbind(z[A[,2]],z[A[,3]],o1-c1,o2-c2)[1:20,]
+      expect_that(o1-c1, equals(o2-c2))
+    }
+  }
 })

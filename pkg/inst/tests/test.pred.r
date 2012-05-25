@@ -16,7 +16,9 @@ beta <- list("intercept"=matrix(-1,K,K),
              "sid"=matrix(0,K,K),
              "rid"=matrix(0,K,K),
              "dc"=matrix(.1,K,K),
-             "cc"=matrix(0,K,K))
+             "cc"=matrix(0,K,K),
+             "rrs"=matrix(0,K,K),
+             "rss"=matrix(0,K,K))
 z <- c(rep(1,N/2),rep(2,N/2))
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
@@ -28,9 +30,10 @@ train <- A[1:500,]
 test <- A
 
 ## Precompute data structures
-strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
+ego <- 0
+strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),ego)
 strain$precompute()
-stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
+stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),ego)
 stest$precompute()
 
 fit <- list(beta=beta,z=z)

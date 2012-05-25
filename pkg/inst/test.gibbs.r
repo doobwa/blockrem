@@ -24,21 +24,18 @@ beta <- list("intercept"=matrix(-1,K,K),
              "sid"=matrix(0,K,K),
              "rid"=matrix(c(.01,0,.01,0),K,K),
              "dc"=matrix(c(0,.03,0,0),K,K),
-             "cc"=matrix(0,K,K))
+             "cc"=matrix(0,K,K),
+             "rrs"=matrix(0,K,K),
+             "rss"=matrix(0,K,K))
 z <- c(rep(1,N/2),rep(2,N/2))
 P <- length(beta)
 beta <- abind(beta,rev.along=3)
 px <- rep(0,P)
 px[1:6] <- 1
 
-## sen <- c(1,2,7,3,3,2,2,3,5,3,1)
-## rec <- c(3,4,8,2,1,7,9,1,4,1,8)
-## M <- length(sen)
-## times <- seq(.1,1,length.out=M)
-## z <- c(1,1,1,2,2,2,2,2,2,2)
-
 A <- cbind(times,sen,rec)
-s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px))
+ego <- 0
+s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),ego)
 s$precompute()
 
 test_that("Check ActorPc agrees with using entire dataset", {
