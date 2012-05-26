@@ -616,6 +616,7 @@ Rcpp::NumericVector RemLogLikelihoodPcSubset(Rcpp::NumericVector beta, Rcpp::Int
   Rcpp::NumericVector llks(M);
   Rcpp::IntegerVector sen = s->sen;
   Rcpp::IntegerVector rec = s->rec;
+  Rcpp::IntegerVector nodes = Rcpp::seq(0,N-1);
 
   for (int v = 0; v < mx.size(); v++) {
     int m = mx[v];
@@ -623,31 +624,10 @@ Rcpp::NumericVector RemLogLikelihoodPcSubset(Rcpp::NumericVector beta, Rcpp::Int
     j = rec[m];
     zi = z[i];
     zj = z[j];
-    llk = 0;
 
-    // Loop through dyads (i,r) and (r,j) whose intensities change due to event m
-    for (int r = 0; r < N; r++) {
-      double lambda;
-      int zr = z[r];
-      if (r != i && r != j) {
-        lambda  = LogLambdaPc(i,r,zi,zr,s->get_s(m,i,r),beta,N,K,P);
-        llk  = llk - (s->times[m] - s->get_tau(m,i,r)) * exp(lambda);
-        lambda  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
-        llk  = llk - (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
-        lambda  = LogLambdaPc(j,r,zj,zr,s->get_s(m,j,r),beta,N,K,P);
-        llk  = llk - (s->times[m] - s->get_tau(m,j,r)) * exp(lambda);
-        lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
-        llk  = llk - (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
-      }
-    }
+    llk = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
+    llk += LogNormalizing(beta,z,statptr_,K,m,i,j,nodes,nodes);
 
-    lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
-    llk -= (s->times[m] - s->get_tau(m,i,j)) * exp(lam);
-    lam  = LogLambdaPc(j,i,zj,zi,s->get_s(m,j,i),beta,N,K,P);
-    llk -= (s->times[m] - s->get_tau(m,j,i)) * exp(lam);
-    
-    // observed event
-    llk += LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
     llks[m] = llk;
   }
 
