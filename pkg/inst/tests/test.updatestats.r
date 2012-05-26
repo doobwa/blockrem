@@ -16,9 +16,7 @@ test_that("statistics creation works",{
             "sid" = matrix(0,N,N),
             "rid" = matrix(0,N,N),
             "dc"=matrix(0,N,N),
-            "cc"=matrix(0,N,N),
-            "rrs"=matrix(0,N,N),
-            "rss"=matrix(0,N,N))
+            "cc"=matrix(0,N,N))
   P <- length(s)
   s <- abind(s,rev.along=3)
   i <- 1

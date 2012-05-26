@@ -1,13 +1,13 @@
 context("using precomputed statistics")
 
-M <- 8
+M <- 7
 N <- 5
 P <- 15
 times <- seq(0,.6,by=.1)
 sen <- c(1,3,3,1,2,5,2)
 rec <- c(3,1,1,3,5,1,4)
-ego <- P
-s <- new(RemStat,times,sen-1,rec-1,N,M,ego)
+ego <- 0
+s <- new(RemStat,times,sen-1,rec-1,N,M,P,ego)
 s$precompute()
 x <- s$get_all_s()
 
@@ -25,6 +25,7 @@ test_that("Can use precomputed data structures",{
 })
 
 test_that("a few statistics vectors are correct",{
+
   sij <- x[[3]][[1]]
   expect_that(sij[[1]],equals(rep(0,P)))
   ans <- rep(0,P)
@@ -33,8 +34,6 @@ test_that("a few statistics vectors are correct",{
   ans[9]  <- 1 # receiver out-degree
   ans[10] <- 1 # sender in-degree
   ans[13] <- 0 # event index of the starting changepoint
-  ans[14] <- 1 # rrs: (1,3) occurred last changepoint
-#  ans[15] <- 0 # rss
   expect_that(sij[[2]],equals(ans))
   ans <- rep(0,P)
   ans[1] <- 1 #intercept
@@ -45,19 +44,15 @@ test_that("a few statistics vectors are correct",{
   ans[11] <- 1 # receiver in degree
   ans[12] <- 1 # dyad count
   ans[13] <- 1 # event count
-  ans[14] <- 1 # rrs: (1,3) only incoming event for a=3
-  ans[15] <- 1 # rss: (3,1) occurred last changepoint
   expect_that(sij[[3]],equals(ans))
   sij <- x[[4]][[2]]
   ans <- rep(0,P)
   ans[1] <- 1 #intercept
   ans[4] <- 1 # ab-xa
   ans[9]  <- 1 # receiver out-degree
-  ans[13] <- 4 # global event count
-#  ans[14] <- 
+  ans[13] <- 4 # event count
   expect_that(sij[[2]],equals(ans))
 })
-
 test_that("get_v gets vectors as expected",{
   a <- x[[3]][[1]]
   b <- s$get_v(3-1,1-1)
@@ -79,7 +74,7 @@ test_that("get_v gets vectors as expected",{
 
 
 
-test_stats_from_s <- function(times,sen,rec,N,M,P) {
+test_stats_from_s <- function(times,sen,rec,N,M,P,ego) {
   set.seed(1)
   M <- 100
   N <- 10
@@ -91,7 +86,7 @@ test_stats_from_s <- function(times,sen,rec,N,M,P) {
   sen <- sen[-ix]
   rec <- rec[-ix]
   M <- length(times)
-  s <- new(RemStat,times,sen-1,rec-1,N,M,P)
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P,ego)
   s$precompute()
   r <- InitializeStatisticsArray(N,P)
   for (m in 0:(M-1)) {
@@ -118,27 +113,9 @@ test_that("Transform works as expected",{
   expect_that(s1,equals(s2))
 })
 
-test_that("Transform works for recency effects", {
-
-})
-
-test_that("Ego restriction updates fewer dyads", {
-  ego <- 1
-  s <- new(RemStat,times,sen-1,rec-1,N,M,ego)
-  s$precompute()
-  x <- s$get_all_s()
-  
-  sij <- do.call(rbind,x[[5]][[2]])
-  ans <- c(0,4,5,7)
-  expect_that(sij[,13], equals(ans))
-
-  sij <- do.call(rbind,x[[4]][[1]])
-  ans <- c(0,6,7)
-  expect_that(sij[,13], equals(ans))
-})
-
 test_that("LogLambdaPc uses degree effects properly",{
-  s <- new(RemStat,times,sen-1,rec-1,N,M,ego)
+  P <-13
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P,ego)
   s$precompute()
   i <- 1
   j <- 3
@@ -157,9 +134,7 @@ test_that("LogLambdaPc uses degree effects properly",{
                "sid"=matrix(0,K,K),
                "rid"=matrix(0,K,K),
                "dc"=matrix(0,K,K),
-               "cc"=matrix(0,K,K),
-               "rrs"=matrix(0,K,K),
-               "rss"=matrix(0,K,K))
+               "cc"=matrix(0,K,K))
   beta <- abind(beta,rev.along=3)
   # Add in some degree effects
   beta[8,1,1] <- 4
@@ -181,3 +156,19 @@ test_that("LogLambdaPc uses degree effects properly",{
   expect_that(lam,equals(ans))
 })
 
+
+test_that("Ego restriction updates fewer dyads", {
+  ego <- 1
+  s <- new(RemStat,times,sen-1,rec-1,N,M,P,ego)
+  s$precompute()
+  x <- s$get_all_s()
+
+  # TODO: Double check these
+  sij <- do.call(rbind,x[[5]][[2]])
+  ans <- c(0,4,5,6)  
+  expect_that(sij[,13], equals(ans))
+
+  sij <- do.call(rbind,x[[4]][[1]])
+  ans <- c(0,6)
+  expect_that(sij[,13], equals(ans))
+})
