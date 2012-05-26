@@ -259,7 +259,7 @@ mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,px=1,niter=20,do.sm
     }
 
     ## Sample phi
-    phi <- sample_phi(phi,z,lposterior,priors,px=px)$phi
+    phi <- sample_phi(phi,z,lposterior,priors)$phi
 
     ## Add clusters from prior (Neal 2000)
     if (num.extra > 0) {
