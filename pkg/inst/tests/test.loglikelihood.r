@@ -86,10 +86,10 @@ test_that("Different ways of computing the loglikelihood agree",{
   lrm <- LogIntensityArrayPc(beta,z-1,s$ptr(),K)
   
   taus <- test_taus(lrm,times,sen-1,rec-1,M,N)
-  taus2 <- test_taus_from_s(times,sen-1,rec-1,N,M,P)
+  taus2 <- test_taus_from_s(times,sen-1,rec-1,N,M,ego)
   expect_that(all.equal(taus,taus2),is_true())
   
-  llks <- RemLogLikelihood(beta,times,sen-1,rec-1,z-1,N,M,K,P)
+  llks <- RemLogLikelihood(beta,times,sen-1,rec-1,z-1,N,M,K,ego)
   llksa <- RRemLogLikelihoodFromArraySlow(lrm,times,sen-1,rec-1,N,M)
   llk2 <-  RemLogLikelihoodFromArray(lrm,times,sen-1,rec-1,N,M)
   llk2a <-  RemLogLikelihoodVecFromArray(lrm,times,sen-1,rec-1,N,M)
@@ -166,8 +166,6 @@ test_that("Check BlockPc agrees with using entire dataset", {
       beta[1:3,k,l] <- c(0,0,0)
       c1 <- RemLogLikelihoodBlockPc(k-1,l-1,knodes-1,lnodes-1,beta,z-1,s$ptr(),K)
       c2 <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
-                                        #    o1-c1
-                                        #    o2-c2
       cbind(z[A[,2]],z[A[,3]],o1-c1,o2-c2)[1:20,]
       expect_that(o1-c1, equals(o2-c2))
     }
