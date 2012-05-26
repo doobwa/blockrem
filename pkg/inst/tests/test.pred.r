@@ -72,7 +72,7 @@ test_that("Helper functions for multinomial likelihood and ranks work", {
 
 
 test_that("BREM models: online mult likelihoods and ranks agree with old code", {
-  p <- eval.online(A,N,train.ix,test.ix,fit,ties.method="first")
+  p <- evaluate(A,N,train.ix,test.ix,fit,ties.method="first")
   q <- get.pred(train,A,N,test.ix,fit)
   llkm.train <- log(multinomial.score(q$m$train,train))
   llkm.test  <- log(multinomial.score(q$m$test, test))
@@ -83,8 +83,9 @@ test_that("BREM models: online mult likelihoods and ranks agree with old code", 
   expect_that(p$rks$train, equals(rk.train))
   expect_that(p$rks$test, equals(rk.test))
 })
+
 test_that("BREM models: online mult likelihoods and ranks check with hard coded answers", {
-  p <- eval.online(A,N,train.ix,test.ix,fit,ties.method="first")
+  p <- evaluate(A,N,train.ix,test.ix,fit,ties.method="first")
   ans <- c(6, 25, 77, 74, 3, 10)
   ans <- c(74, 34, 11, 18, 73, 68)
   ans <- c(-4.49980967033027, -4.81081587105776, -5.02537295559027, -4.92589230086563, -3.2896979969751, -4.35176341317661)
@@ -92,8 +93,9 @@ test_that("BREM models: online mult likelihoods and ranks check with hard coded 
   ans <- c(-5.04026531620789, -5.09140599388328, -4.15951847928562, -4.13957979834807, -5.13673903647754, -5.2896979969751)
   expect_that(head(p$mllk$test), equals(ans))
 })
+
 test_that("Baseline models: online mult likelihoods and ranks agree with old", {
-  p <- eval.online.baseline(A,N,train.ix,test.ix,model="online",ties.method="first")
+  p <- evaluate.baseline(A,N,train.ix,test.ix,model="online",ties.method="first")
   q <- get.pred.baseline(train,A,N,test.ix,model="online")
   llkm.train <- log(multinomial.score(q$m$train,train))
   llkm.test  <- log(multinomial.score(q$m$test, test))
@@ -106,7 +108,7 @@ test_that("Baseline models: online mult likelihoods and ranks agree with old", {
 })
 test_that("Baseline models: online mult likelihoods and ranks check with hard coded answers", {
 
-  p <- eval.online.baseline(A,N,train.ix,test.ix,model="online",ties.method="first")
+  p <- evaluate.baseline(A,N,train.ix,test.ix,model="online",ties.method="first")
   ans <- c(6,17,75,73,28,38)
   expect_that(head(p$rks$train), equals(ans))
   ans <- c(58,47,80,41,38,15)

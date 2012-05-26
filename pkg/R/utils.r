@@ -45,7 +45,7 @@ eval.rank <- function(edgelist,lrm,i,...) {
 ##' @param ... options to pass to rank()
 ##' @return list of mllk, rks
 ##' @export
-eval.online <- function(edgelist,N,train.ix,test.ix,fit,...) {
+evaluate <- function(edgelist,N,train.ix,test.ix,fit,...) {
   train <- edgelist[train.ix,]
   test  <- edgelist[test.ix,]
   P <- dim(fit$beta)[1]
@@ -81,7 +81,7 @@ eval.online <- function(edgelist,N,train.ix,test.ix,fit,...) {
 ##' @param ... 
 ##' @return 
 ##' @author chris
-eval.online.baseline <- function(edgelist,N,train.ix,test.ix,model="online",...) {
+evaluate.baseline <- function(edgelist,N,train.ix,test.ix,model="online",...) {
 
   train <- edgelist[train.ix,]
   test  <- edgelist[test.ix,]
