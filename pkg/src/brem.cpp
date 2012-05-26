@@ -26,6 +26,8 @@ Currently implemented statistics for a particular (t,i,j):
   - number of times this dyad has occurred
   - number of changepoints fo this dyad
 
+Suppose an event (i,j) occurs.  If the ego variable is 0, then (i,r), (j,r), (r,i) and (r,j) dyads all have changepoints for all other nodes r, so their statistics vectors need to be updated and any likelihood computation needs to account for them.  If ego==1, then we only consider (i,r) and (j,r) for all nodes r.
+
 old notes:
 // element (i,j,v) is a vector of sufficient statistics for dyad (i,j) at its v'th changepoint.  These sufficient statistics apply to the time period leading up to the v'th timepoint.
 // Compute a data structure for finding m_{last changepoint of ij}.
@@ -413,6 +415,7 @@ Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcp
   int N = s->N;
   int P = s->P;
   int M = s->M;
+  int ego = s->ego;
 
   double llk = 0.0; 
   double lam;
@@ -438,8 +441,10 @@ Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcp
         if (r != i && r != j) {
           lambda  = LogLambdaPc(a,r,za,zr,s->get_s(m,a,r),beta,N,K,P);
           llk  = llk - (s->times[m] - s->get_tau(m,a,r)) * exp(lambda);
-          lambda  = LogLambdaPc(r,a,zr,za,s->get_s(m,r,a),beta,N,K,P);
-          llk  = llk - (s->times[m] - s->get_tau(m,r,a)) * exp(lambda);
+          if (ego == 0) {
+            lambda  = LogLambdaPc(r,a,zr,za,s->get_s(m,r,a),beta,N,K,P);
+            llk  = llk - (s->times[m] - s->get_tau(m,r,a)) * exp(lambda);
+          }
         }
       }
       lam  = LogLambdaPc(i,j,zi,zj,s->get_s(m,i,j),beta,N,K,P);
@@ -449,12 +454,14 @@ Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcp
     } else {
       lam  = LogLambdaPc(i,a,zi,za,s->get_s(m,i,a),beta,N,K,P);
       llk -= (s->times[m] - s->get_tau(m,i,a)) * exp(lam);
-      lam  = LogLambdaPc(a,i,za,zi,s->get_s(m,a,i),beta,N,K,P);
-      llk -= (s->times[m] - s->get_tau(m,a,i)) * exp(lam);
-      lam  = LogLambdaPc(a,j,za,zj,s->get_s(m,a,j),beta,N,K,P);
-      llk -= (s->times[m] - s->get_tau(m,a,j)) * exp(lam);
       lam  = LogLambdaPc(j,a,zj,za,s->get_s(m,j,a),beta,N,K,P);
       llk -= (s->times[m] - s->get_tau(m,j,a)) * exp(lam);
+      if (ego == 0) {
+        lam  = LogLambdaPc(a,i,za,zi,s->get_s(m,a,i),beta,N,K,P);
+        llk -= (s->times[m] - s->get_tau(m,a,i)) * exp(lam);
+        lam  = LogLambdaPc(a,j,za,zj,s->get_s(m,a,j),beta,N,K,P);
+        llk -= (s->times[m] - s->get_tau(m,a,j)) * exp(lam);
+      }
     }
 
     // observed event
@@ -474,8 +481,10 @@ Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcp
     if (i != a) {
       lam  = LogLambdaPc(i,a,zi,za,s->get_s(m,i,a),beta,N,K,P);
       llk -= (s->times[m] - s->get_tau(m,i,a)) * exp(lam);
-      lam  = LogLambdaPc(a,i,za,zi,s->get_s(m,a,i),beta,N,K,P);
-      llk -= (s->times[m] - s->get_tau(m,a,i)) * exp(lam);
+      if (ego == 0) {
+        lam  = LogLambdaPc(a,i,za,zi,s->get_s(m,a,i),beta,N,K,P);
+        llk -= (s->times[m] - s->get_tau(m,a,i)) * exp(lam);
+      }
     }
   }
   llks[M-1] = llk;
@@ -488,6 +497,7 @@ double LogNormalizing(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP stat
   RemStat *s = XPtr<RemStat>(statptr_);
   int N = s->N;
   int P = s->P;
+  int ego = s->ego;
 
   double llk = 0.0; 
   double lam = 0.0;
@@ -509,14 +519,16 @@ double LogNormalizing(Rcpp::NumericVector beta, Rcpp::IntegerVector z, SEXP stat
   }
 
   // Iterate through other nodes in receiver block
-  for (int kx = 0; kx < knodes.size(); kx++) {
-    r = knodes[kx];
-    zr = z[r];
-    if (r != i && r != j) {
-      lambda  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
-      llk  = llk - (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
-      lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
-      llk  = llk - (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
+  if (ego == 0) {
+    for (int kx = 0; kx < knodes.size(); kx++) {
+      r = knodes[kx];
+      zr = z[r];
+      if (r != i && r != j) {
+        lambda  = LogLambdaPc(r,i,zr,zi,s->get_s(m,r,i),beta,N,K,P);
+        llk  = llk - (s->times[m] - s->get_tau(m,r,i)) * exp(lambda);
+        lambda  = LogLambdaPc(r,j,zr,zj,s->get_s(m,r,j),beta,N,K,P);
+        llk  = llk - (s->times[m] - s->get_tau(m,r,j)) * exp(lambda);
+      }
     }
   }
 
