@@ -1,12 +1,50 @@
-
-event.llk <- function(A,N,fit,i,s) {
-  if (i==1) stop("llk of first event not implemented")
-  if (i > nrow(A)) stop("index out of bounds")
-  lrm <- brem.lrm.fast.subset(s, fit$z, fit$beta, (i-1):i)
+##' @title 
+##' @param A 
+##' @param N 
+##' @param fit 
+##' @param i 
+##' @param s 
+##' @return 
+##' @author chris
+eval.llk <- function(edgelist,N,fit,i,s) {
+  if (i > nrow(edgelist)) stop("index out of bounds")
+  if (i==1) {
+    lrm <- brem.lrm.fast.subset(s, fit$z, fit$beta, i)
+    llk <- lrm[edgelist[i,2],edgelist[i,3]]
+  } else {
+    lrm <- brem.lrm.fast.subset(s, fit$z, fit$beta, (i-1):i)
   # Currently written to account for how the following function
   # deals with the first event
-  llks <- RemLogLikelihoodVecFromArray(lrm,A[(i-1):i,1],as.integer(A[(i-1):i,2])-1,as.integer(A[(i-1):i,3])-1,N,2)
-  return(llks[2])
+    llks <- RemLogLikelihoodVecFromArray(lrm,edgelist[(i-1):i,1],as.integer(edgelist[(i-1):i,2])-1,as.integer(edgelist[(i-1):i,3])-1,N,2)
+    llk <- llks[2]
+  }
+  return(llk)
+}
+
+##' @title 
+##' @param edgelist 
+##' @param lrm 
+##' @param i 
+##' @return 
+##' @author chris
+eval.brem <- function(edgelist,lrm,i) {
+  N <- dim(lrm)[2]
+  sen <- as.integer(edgelist[i,2])
+  rec <- as.integer(edgelist[i,3])
+  if (i == 1) {
+    llk <- lrm[sen,rec]
+  } else {
+    delta <- c(0,edgelist[i,1] - edgelist[i-1,1])
+    a <- sample((1:N)[-sen],1)
+    b <- sample((1:N)[-rec],1)
+    sen <- c(a,sen)  # arbitrary first event
+    rec <- c(b,rec)
+    lam <- array(1,dim=c(2,dim(lrm)))
+    lam[2,,] <- lrm
+    llk <- RemLogLikelihoodVecFromArray(lam,delta,sen-1,rec-1,N,2)
+    llk <- llk[2]
+  }
+  return(llk)
 }
 
 ##' @title Compute the multinomial log likelihood of a given event
@@ -36,6 +74,7 @@ eval.rank <- function(edgelist,lrm,i,...) {
   rk[edgelist[i,2],edgelist[i,3]]
 }
 
+
 ##' Compute multinomial log likelihood and ranks of train and test events using a fitted BREM model in an online fashion.
 ##' @param edgelist Mx3 matrix of (time, sender, receiver)
 ##' @param N number of nodes
@@ -55,21 +94,24 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,...) {
   stest$precompute()
 
   # Compute loglikelihoods
-  rks <- mllk <- list(train = rep(0,nrow(train)),
-                      test  = rep(0,length(test.ix)))
+  llk <- list(train = rep(0,nrow(train)),
+              test  = rep(0,length(test.ix)))
+  rks <- mllk <- llk
   for (m in 1:nrow(train)) {
     lrm <- brem.lrm.fast.subset(strain, fit$z, fit$beta, m)
-    lrm <- lrm[1,,]
+    lrm <- lrm[1,,]    
+    llk$train[m]  <- eval.brem(train,lrm,m)
     mllk$train[m] <- eval.mult(train,lrm,m)
     rks$train[m]  <- eval.rank(train,lrm,m,...)
   }
-  for (i in 1:length(test.ix)) {
-    lrm <- brem.lrm.fast.subset(stest, fit$z, fit$beta, test.ix[i])
+  for (m in 1:length(test.ix)) {
+    lrm <- brem.lrm.fast.subset(stest, fit$z, fit$beta, test.ix[m])
     lrm <- lrm[1,,]
-    mllk$test[i] <- eval.mult(edgelist,lrm,test.ix[i])
-    rks$test[i]  <- eval.rank(edgelist,lrm,test.ix[i],...)
+    llk$test[m]  <- eval.brem(edgelist,lrm,test.ix[m])
+    mllk$test[m] <- eval.mult(edgelist,lrm,test.ix[m])
+    rks$test[m]  <- eval.rank(edgelist,lrm,test.ix[m],...)
   }
-  return(list(mllk=mllk,rks=rks))
+  return(list(llk=llk,mllk=mllk,rks=rks))
 }
 
 ##' @title Same as eval.online, but for a particular baseline method
@@ -97,9 +139,9 @@ evaluate.baseline <- function(edgelist,N,train.ix,test.ix,model="online",...) {
   ## Initialize online counts
   r$online <- matrix(0,N,N)
 
-  rks <- mllk <- list(train = rep(0,nrow(train)),
-                      test  = rep(0,length(test.ix)))
-
+  llk <- list(train = rep(0,nrow(train)),
+              test  = rep(0,length(test.ix)))
+  rks <- mllk <- llk
   for (m in 1:nrow(train)) {
     if (m > 1) {
       i <- train[m-1,2]
@@ -110,6 +152,7 @@ evaluate.baseline <- function(edgelist,N,train.ix,test.ix,model="online",...) {
     lam <- lam/sum(lam)
     lrm <- log(lam * nrow(train)/train[nrow(train),1])
     diag(lrm) <- -Inf
+    llk$train[m]  <- eval.brem(train,lrm,m)
     mllk$train[m] <- eval.mult(train,lrm,m)
     rks$train[m]  <- eval.rank(train,lrm,m,...)
   }
@@ -122,11 +165,12 @@ evaluate.baseline <- function(edgelist,N,train.ix,test.ix,model="online",...) {
     ## use expected rate from training set
     lrm <- log(lam * nrow(train)/train[nrow(train),1])  
     diag(lrm) <- -Inf
+    llk$test[m]  <- eval.brem(edgelist,lrm,test.ix[m])
     mllk$test[m] <- eval.mult(edgelist,lrm,test.ix[m])
     rks$test[m]  <- eval.rank(edgelist,lrm,test.ix[m],...)
   }
 
-  return(list(mllk=mllk,rks=rks))
+  return(list(llk=llk,mllk=mllk,rks=rks))
 }
   
 ##   # Compute multinomial likelihood

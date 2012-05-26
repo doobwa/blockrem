@@ -49,8 +49,9 @@ test_that("train and test BREM likelihood agree with online version", {
   llk.test <- RemLogLikelihoodVecFromArray(lrm$test,test[,1],as.integer(test[,2])-1,as.integer(test[,3])-1,N,nrow(test))
 
   for (i in 2:10) {
-    expect_that(event.llk(train,N,fit,i,strain), equals(llk.train[i]))
+    expect_that(eval.llk(train,N,fit,i,strain), equals(llk.train[i]))
   }
+  
 })
 
 test_that("Helper functions for multinomial likelihood and ranks work", {
@@ -92,6 +93,11 @@ test_that("BREM models: online mult likelihoods and ranks check with hard coded 
   expect_that(head(p$mllk$train), equals(ans))
   ans <- c(-5.04026531620789, -5.09140599388328, -4.15951847928562, -4.13957979834807, -5.13673903647754, -5.2896979969751)
   expect_that(head(p$mllk$test), equals(ans))
+  ans <- c(-1, -1.1397952618685, -1.32159558497369, -3.89496853746407, 
+0.460317160002888, -0.435237016528844)
+  expect_that(head(p$llk$train), equals(ans))
+  ans <- c(-2.18733996986865, -3.52452590117665, -0.508645472116811, -0.0568255931138519, -1.08559791999357, -3.1297706427309)
+  expect_that(head(p$llk$test), equals(ans))
 })
 
 test_that("Baseline models: online mult likelihoods and ranks agree with old", {
@@ -106,8 +112,8 @@ test_that("Baseline models: online mult likelihoods and ranks agree with old", {
   expect_that(p$rks$train, equals(rk.train))
   expect_that(p$rks$test, equals(rk.test))
 })
-test_that("Baseline models: online mult likelihoods and ranks check with hard coded answers", {
 
+test_that("Baseline models: online mult likelihoods and ranks check with hard coded answers", {
   p <- evaluate.baseline(A,N,train.ix,test.ix,model="online",ties.method="first")
   ans <- c(6,17,75,73,28,38)
   expect_that(head(p$rks$train), equals(ans))
@@ -117,5 +123,24 @@ test_that("Baseline models: online mult likelihoods and ranks check with hard co
   expect_that(head(p$mllk$train), equals(ans))
   ans <- c(-4.58836306767171, -4.59005654817804, -4.99721227376411, -4.43928424994241, -4.44096917030733, -4.19133682820941)
   expect_that(head(p$mllk$test), equals(ans))
+  # TODO: llk check for evaluate.baseline
 })
 
+test_that("BREM likelihood same between Pc method and evaluate()", {
+
+  llk.pc  <- RemLogLikelihoodPc(fit$beta,fit$z-1,strain$ptr(),K)
+  llk.train <- RemLogLikelihoodVecFromArray(lrm$train,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train))
+
+  res <- sapply(1:nrow(train),function(i) {
+    eval.brem(train,lrm$train[i,,],i)
+  })
+  expect_that(sum(res), equals(sum(llk.pc)))
+  expect_that(res, equals(llk.train))
+
+  llk.test <- RemLogLikelihoodVecFromArray(lrm$test,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A))[test.ix]
+  res <- sapply(1:1000,function(i) {
+    eval.brem(A,lrm$test[i,,],i)
+  })
+  expect_that(res[test.ix], equals(llk.test))
+  
+})
