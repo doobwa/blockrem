@@ -9,39 +9,123 @@ event.llk <- function(A,N,fit,i,s) {
   return(llks[2])
 }
 
-##' Compute log likelihood of train and test events using a fitted BREM model in an online fashion.
-##' 
-eval.online <- function(A,N,train.ix,test.ix,fit,...) {
-  train <- A[train.ix,]
-  test  <- A[test.ix,]
-  P <- 15
-  ego <- 0
-  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),ego)
+##' @title Compute the multinomial log likelihood of a given event
+##' @param edgelist Mx3 matrix of (time, sender, receiver)
+##' @param lrm current log rate matrix
+##' @param i index of event to evaluate
+##' @return
+##' @export
+##' @author chris
+eval.mult <- function(edgelist,lrm,i) {
+  m <- exp(lrm)
+  m <- m/sum(m)
+  log(m[edgelist[i,2],edgelist[i,3]])
+}
+
+##' @title Compute the rank of a given event
+##' @param edgelist Mx3 matrix of (time, sender, receiver)
+##' @param lrm current log rate matrix
+##' @param i index of event to evaluate
+##' @param ... parameters to pass to rank()
+##' @return
+##' @export
+##' @author chris
+eval.rank <- function(edgelist,lrm,i,...) {
+  N <- dim(lrm)[1]
+  rk <- matrix(rank(-lrm,...),N,N)
+  rk[edgelist[i,2],edgelist[i,3]]
+}
+
+##' Compute multinomial log likelihood and ranks of train and test events using a fitted BREM model in an online fashion.
+##' @param edgelist Mx3 matrix of (time, sender, receiver)
+##' @param N number of nodes
+##' @param train.ix indices of edgelist to use as training data
+##' @param test.ix indices of edgelist to use as training data
+##' @param fit BREM object having elements beta, z, and ego
+##' @param ... options to pass to rank()
+##' @return list of mllk, rks
+##' @export
+eval.online <- function(edgelist,N,train.ix,test.ix,fit,...) {
+  train <- edgelist[train.ix,]
+  test  <- edgelist[test.ix,]
+  P <- dim(fit$beta)[1]
+  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P,fit$ego)
   strain$precompute()
-  stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),ego)
+  stest <- new(RemStat,edgelist[,1],as.integer(edgelist[,2])-1,as.integer(edgelist[,3])-1,N,nrow(edgelist),P,fit$ego)
   stest$precompute()
 
   # Compute loglikelihoods
   rks <- mllk <- list(train = rep(0,nrow(train)),
                       test  = rep(0,length(test.ix)))
-  for (i in 1:nrow(train)) {
-    lrm <- brem.lrm.fast.subset(strain, fit$z, fit$beta, i)
+  for (m in 1:nrow(train)) {
+    lrm <- brem.lrm.fast.subset(strain, fit$z, fit$beta, m)
     lrm <- lrm[1,,]
-    m <- exp(lrm)
-    m <- m/sum(m)
-    mllk$train[i] <- log(m[train[i,2],train[i,3]])
-    rk <- matrix(rank(-lrm,...),N,N)
-    rks$train[i] <- rk[train[i,2],train[i,3]]
+    mllk$train[m] <- eval.mult(train,lrm,m)
+    rks$train[m]  <- eval.rank(train,lrm,m,...)
   }
   for (i in 1:length(test.ix)) {
     lrm <- brem.lrm.fast.subset(stest, fit$z, fit$beta, test.ix[i])
     lrm <- lrm[1,,]
-    m <- exp(lrm)
-    m <- m/sum(m)
-    mllk$test[i] <- log(m[A[test.ix[i],2],A[test.ix[i],3]])
-    rk <- matrix(rank(-lrm,...),N,N)
-    rks$test[i] <- rk[A[test.ix[i],2],A[test.ix[i],3]]
+    mllk$test[i] <- eval.mult(edgelist,lrm,test.ix[i])
+    rks$test[i]  <- eval.rank(edgelist,lrm,test.ix[i],...)
   }
+  return(list(mllk=mllk,rks=rks))
+}
+
+##' @title Same as eval.online, but for a particular baseline method
+##' @param edgelist Mx3 matrix of (time, sender, receiver)
+##' @param N number of nodes
+##' @param train.ix indices of edgelist to use as training data
+##' @param test.ix indices of edgelist to use as training data
+##' @param model type of baseline (online, marg, or uniform)
+##' @param ... 
+##' @return 
+##' @author chris
+eval.online.baseline <- function(edgelist,N,train.ix,test.ix,model="online",...) {
+
+  train <- edgelist[train.ix,]
+  test  <- edgelist[test.ix,]
+  eps <- 1
+  
+  r <- list()
+  r$uniform <- matrix(1,N,N)
+  
+  ## Compute marginals
+  b <- table(factor(train[, 2], 1:N), factor(train[, 3], 1:N))
+  r$marg <- rowSums(b) %*% t(colSums(b))
+
+  ## Initialize online counts
+  r$online <- matrix(0,N,N)
+
+  rks <- mllk <- list(train = rep(0,nrow(train)),
+                      test  = rep(0,length(test.ix)))
+
+  for (m in 1:nrow(train)) {
+    if (m > 1) {
+      i <- train[m-1,2]
+      j <- train[m-1,3]
+      r$online[i,j] <- r$online[i,j] + 1
+    }    
+    lam <- r[[model]] + eps
+    lam <- lam/sum(lam)
+    lrm <- log(lam * nrow(train)/train[nrow(train),1])
+    diag(lrm) <- -Inf
+    mllk$train[m] <- eval.mult(train,lrm,m)
+    rks$train[m]  <- eval.rank(train,lrm,m,...)
+  }
+  for (m in 1:length(test.ix)) {
+    i <- edgelist[test.ix[m]-1,2]
+    j <- edgelist[test.ix[m]-1,3]
+    r$online[i,j] <- r$online[i,j] + 1
+    lam <- r[[model]] + eps
+    lam <- lam/sum(lam)
+    ## use expected rate from training set
+    lrm <- log(lam * nrow(train)/train[nrow(train),1])  
+    diag(lrm) <- -Inf
+    mllk$test[m] <- eval.mult(edgelist,lrm,test.ix[m])
+    rks$test[m]  <- eval.rank(edgelist,lrm,test.ix[m],...)
+  }
+
   return(list(mllk=mllk,rks=rks))
 }
   
@@ -57,7 +141,7 @@ eval.online <- function(A,N,train.ix,test.ix,fit,...) {
 ##' @param test.ix indices of A that represent the test set
 ##' @param fit object as returned by brem.mcmc
 ##' @export
-get.pred.baseline <- function(train,A,test.ix,model="online") {
+get.pred.baseline <- function(train,A,N,test.ix,model="online") {
   get.ms <- switch(model,
                    "uniform" = function(x) array(1,c(nrow(x),N,N)),
                    "online"  = function(x) ratemat.online(x,N),
@@ -72,11 +156,11 @@ get.pred.baseline <- function(train,A,test.ix,model="online") {
                    })
   
   eps <- 1  # smoothing
-  cat("lambdas (train)\n")
   m.train <- get.ms(train)
   m.train[which(m.train==-Inf)] <- 0
   for (i in 1:nrow(train)) {
     lam <- m.train[i,,] + eps
+    diag(lam) <- 0
     m.train[i,,] <- lam/sum(lam)
   }
   m.test <- get.ms(A)
@@ -84,10 +168,17 @@ get.pred.baseline <- function(train,A,test.ix,model="online") {
   m.test[which(m.test==-Inf)] <- 0
   for (i in 1:length(test.ix)) {
     lam <- m.test[i,,] + eps
+    diag(lam) <- 0
     m.test[i,,] <- lam/sum(lam)
   }
+  # Set rates of diagonals to 0
+  for (i in 1:nrow(train)) {
+    diag(m.train[i,,]) <- 0
+  }
+  for (i in 1:length(test.ix)) {
+    diag(m.test[i,,]) <- 0
+  }
   # Get lambda estimates using global rate
-  lrm.train <- log(m.train * nrow(train)/train[nrow(train),1])
   lrm.train <- log(m.train * nrow(train)/train[nrow(train),1])
   lrm.test  <- log(m.test  * nrow(train)/train[nrow(train),1])
   return(list(lrm=list(train=lrm.train,test=lrm.test),m=list(train=m.train,test=m.test)))
@@ -99,13 +190,12 @@ get.pred.baseline <- function(train,A,test.ix,model="online") {
 ##' @param test.ix indices of A that represent the test set
 ##' @param fit object as returned by brem.mcmc
 ##' @export
-get.pred <- function(train,A,test.ix,fit) {
-  cat("precomputing\n")
-  P <- 15
+get.pred <- function(train,A,N,test.ix,fit) {
+  P <- dim(fit$beta)[1]
   ego <- 0
-  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),ego)
+  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P,fit$ego)
   strain$precompute()
-  stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),ego)
+  stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P,ego)
   stest$precompute()
   lrm <- list()
   lrm$train <- brem.lrm.fast(strain, fit$z, fit$beta)

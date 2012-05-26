@@ -9,7 +9,7 @@ source("pkg/R/brem.alt.r")
 # Precompute data structures
 N <- max(c(train[,2],train[,3]))
 M <- nrow(train)
-P <- 15
+P <- 13
 ego <- 1
 K <- opts$numclusters
 s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P,ego)
@@ -25,7 +25,7 @@ px[7] <- 0
 K <- 2
 k1 <- k2 <- 1
 current <- array(rnorm(P*K^2,priors$phi$mu,priors$phi$sigma),c(P,K,K))
-olp <- brem.lpost.fast(A,N,K,z,s,current*0)
+olp <- brem.lpost.fast(A,N,K,z,s,beta)
 
 priors <- list(alpha=1,sigma=.1,phi=list(mu=0,sigma=1))
 llk <- sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
@@ -37,8 +37,11 @@ llk <- sum(RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,beta,z-1,s$ptr(
 
 # Fit model
 source("pkg/R/brem.alt.r")
+lp(beta,z,priors)
 px <- c(1,2,3,4,5,6)
-fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,5,do.sm=FALSE,num.extra=10,niter=20,verbose=TRUE)
+K <- 5; P <- 13
+fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,do.sm=FALSE,num.extra=10,niter=15,verbose=TRUE)
+lp(fit$samples[[5]]$phi,fit$samples[[5]]$z,priors)
 
 fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,10,do.sm=TRUE,num.extra=10,niter=20,verbose=TRUE)
 
