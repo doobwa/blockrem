@@ -372,6 +372,9 @@ public:
   SEXP ptr() {
     return Rcpp::XPtr<RemStat>(this, false);
   }
+  int get_P() {
+    return P;
+  }
 
   // Number of nodes, events, parameters, and clusters.
   int N, M, P, ego;
@@ -924,6 +927,8 @@ RCPP_MODULE(brem){
              "v vectors for all dyads")
     .method( "get_all_u", &RemStat::get_all_u,
              "u vectors for all dyads")
+    .method( "get_P", &RemStat::get_P,
+             "get length of statistics vectors")
     .method( "ptr", &RemStat::ptr,
              "get pointer to object in memory")
     ;

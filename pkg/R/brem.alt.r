@@ -1,5 +1,7 @@
 lp <- function(phi,z,priors) {
   K <- dim(phi)[2]
+  P <- dim(phi)[1]
+  if (s$get_P() != P) stop("Mismatch in parameter vector lengths")
   pr.y <- sum(RemLogLikelihoodPc(phi,z-1,s$ptr(),K))
   pr.phi <- sum(dnorm(unlist(phi),priors$phi$mu,priors$phi$sigma,log=TRUE))
   tb <- table(factor(z,1:K))
