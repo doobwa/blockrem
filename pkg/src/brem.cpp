@@ -116,8 +116,9 @@ Data structure for precomputing relational event statistics
 */
 
 class RemStat {
-  public:
-  RemStat(Rcpp::NumericVector times_, Rcpp::IntegerVector sen_,  Rcpp::IntegerVector rec_, int N_, int M_, int ego_) : times(times_),sen(sen_),rec(rec_),N(N_),M(M_),ego(ego_) {
+public:
+  RemStat(Rcpp::NumericVector times_, Rcpp::IntegerVector sen_,  Rcpp::IntegerVector rec_, int N_, int M_, int ego_) : 
+    times(times_),sen(sen_),rec(rec_),N(N_),M(M_),ego(ego_) {
 
     P = 15;
 
@@ -141,7 +142,7 @@ class RemStat {
       s.push_back(s_i);
     }
 
-    // Actor changepoint indices
+    // Actor changepoitn indices
     for (int i = 0; i < N; i++) {
       vector<int> u_i;
       u.push_back(u_i);
@@ -173,20 +174,17 @@ class RemStat {
   }
 
   void transform() {
-
-    // Transform degree effects k to log((k+1) / (m + N^2)) where m is number of changepoints so far. [TODO?]
     for (int i = 0; i < N; i++) {
       for (int j = 0; j < N; j++) {
         for (int v = 0; v < x[i][j].size(); v++) {
           for (int p = 7; p < 12; p++) {
+            // Rprintf("befor: %i %i %i %i %i\n",i,j,v,p,x[i][j][v][p]);
             x[i][j][v][p] = log((x[i][j][v][p] + 1.0)/(x[i][j][v][12] + N*(N-1)));
             // Rprintf("after: %i %i %i %i %f\n",i,j,v,p,x[i][j][v][p]);
           }
         }
       }
     }
-
-    // Compute recency statistics
   }
 
   // Update the statistics for dyad (i,j) with the information that dyad (a,b) just occurred.  s_1{(i,j)} (the statistic for an abba effect)  will now be 1 if b==i and a==j.
@@ -219,26 +217,6 @@ class RemStat {
         s[i][j][11] += 1; // dyad count
       }
       s[i][j][12] = m;   // changepoint count
-
-      // Recency: i sends to recent in-contacts (RRS)
-      // Update rank of b in i's in-contact list
-      if (b==i && s[i][j][13] > 0) {
-        s[i][j][13] += 1; // not most recent gets bumped down a rank
-      }
-      if (b==i && a==j) { 
-        s[i][j][13] = 1;  // most recent in-contact to i
-      }
-
-      // Recency: i sends to recent out-contacts (RSS)
-      // Update rank of a in i's out-contact list
-      if (a==i && s[i][j][14] > 0) {
-        s[i][j][14] += 1;  // not most recent gets bumped down a rank
-      }
-      if (a==i && b==j) {
-        s[i][j][14] = 1;   // most recent out-contact of i is b
-      }
-
-      // Shared partner effects
     }
   }
 
@@ -251,34 +229,30 @@ class RemStat {
       int i = sen[m];
       int j = rec[m];
 
-     // Update current statistics for those affected by event (i,j)@m
+     // Update statistics for those affected by previous event
       for (int r = 0; r < N; r++) {
         if (r!=j && r!=i) {
           update(m,i,j,i,r);
+          update(m,i,j,r,i);
           update(m,i,j,j,r);
-          if (ego == 0) {
-            update(m,i,j,r,i);
-            update(m,i,j,r,j);
-          }
+          update(m,i,j,r,j);
         }
       }
       update(m,i,j,i,j);
       update(m,i,j,j,i);
 
 
-      // Store statistics  for those affected by event (i,j)@m
+      // Update statistics and changepoints for all dyads affected by (i,j)@m
       for (int r = 0; r < N; r++) {
         if (r!=i && r!=j) {
           x[i][r].push_back(s[i][r]); // pushing to m element
+          x[r][i].push_back(s[r][i]);
           x[j][r].push_back(s[j][r]);
+          x[r][j].push_back(s[r][j]);
           v[i][r].push_back(m);
+          v[r][i].push_back(m);
           v[j][r].push_back(m);
-          if (ego == 0) {
-            v[r][i].push_back(m);
-            v[r][j].push_back(m);
-            x[r][i].push_back(s[r][i]);
-            x[r][j].push_back(s[r][j]);
-          }
+          v[r][j].push_back(m);
         }
       }
       x[i][j].push_back(s[i][j]);
@@ -400,7 +374,7 @@ private:
 
 double LogLambdaPc(int i, int j, int zi, int zj, vector<double> s, Rcpp::NumericVector beta, int N, int K, int P) {
   double lam = beta[threeDIndex(0,zi,zj,P,K,K)]; // intercept
-  for (int p = 1; p < P; p++) {
+  for (int p = 1; p < 12; p++) {
     lam += s[p] * beta[threeDIndex(p,zi,zj,P,K,K)];
   }
   return lam;

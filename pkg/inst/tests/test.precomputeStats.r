@@ -6,7 +6,7 @@ P <- 15
 times <- seq(0,.6,by=.1)
 sen <- c(1,3,3,1,2,5,2)
 rec <- c(3,1,1,3,5,1,4)
-ego <- 0
+ego <- P
 s <- new(RemStat,times,sen-1,rec-1,N,M,ego)
 s$precompute()
 x <- s$get_all_s()
@@ -138,7 +138,6 @@ test_that("Ego restriction updates fewer dyads", {
 })
 
 test_that("LogLambdaPc uses degree effects properly",{
-  ego <- 0
   s <- new(RemStat,times,sen-1,rec-1,N,M,ego)
   s$precompute()
   i <- 1

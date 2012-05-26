@@ -1,6 +1,5 @@
 context("computing tau")
 
-
 M <- 7
 N <- 5
 times <- c(1,2,3,4,5,6,7)

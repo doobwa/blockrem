@@ -14,10 +14,11 @@ event.llk <- function(A,N,fit,i,s) {
 eval.online <- function(A,N,train.ix,test.ix,fit,...) {
   train <- A[train.ix,]
   test  <- A[test.ix,]
-  P <- 13
-  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
+  P <- 15
+  ego <- 0
+  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),ego)
   strain$precompute()
-  stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
+  stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),ego)
   stest$precompute()
 
   # Compute loglikelihoods
@@ -100,10 +101,11 @@ get.pred.baseline <- function(train,A,test.ix,model="online") {
 ##' @export
 get.pred <- function(train,A,test.ix,fit) {
   cat("precomputing\n")
-  P <- 13
-  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P)
+  P <- 15
+  ego <- 0
+  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),ego)
   strain$precompute()
-  stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
+  stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),ego)
   stest$precompute()
   lrm <- list()
   lrm$train <- brem.lrm.fast(strain, fit$z, fit$beta)
@@ -403,8 +405,8 @@ llk_indiv <- function(a,lrm,times,sen,rec) {
 
 
 
-test_taus_from_s <- function(times,sen,rec,N,M,P) {
-  s <- new(RemStat,times,sen,rec,N,M,P)
+test_taus_from_s <- function(times,sen,rec,N,M,ego) {
+  s <- new(RemStat,times,sen,rec,N,M,ego)
   s$precompute()
   taus <- array(0,c(M,N,N))
   for (m in 0:(M-1)) {
