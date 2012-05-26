@@ -1,4 +1,4 @@
-opts <- list(dataset="synthetic",numclusters=2,model.type="full",numiterations=20)
+opts <- list(dataset="synthetic-1",numclusters=2,model.type="full",numiterations=20)
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
 library(brem)
@@ -9,9 +9,10 @@ source("pkg/R/brem.alt.r")
 # Precompute data structures
 N <- max(c(train[,2],train[,3]))
 M <- nrow(train)
-P <- 13
+P <- 15
+ego <- 1
 K <- opts$numclusters
-s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
+s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P,ego)
 s$precompute()
 
 ## Set priors
