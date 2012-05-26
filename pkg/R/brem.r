@@ -4,18 +4,18 @@
 ##' @param z latent class assignments
 ##' @param beta P x K x K array of parameters
 ##' @export
-generate.brem <- function(M,N,beta,z) {
+generate.brem <- function(M,N,beta,z,ego=FALSE) {
   edgelist <- matrix(c(0,1,2),nr=1)
-  simulate.brem.cond(beta,z,edgelist,M,N)
+  simulate.brem.cond(beta,z,edgelist,M,N,ego)
 }
-simulate.brem <- function(fit,train,M=100,nsim=1) {
+simulate.brem <- function(fit,train,M=100,nsim=1,ego=FALSE) {
   mclapply(1:nsim,function(i) {
     beta <- fit$param[fit$niter - i + 1,,,]
     z <- fit$zs[[fit$niter - i + 1]]
-    simulate.brem.cond(beta,z,train,M,fit$N)
+    simulate.brem.cond(beta,z,train,M,fit$N,ego)
   })
 }
-simulate.brem.cond <- function(beta,z,train,M=100,N) {
+simulate.brem.cond <- function(beta,z,train,M,N,ego=FALSE) {
   K <- dim(beta)[2]
   P <- dim(beta)[1]
   edgelist <- train[nrow(train),,drop=FALSE]
@@ -34,10 +34,12 @@ simulate.brem.cond <- function(beta,z,train,M=100,N) {
   }
   for (m in 1:M) {
     for (r in 1:N) {
-      lambda[r,j] <- LogLambda(r-1,j-1,z[r]-1,z[j]-1,s,beta,N,K,P)
       lambda[j,r] <- LogLambda(j-1,r-1,z[j]-1,z[r]-1,s,beta,N,K,P)
       lambda[i,r] <- LogLambda(i-1,r-1,z[i]-1,z[r]-1,s,beta,N,K,P)
-      lambda[r,i] <- LogLambda(r-1,i-1,z[r]-1,z[i]-1,s,beta,N,K,P)
+      if (!ego) {
+        lambda[r,j] <- LogLambda(r-1,j-1,z[r]-1,z[j]-1,s,beta,N,K,P)
+        lambda[r,i] <- LogLambda(r-1,i-1,z[r]-1,z[i]-1,s,beta,N,K,P)
+      }
     }
     diag(lambda) <- -Inf
     cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))

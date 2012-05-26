@@ -91,7 +91,7 @@ int rcategorical (Rcpp::NumericVector lp) {
   Rcpp::NumericVector p = exp(lp);
 
   // Get sum.  If any Infinite values, return that index. 
-  // TODO: This probably introduces a bias towards smaller k.
+  // TODO: This might introduce a bias towards smaller k!
   int k;
   double cuml = 0;
   double sum = 0;
