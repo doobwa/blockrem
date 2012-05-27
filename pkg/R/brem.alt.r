@@ -5,11 +5,21 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
   s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P,ego)
   s$precompute()
   priors$px <- which(effects %in% c("intercept","abba","abby","abxa","abxb","abay","abab","sen_outdeg","rec_outdeg","sen_indeg","rec_indeg","dyad_count","changepoint_count"))
+
+  # Do an iteration for the lowerlevel blockmodel
   fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,do.sm=do.sm,num.extra=num.extra,niter=niter,verbose=TRUE)
 
+  # Fit hierarchical portion
+  mu <- 0
+  sigma <- 1
+
   fit$ego <- ego
+  fit$mu <- mu
+  fit$sigma <- sigma
   fit$beta <- fit$samples[[niter]]$phi
   fit$z <- fit$samples[[niter]]$z
+  fit$priors <- priors
+  fit$s <- s
   class(fit) <- "brem"
   return(fit)
 }

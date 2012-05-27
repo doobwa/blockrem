@@ -1,3 +1,40 @@
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title Plot histograms of the log probability of data and model parameters
+##' @param fit brem object
+##' @param priors 
+##' @return 
+##' @author chris
+plot.posterior <- function(fit,priors) {
+  P <- dim(fit$beta)[1]
+  K <- dim(fit$beta)[2]
+  sigma <- fit$sigma
+  mu <- fit$mu
+  beta  <- fit$beta
+  z <- fit$z
+  if (length(sigma) == 1) {
+    mu <- rep(mu,P)
+    sigma <- rep(sigma,P)
+  }
+  lbetas <- ys <- list()
+  for (k1 in 1:K) {
+    lbetas[[k1]] <- ys[[k1]] <- list()
+    for (k2 in 1:K) {
+      lbetas[[k1]][[k2]] <- dnorm(beta[,k1,k2],mu,sigma,log=TRUE)
+      k1nodes <- which(z==k1)
+      k2nodes <- which(z==k2)
+      ys[[k1]][[k2]] <- RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,beta,z-1,fit$s$ptr(),K)
+    }
+  }
+  lsigmas <- dgamma(sigma,priors$sigma$alpha,priors$sigma$beta,log=TRUE)
+
+  par(mfrow=c(1,3))
+  hist(unlist(lsigmas),main="Parameters sigma_p",xlab="logprob")
+  hist(unlist(lbetas),main="Parameters beta_p,k1,k2",xlab="logprob")
+  hist(unlist(ys),main="Observations",xlab="logprob")
+}
+
 ##' @title 
 ##' @param A 
 ##' @param N 
