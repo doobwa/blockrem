@@ -6,7 +6,16 @@
 ##' @param priors 
 ##' @return 
 ##' @author chris
-plot.posterior <- function(fit) {
+plot.posterior <- function(train,N,fit) {
+  M <- nrow(train)
+  P <- 13
+  ego <- fit$ego*1  # RemStat doesn't want boolean
+  s <- new(RemStat,
+           train[,1],
+           as.integer(train[,2])-1,
+           as.integer(train[,3])-1,
+           N,M,P,ego)
+  s$precompute()  
   P <- dim(fit$params$beta)[1]
   K <- dim(fit$params$beta)[2]
   sigma <- fit$params$sigma
@@ -24,7 +33,7 @@ plot.posterior <- function(fit) {
       lbetas[[k1]][[k2]] <- dnorm(beta[,k1,k2],mu,sigma,log=TRUE)
       k1nodes <- which(z==k1)
       k2nodes <- which(z==k2)
-      ys[[k1]][[k2]] <- RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,beta,z-1,fit$s$ptr(),K)
+      ys[[k1]][[k2]] <- RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,beta,z-1,s$ptr(),K)
     }
   }
   lsigmas <- dgamma(sigma,fit$priors$sigma$alpha,fit$priors$sigma$beta,log=TRUE)
@@ -33,6 +42,13 @@ plot.posterior <- function(fit) {
   hist(unlist(lsigmas),main="Parameters sigma_p",xlab="logprob")
   hist(unlist(lbetas),main="Parameters beta_p,k1,k2",xlab="logprob")
   hist(unlist(ys),main="Observations",xlab="logprob")
+}
+
+plot.posterior.pc <- function(lp) {
+  par(mfrow=c(1,3))
+  hist(lp$sigma,main="Parameters sigma_p",xlab="logprob")
+  hist(lp$beta,main="Parameters beta_p,k1,k2",xlab="logprob")
+  hist(lp$y,main="Observations",xlab="logprob")
 }
 
 ##' @title 
@@ -124,10 +140,10 @@ eval.rank <- function(edgelist,lrm,i,...) {
 evaluate <- function(edgelist,N,train.ix,test.ix,fit,...) {
   train <- edgelist[train.ix,]
   test  <- edgelist[test.ix,]
-  P <- dim(fit$beta)[1]
-  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P,fit$ego)
+  P <- dim(fit$params$beta)[1]
+  strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P,as.integer(fit$ego))
   strain$precompute()
-  stest <- new(RemStat,edgelist[,1],as.integer(edgelist[,2])-1,as.integer(edgelist[,3])-1,N,nrow(edgelist),P,fit$ego)
+  stest <- new(RemStat,edgelist[,1],as.integer(edgelist[,2])-1,as.integer(edgelist[,3])-1,N,nrow(edgelist),P,as.integer(fit$ego))
   stest$precompute()
 
   # Compute loglikelihoods
@@ -135,14 +151,14 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,...) {
               test  = rep(0,length(test.ix)))
   rks <- mllk <- llk
   for (m in 1:nrow(train)) {
-    lrm <- brem.lrm.fast.subset(strain, fit$z, fit$beta, m)
+    lrm <- brem.lrm.fast.subset(strain, fit$params$z, fit$params$beta, m)
     lrm <- lrm[1,,]    
     llk$train[m]  <- eval.brem(train,lrm,m)
     mllk$train[m] <- eval.mult(train,lrm,m)
     rks$train[m]  <- eval.rank(train,lrm,m,...)
   }
   for (m in 1:length(test.ix)) {
-    lrm <- brem.lrm.fast.subset(stest, fit$z, fit$beta, test.ix[m])
+    lrm <- brem.lrm.fast.subset(stest, fit$params$z, fit$params$beta, test.ix[m])
     lrm <- lrm[1,,]
     llk$test[m]  <- eval.brem(edgelist,lrm,test.ix[m])
     mllk$test[m] <- eval.mult(edgelist,lrm,test.ix[m])

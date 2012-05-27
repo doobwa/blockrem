@@ -30,9 +30,9 @@ summaryRprof()
 # Mixing
 library(reshape2)
 library(ggplot2)
-tmp <- melt(lapply(fit$samples,function(x) x$phi))
+tmp <- melt(lapply(fit$samples,function(x) x$beta))
 qplot(L1, value, data=tmp, geom="line", colour=factor(Var1)) +facet_grid(Var2~Var3,scales="free")
 #tmp <- subset(tmp,Var2==k1 & Var3==k2)
 #qplot(L1, value, data=tmp, geom="line") +facet_grid(Var1~.,scales="free")
 
-plot.posterior(fit,priors)
+plot.posterior(train,N,fit)

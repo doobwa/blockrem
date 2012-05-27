@@ -12,21 +12,26 @@ lposterior <- function(params,priors,collapse.sigma=TRUE) {
   if (s$get_P() != P) stop("Mismatch in parameter vector lengths")
 
   # Likelihood
-  pr.y <- sum(RemLogLikelihoodPc(params$beta,params$z-1,s$ptr(),K))
+  y <- sum(RemLogLikelihoodPc(params$beta,params$z-1,s$ptr(),K))
 
   # Prior on beta
   if (collapse.sigma) {
-    pr.beta <- lprior.nosigma.hier.gaussian(params$beta,params$mu,priors,grad=FALSE)
+    beta <- lprior.nosigma.hier.gaussian(params$beta,params$mu,priors,grad=FALSE)
   } else {
-    pr.beta <- lprior.hier.gaussian(params$beta,params$mu,params$sigma,priors,grad=FALSE)
+    beta <- lprior.hier.gaussian(params$beta,params$mu,params$sigma,priors,grad=FALSE)
   }
 
   # Prior on z
   tb <- table(factor(params$z,1:K))
   tb <- tb[which(tb>0)]
-  pr.z <- sum(log(sapply(tb - 1,factorial)))
-  
-  return(pr.y + pr.beta + pr.z)
+  z <- sum(log(sapply(tb - 1,factorial)))
+
+  # Prior on sigma
+  sigma <- dgamma(params$sigma,priors$sigma$alpha,priors$sigma$beta,log=TRUE)
+
+  r <- list(y=y,beta=beta,z=z,sigma=sigma)
+  r$all <- sum(r$sigma[priors$px]) + y + beta + z
+  return(r)
 }
 
 llk_node <- function(a,beta,z,priors) {
@@ -86,10 +91,11 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
            as.integer(train[,3])-1,
            N,M,P,ego)
   s$precompute()
-  priors$px <- which(effects %in%
-                     c("intercept","abba","abby","abxa","abxb","abay","abab",
-                       "sen_outdeg","rec_outdeg","sen_indeg","rec_indeg",
-                       "dyad_count","changepoint_count"))
+  # TODO: Transform
+  enam <- c("intercept","abba","abby","abxa","abxb","abay","abab",
+            "sen_outdeg","rec_outdeg","sen_indeg","rec_indeg",
+            "dyad_count","changepoint_count")
+  priors$px <- match(effects,enam)
 
   # Initialize parameters
   beta <- array(0,c(P,K,K))
@@ -105,7 +111,13 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
 
     ## Split merge move
     if (do.sm) {
-      sm <- splitmerge(beta,z,lposterior,llk_node,priors,verbose=verbose)
+      lpost <- function(phi,z,priors) {
+        params$phi <- phi
+        params$z <- z
+        lposterior(params,priors)
+      }
+
+      sm <- splitmerge(beta,z,lpost,llk_node,priors,verbose=verbose)
       beta <- sm$final$phi
       z <- sm$final$z
       acc[iter] <- sm$final$accepted
@@ -143,11 +155,12 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
 
     ## Save progress
     params <- list(beta=beta,z=z,mu=mu,sigma=sigma)
-    lps[iter] <- lposterior(params,priors)
+    lp <- lposterior(params,priors)
+    lps[iter] <- lp$all
     cat(iter,":",lps[iter],"\n")
     if (verbose) cat(z,"\n")
     samples[[iter]] <- params
-    fit <- list(params=params,samples=samples,ego=ego,priors=priors,s=s)
+    fit <- list(params=params,samples=samples,ego=ego,priors=priors,lps=lps,effects=effects,lp=lp)
     class(fit) <- "brem"
     if (!is.null(outfile)) save(fit,file=outfile)
   }

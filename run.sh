@@ -50,6 +50,7 @@ rsync -auvz brem.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz predict.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz getcounts.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz data/synthetic.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
+rsync -auvz data/twitter-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz data/eckmann-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz tmp.rdata duboisc@d1:/extra/duboisc0/blockrem/

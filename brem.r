@@ -18,7 +18,7 @@ option_list <- list(
   )
 parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
-#library(brem); opts <- list(dataset="twitter-sm",numcluster=20,numiterations=100,splitmerge=FALSE,numextra=5,model.type="full")
+#library(brem); opts <- list(dataset="twitter-small",numclusters=20,numiterations=100,splitmerge=FALSE,numextra=5,model.type="full")
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
 
@@ -33,4 +33,4 @@ priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sig
 
 # Fit and save model
 fit <- brem(train,N,K,effects,outfile=outfile)
-save(fit,outfile)
+save(fit,file=outfile)
