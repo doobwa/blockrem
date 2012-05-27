@@ -28,11 +28,13 @@ options(verbose=FALSE)
 library(brem)
 library(ggplot2)
 
+#opts <- list(dataset="synthetic-1",predictions=TRUE)
+
 # Pull data from each saved file and grab the name of the fit
 results.dir <- paste("results/",opts$dataset,sep="")
 load(paste("data/",opts$dataset,".rdata",sep=""))
 fs <- list.files(results.dir,full.names=TRUE)
-fs <- fs[-grep("ranks",fs)]
+fs <- fs[-grep("ranks",fs)]  # TODO: Bug if one of these not present
 fs <- fs[-grep("final",fs)]
 fs <- fs[-grep("llks",fs)]
 fs <- fs[-grep("counts",fs)]

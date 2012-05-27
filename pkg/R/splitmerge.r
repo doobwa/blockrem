@@ -240,7 +240,7 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
 ##' @export
 ##' @return 
 ##' @author chris
-mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE,num.extra=0,verbose=FALSE,sigma=.1) {
+mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE,num.extra=0,verbose=FALSE,sigma.proposal=.1) {
   priors$sigma <- sigma
   phi <- array(0,c(P,K,K))
   phi[1,,] <- rnorm(K^2)

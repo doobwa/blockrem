@@ -40,7 +40,8 @@
 
 # Run dashboard
 rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
-./parallel --sshlogin 8/d6 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE --predictions TRUE' ::: "synthetic" "eckmann-small"
+./parallel --sshlogin 8/d6 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE --predictions TRUE' ::: "synthetic-1"
+./parallel 'cd /extra/duboisc0/blockrem;./dashboard.r -d {} -s TRUE --predictions TRUE' ::: "synthetic-1"
 
 # Helper commands
 cd ~/Documents/blockrem/

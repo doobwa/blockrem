@@ -217,13 +217,18 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
   - [ ] use precomputed llk as input to slice sampling.
   (seems to cause problems with slice sampler... probably not correct)
   starting llk)
-- [ ] Likelihood computations working with ego restriction
-- [ ] Synthetic example fitting correctly
-- [ ] Pipeline on synthetic data set with online prediction
-- [ ] Role of priors?  Hierarchical portion?
-- [ ] Learn mu and sigma?
-- [ ] Fixed K vs DP option
-- [ ] Allow different priors on different effects p
+- [X] Likelihood computations working with ego restriction
+- [X] Synthetic example fitting correctly
+  - [ ] check bias plot
+- [-] Pipeline on synthetic data set with online prediction
+  - [X] online evaluation of baselines
+  - [ ] make sure pipeline works and spits out results table
+- [ ] BREM function (that uses splitmerge)
+  - [ ] return ego in BREM fit object
+  - [ ] Role of priors?  Hierarchical portion?
+  - [ ] Learn mu and sigma?
+  - [ ] Fixed K vs DP option
+  - [ ] Allow different priors on different effects p?
 - [ ] Double check pshift implementation; is it global? fix
   description in paper
 - [X] Set up reality mining
