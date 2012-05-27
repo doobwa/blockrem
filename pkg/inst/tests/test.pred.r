@@ -37,12 +37,12 @@ strain$precompute()
 stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P,ego)
 stest$precompute()
 
-fit <- list(beta=beta,z=z,ego=ego)
+fit <- list(params=list(beta=beta,z=z),ego=ego,beta=beta,z=z)
 
 ## Precompute rate arrays
 lrm <- list()
-lrm$train <- brem.lrm.fast(strain, fit$z, fit$beta)
-lrm$test  <- brem.lrm.fast(stest, fit$z, fit$beta)
+lrm$train <- brem.lrm.fast(strain, fit$params$z, fit$params$beta)
+lrm$test  <- brem.lrm.fast(stest, fit$params$z, fit$params$beta)
 
 test_that("train and test BREM likelihood agree with online version", {
   llk.train <- RemLogLikelihoodVecFromArray(lrm$train,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train))

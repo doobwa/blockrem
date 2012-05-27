@@ -227,6 +227,7 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
   - [X] return ego in BREM fit object
   - [X] Role of priors?  Hierarchical portion?
   - [X] Learn mu and sigma?
+  - [ ] Make sure new clusters from upper level mu and sigma
   - [ ] transform degree effects?
   - [ ] Fixed K vs DP option
   - [X] Allow different priors on different effects p?
@@ -235,6 +236,7 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [X] Set up reality mining
 - [ ] classroom example
 - [ ] Set up enron dataset
+- [ ] Split-merge attempts
 - [ ] implement recency stats
 - [ ] Fit Eckmann and Twitter (w/o pshifts)
 - [ ] Compare llk timing to Carter's code
@@ -259,4 +261,8 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
     notation throughout?  
 - [ ] Fix Gibbs sampling equation, e.g. z_{i_m} instead of i_m ?
 - [ ] Incorporate SNRG notes
+  
 
+* Bugs
+** TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
+** TODO 

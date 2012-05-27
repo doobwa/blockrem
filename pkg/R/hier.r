@@ -91,7 +91,9 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
            as.integer(train[,3])-1,
            N,M,P,ego)
   s$precompute()
+  s$transform()
   # TODO: Transform
+
   enam <- c("intercept","abba","abby","abxa","abxb","abay","abab",
             "sen_outdeg","rec_outdeg","sen_indeg","rec_indeg",
             "dyad_count","changepoint_count")
@@ -157,10 +159,10 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
     params <- list(beta=beta,z=z,mu=mu,sigma=sigma)
     lp <- lposterior(params,priors)
     lps[iter] <- lp$all
-    cat(iter,":",lps[iter],"\n")
+    cat("\n",iter,":",lps[iter],"\n")
     if (verbose) cat(z,"\n")
     samples[[iter]] <- params
-    fit <- list(params=params,samples=samples,ego=ego,priors=priors,lps=lps,effects=effects,lp=lp)
+    fit <- list(params=params,samples=samples,ego=ego,priors=priors,lps=lps,effects=effects,lp=lp,niter=niter)
     class(fit) <- "brem"
     if (!is.null(outfile)) save(fit,file=outfile)
   }

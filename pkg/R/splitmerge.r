@@ -78,7 +78,11 @@ gibbs <- function(phi,z,S,llk_node,N,priors) {
       z[a] <- j
       ys[a,j] <- llk_node(a,phi,z,priors) + log(counts[j] + priors$alpha)
     }
-    z[a] <- sample(1:K,1,prob=lnormalize(ys[a,])) #rcatlog(ys[a,])
+    if (any(is.nan(ys[a,]))) {
+      z[a] <- z.init[a]   # TODO: Bug in llk_node causes nans sometimes?
+    } else {
+      z[a] <- sample(1:K,1,prob=lnormalize(ys[a,])) #rcatlog(ys[a,])
+    }
     counts[z[a]] <- counts[z[a]] + 1
   }
   ys[S,] <- t(apply(ys[S,,drop=FALSE],1,lnormalize))

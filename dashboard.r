@@ -33,11 +33,16 @@ library(ggplot2)
 # Pull data from each saved file and grab the name of the fit
 results.dir <- paste("results/",opts$dataset,sep="")
 load(paste("data/",opts$dataset,".rdata",sep=""))
+dir.create(paste("results/",opts$dataset,"/ranks",sep=""),showWarn=FALSE)
+dir.create(paste("results/",opts$dataset,"/llks",sep=""),showWarn=FALSE)
+dir.create(paste("results/",opts$dataset,"/final",sep=""),showWarn=FALSE)
+
 fs <- list.files(results.dir,full.names=TRUE)
 fs <- fs[-grep("ranks",fs)]  # TODO: Bug if one of these not present
 fs <- fs[-grep("final",fs)]
 fs <- fs[-grep("llks",fs)]
-fs <- fs[-grep("counts",fs)]
+ix <- grep("counts",fs)
+if (length(ix) > 0) fs <- fs[-grep("counts",fs)]
 fnames <- unlist(strsplit(fs,".rdata"))
 fitnames <- sapply(fnames,function(f) strsplit(f,paste(results.dir,"/",sep=""))[[1]][2])
 fits <- lapply(fs,function(f) {
@@ -48,23 +53,23 @@ names(fits) <- fitnames
 
 cat("Plotting log posterior during MCMC.\n")
 llks <- lapply(1:length(fits),function(i) {
-  data.frame(model=names(fits)[i],llk=fits[[i]]$llks,iter=1:fits[[i]]$niter)
+  data.frame(model=names(fits)[i],llk=fits[[i]]$lps,iter=1:fits[[i]]$niter)
 })
 llks <- do.call(rbind,llks)
 
 llks <- subset(llks,iter<100)
 if (opts$dataset == "synthetic") {
   load("data/synthetic.rdata")
-  q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model))+ geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + limits(c(min(llks$llk),0),"y")
+  q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model))+ geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() #+ limits(c(min(llks$llk),0),"y")
 } else {
   q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 }
 
 library(coda)
-load(paste("results/",opts$dataset,"/full.2.rdata",sep=""))
-r <- melt(fit$param)
-r <- subset(r,X1 < 60)
-q1a <- qplot(X1,value,data=r, colour=factor(X2),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(X3~X4,scales="free")
+load(paste("results/",opts$dataset,"/full.rdata",sep=""))
+r <- melt(fit$samples)
+r <- subset(r,Var1 < 60)
+q1a <- qplot(L2,value,data=r, colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3,scales="free")
 
 
 cat("Plot overall rate\n")
@@ -88,7 +93,7 @@ if (FALSE) {
 #qplot(iter,log(-llk + 1),data=subset(llks,iter < 20 & iter > 15),geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 
 cat("Plotting progress of z at each MCMC iteration.\n")
-zs <- lapply(fits,function(f) do.call(rbind,f$zs))
+zs <- lapply(fits,function(f) do.call(rbind,f$samples$z))
 names(zs) <- names(fits)
 zs <- melt(zs)
 q2 <- qplot(X1,X2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1) + labs(x="iteration",y="node")
@@ -243,7 +248,6 @@ if (opts$predictions) {
               )
   df$L1 <- factor(df$L1,c("uniform","marg","online","full.1","full.2","full.3","dp","truth"))
   df$dataset <- opts$dataset
-  dir.create(paste("results/",opts$dataset,"/final",sep=""))
   save(df,file=paste("results/",opts$dataset,"/final/results.rdata",sep=""))
 }
 
