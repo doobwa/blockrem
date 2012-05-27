@@ -6,13 +6,13 @@
 ##' @param priors 
 ##' @return 
 ##' @author chris
-plot.posterior <- function(fit,priors) {
-  P <- dim(fit$beta)[1]
-  K <- dim(fit$beta)[2]
-  sigma <- fit$sigma
-  mu <- fit$mu
-  beta  <- fit$beta
-  z <- fit$z
+plot.posterior <- function(fit) {
+  P <- dim(fit$params$beta)[1]
+  K <- dim(fit$params$beta)[2]
+  sigma <- fit$params$sigma
+  mu <- fit$params$mu
+  beta  <- fit$params$beta
+  z <- fit$params$z
   if (length(sigma) == 1) {
     mu <- rep(mu,P)
     sigma <- rep(sigma,P)
@@ -27,7 +27,7 @@ plot.posterior <- function(fit,priors) {
       ys[[k1]][[k2]] <- RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,beta,z-1,fit$s$ptr(),K)
     }
   }
-  lsigmas <- dgamma(sigma,priors$sigma$alpha,priors$sigma$beta,log=TRUE)
+  lsigmas <- dgamma(sigma,fit$priors$sigma$alpha,fit$priors$sigma$beta,log=TRUE)
 
   par(mfrow=c(1,3))
   hist(unlist(lsigmas),main="Parameters sigma_p",xlab="logprob")

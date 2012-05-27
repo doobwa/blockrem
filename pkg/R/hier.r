@@ -14,8 +14,8 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
                        "dyad_count","changepoint_count"))
 
   # Initialize parameters
-  phi <- array(0,c(P,K,K))
-  phi[1,,] <- rnorm(K^2)
+  beta <- array(0,c(P,K,K))
+  beta[1,,] <- rnorm(K^2)
   
   z     <- sample(1:K,N,rep=T)
   mu    <- rep(0,P)
@@ -27,32 +27,32 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
 
     ## Split merge move
     if (do.sm) {
-      sm <- splitmerge(phi,z,lposterior,llk_node,priors,verbose=verbose)
-      phi <- sm$final$phi
+      sm <- splitmerge(beta,z,lposterior,llk_node,priors,verbose=verbose)
+      beta <- sm$final$phi
       z <- sm$final$z
       acc[iter] <- sm$final$accepted
     }
 
     ## Sample phi
-    phi <- sample_phi(phi,z,mu,sigma,priors)$phi
+    beta <- sample_beta(beta,z,mu,sigma,priors)$beta
 
     ## Add clusters from prior (Neal 2000)
     if (num.extra > 0) {
       for (j in 1:num.extra) {
-        phi <- add_cluster(phi)
-        phi <- sample_cluster_from_prior(phi,dim(phi)[2],priors)
+        beta <- add_cluster(beta)
+        beta <- sample_cluster_from_prior(beta,dim(beta)[2],priors)
       }
     }
 
     ## Gibbs sample assignments
-    h <- gibbs(phi,z,1:N,llk_node,N,priors)
+    h <- gibbs(beta,z,1:N,llk_node,N,priors)
     z <- h$z
 
     ## Remove empty clusters
-    iz <- which(table(factor(z,1:dim(phi)[2]))==0)
+    iz <- which(table(factor(z,1:dim(beta)[2]))==0)
     for (l in rev(iz)) {  
       z[which(z > l)] <- z[which(z > l)] - 1
-      phi <- remove_cluster(phi,l)
+      beta <- remove_cluster(beta,l)
     }
     K <- max(z)
 
@@ -62,7 +62,7 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
     sigma <- 1
 
     ## Save progress
-    params <- list(phi=phi,z=z,mu=mu,sigma=sigma)
+    params <- list(beta=beta,z=z,mu=mu,sigma=sigma)
     lps[iter] <- lposterior(params,priors)
     cat(iter,":",lps[iter],"\n")
     if (verbose) cat(z,"\n")
@@ -86,18 +86,18 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
 ##' @return 
 ##' @author chris
 lposterior <- function(params,priors,collapse.sigma=TRUE) {
-  K <- dim(params$phi)[2]
-  P <- dim(params$phi)[1]
+  K <- dim(params$beta)[2]
+  P <- dim(params$beta)[1]
   if (s$get_P() != P) stop("Mismatch in parameter vector lengths")
 
   # Likelihood
-  pr.y <- sum(RemLogLikelihoodPc(params$phi,params$z-1,s$ptr(),K))
+  pr.y <- sum(RemLogLikelihoodPc(params$beta,params$z-1,s$ptr(),K))
 
-  # Prior on phi
+  # Prior on beta
   if (collapse.sigma) {
-    pr.phi <- lprior.nosigma.hier.gaussian(params$phi,params$mu,priors,grad=FALSE)
+    pr.beta <- lprior.nosigma.hier.gaussian(params$beta,params$mu,priors,grad=FALSE)
   } else {
-    pr.phi <- lprior.hier.gaussian(params$phi,params$mu,params$sigma,priors,grad=FALSE)
+    pr.beta <- lprior.hier.gaussian(params$beta,params$mu,params$sigma,priors,grad=FALSE)
   }
 
   # Prior on z
@@ -105,18 +105,18 @@ lposterior <- function(params,priors,collapse.sigma=TRUE) {
   tb <- tb[which(tb>0)]
   pr.z <- sum(log(sapply(tb - 1,factorial)))
   
-  return(pr.y + pr.phi + pr.z)
+  return(pr.y + pr.beta + pr.z)
 }
 
-llk_node <- function(a,phi,z,priors) {
-  K <- dim(phi)[2]
-  sum(RemLogLikelihoodActorPc(a-1,phi,z-1,s$ptr(),K))
-#  sum(RemLogLikelihoodPc(phi,z-1,s$ptr(),K))
+llk_node <- function(a,beta,z,priors) {
+  K <- dim(beta)[2]
+  sum(RemLogLikelihoodActorPc(a-1,beta,z-1,s$ptr(),K))
+#  sum(RemLogLikelihoodPc(beta,z-1,s$ptr(),K))
 }
 
 ##' Requires s to be in environment
-##' @title Sample block level parameters phi
-##' @param phi 
+##' @title Sample block level parameters beta
+##' @param beta 
 ##' @param z 
 ##' @param mu 
 ##' @param sigma 
@@ -124,8 +124,8 @@ llk_node <- function(a,phi,z,priors) {
 ##' @param kx 
 ##' @return 
 ##' @author chris
-sample_phi <- function(phi,z,mu,sigma,priors,kx=NULL) {
-  K <- dim(phi)[2]
+sample_beta <- function(beta,z,mu,sigma,priors,kx=NULL) {
+  K <- dim(beta)[2]
   if (is.null(kx)) kx <- 1:K
   for (k1 in kx) {
     for (k2 in kx) {
@@ -135,17 +135,17 @@ sample_phi <- function(phi,z,mu,sigma,priors,kx=NULL) {
         brem.lpost.pk1k2 <- function(x) {
           k1nodes <- which(z==k1)
           k2nodes <- which(z==k2)
-          phi[p,k1,k2] <- x
-          pr.y <- sum(RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,phi,z-1,s$ptr(),K))
-          pr.phi <- sum(dnorm(phi[,k1,k2],mu,sigma,log=TRUE)) 
-          return(pr.y + pr.phi)
+          beta[p,k1,k2] <- x
+          pr.y <- sum(RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,beta,z-1,s$ptr(),K))
+          pr.beta <- sum(dnorm(beta[,k1,k2],mu,sigma,log=TRUE)) 
+          return(pr.y + pr.beta)
         }
-        res <- slice(phi[p,k1,k2],brem.lpost.pk1k2,m=20,olp=olp)
+        res <- slice(beta[p,k1,k2],brem.lpost.pk1k2,m=20,olp=olp)
         olp <- attr(res,"log.density")
-        phi[p,k1,k2] <- res
+        beta[p,k1,k2] <- res
       }
     }
   }
-  return(list(phi=phi,z=z))
+  return(list(beta=beta,z=z))
 }
 
