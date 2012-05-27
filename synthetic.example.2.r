@@ -12,8 +12,9 @@ s$precompute()
 
 ## Set priors
 effects <- c("intercept","abba","abby","abay")
-priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),sigma=list(alpha=3,beta=1))
+priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=3,beta=1))
 fit <- brem(train,N,K,effects)
+
 save(fit,file=outfile)
 
 train.ix <- 1:nrow(train)
