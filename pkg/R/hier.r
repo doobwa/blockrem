@@ -80,7 +80,7 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
   M <- nrow(train)
   P <- 13
   ego <- ego*1  # RemStat doesn't want boolean
-  s <- new(RemStat,
+  s <<- new(RemStat,
            train[,1],
            as.integer(train[,2])-1,
            as.integer(train[,3])-1,
