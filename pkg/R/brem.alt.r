@@ -2,9 +2,16 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
   M <- nrow(train)
   P <- 13
   ego <- ego*1  # RemStat doesn't want boolean
-  s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P,ego)
+  s <- new(RemStat,
+           train[,1],
+           as.integer(train[,2])-1,
+           as.integer(train[,3])-1,
+           N,M,P,ego)
   s$precompute()
-  priors$px <- which(effects %in% c("intercept","abba","abby","abxa","abxb","abay","abab","sen_outdeg","rec_outdeg","sen_indeg","rec_indeg","dyad_count","changepoint_count"))
+  priors$px <- which(effects %in%
+                     c("intercept","abba","abby","abxa","abxb","abay","abab",
+                       "sen_outdeg","rec_outdeg","sen_indeg","rec_indeg",
+                       "dyad_count","changepoint_count"))
 
   # Do an iteration for the lowerlevel blockmodel
   fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,do.sm=do.sm,num.extra=num.extra,niter=niter,verbose=TRUE)

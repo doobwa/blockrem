@@ -232,15 +232,15 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
 ##' @param N number of actors
 ##' @param P number of parameters
 ##' @param K number of clusters
-##' @param px binary vector of which effects to fit
 ##' @param niter 
 ##' @param do.sm perform split-merge moves
 ##' @param num.extra propose extra clusters at each iteration
 ##' @param verbose 
 ##' @param sigma proposal distribution variance parameter
+##' @export
 ##' @return 
 ##' @author chris
-mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,px=1,niter=20,do.sm=TRUE,num.extra=0,verbose=FALSE,sigma=.1) {
+mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE,num.extra=0,verbose=FALSE,sigma=.1) {
   priors$sigma <- sigma
   phi <- array(0,c(P,K,K))
   phi[1,,] <- rnorm(K^2)
@@ -288,5 +288,5 @@ mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,px=1,niter=20,do.sm
     if (verbose) cat(z,"\n")
     samples[[iter]] <- list(phi=phi,z=z)
   }
-  return(list(lps=lps,samples=samples,acc=acc))
+  return(list(lps=lps,samples=samples,acc=acc,phi=phi,z=z))
 }
