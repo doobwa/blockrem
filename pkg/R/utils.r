@@ -116,7 +116,7 @@ eval.rank <- function(edgelist,lrm,i,...) {
 ##' @param edgelist Mx3 matrix of (time, sender, receiver)
 ##' @param N number of nodes
 ##' @param train.ix indices of edgelist to use as training data
-##' @param test.ix indices of edgelist to use as training data
+##' @param test.ix indices of edgelist to use as test data
 ##' @param fit BREM object having elements beta, z, and ego
 ##' @param ... options to pass to rank()
 ##' @return list of mllk, rks
@@ -155,12 +155,13 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,...) {
 ##' @param edgelist Mx3 matrix of (time, sender, receiver)
 ##' @param N number of nodes
 ##' @param train.ix indices of edgelist to use as training data
-##' @param test.ix indices of edgelist to use as training data
+##' @param test.ix indices of edgelist to use as test data
 ##' @param model type of baseline (online, marg, or uniform)
 ##' @param ... 
 ##' @return 
 ##' @author chris
 evaluate.baseline <- function(edgelist,N,train.ix,test.ix,model="online",...) {
+  if (! model %in% c("online","marg","uniform")) stop("unrecognized baseline")
 
   train <- edgelist[train.ix,]
   test  <- edgelist[test.ix,]

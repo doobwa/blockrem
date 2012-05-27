@@ -13,6 +13,8 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
   mu <- 0
   sigma <- 1
 
+  # TODO: Save to outfile.  Pull it out of mcmc.blockmodel.
+
   fit$ego <- ego
   fit$mu <- mu
   fit$sigma <- sigma

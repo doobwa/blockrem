@@ -24,6 +24,9 @@
 
 # Make predictions: for twitter, only 1 can put on each datalab
 
+./parallel './predict.r -d {1} -t {2}' ::: "synthetic-1" ::: "full" "uniform" "online" "marg"
+
+
 ./parallel --sshlogin  7/m 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "twitter-small" ::: "full.1" "full.2" "online" "full.3" "shared.2" "shared.3" "uniform" "online" "marg"
 
 ./parallel --sshlogin 2/d4,2/d5,2/d6,2/d7 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "synthetic" ::: "full.2" "full.1" "uniform" "online" "marg" "truth"
