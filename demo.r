@@ -1,20 +1,13 @@
 load(paste("data/synthetic-1.rdata",sep=""))
 outfile <- c("results/synthetic-1/full.rdata")
 library(brem)
-# Precompute data structures
-N <- max(c(train[,2],train[,3]))
-M <- nrow(train)
-P <- 13
-ego <- 1
-K <- 5
-s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P,ego)
-s$precompute()
 
 ## Set priors
 effects <- c("intercept","abba","abby","abay")
 priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=3,beta=1))
-fit <- brem(train,N,K,effects)
 
+# Fit and save model
+fit <- brem(train,N,K,effects)
 save(fit,file=outfile)
 
 train.ix <- 1:nrow(train)

@@ -33,54 +33,15 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
 
-
 # Precompute data structures
 # N should be loaded by dataset
-M <- nrow(train)
 P <- 13
 K <- opts$numclusters
 
-# Initialize with K=1 solution, if available
-## if (K==1) opts$gibbs <- FALSE
-## f <- paste("results/",opts$dataset,"/full.1.rdata",sep="")
-## if ((K > 1) & file.exists(f) & opts$initialize) {
-##  load(f)
-##  beta <- array(res$beta,c(P,K,K))
-## } else {
-##  beta <- NULL
-## }
-
-px <- rep(1,13)
-px[13] <- 0
-px[7]  <- 0
-
-if (opts$dataset=="synthetic") {
-  px[8:13] <- 0
-}
-
-if (opts$dataset=="twitter-small") {  # & opts$fixz) {
-  tb <- table(factor(c(train[,2],train[,3]),1:N))
-  chosen <- names(tb)[which(tb > 20)]
-  chosen <- as.numeric(chosen)
-  z <- rep(1,N)
-  z[chosen] <- 2
-  opts$gibbs <- FALSE
-} else {
-  z <- NULL
-}
-
-px <- which(px==1)
-
 outfile <- paste("results/",opts$dataset,"/",opts$model.type,".",K,".rdata",sep="")
+effects <- c("intercept","abba","abby","abay","dyad_count")
+priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=3,beta=1))
 
-priors <- list(phi=list(mu=0,sigma=1),alpha=1,sigma=.5)
-
-s <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,M,P)
-s$precompute()
-
-fit <- mcmc.blockmodel(lp,llk_node,priors,N,P,K,do.sm=opts$splitmerge,num.extra=opts$numextra,niter=as.numeric(opts$numiterations),verbose=TRUE,outfile=outfile)
-
-## fit <- brem.mcmc(train,N,K,model.type=opts$model.type,slice=opts$slice,
-##                  gibbs=opts$gibbs,mh=opts$mh,
-##                  niter=opts$numiterations,beta=beta,px=px,z=z,m=10,
-##                  outfile=outfile,priors=priors,skip.intercept=FALSE)
+# Fit and save model
+fit <- brem(train,N,K,effects,outfile=outfile)
+save(fit,outfile)

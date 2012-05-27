@@ -219,17 +219,17 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
   starting llk)
 - [X] Likelihood computations working with ego restriction
 - [X] Synthetic example fitting correctly
-  - [ ] check bias plot
+  - [X] check bias plot.  [Works with known mu, sigma.]
 - [-] Pipeline on synthetic data set with online prediction
   - [X] online evaluation of baselines
   - [ ] make sure pipeline works and spits out results table
-- [ ] BREM function (that uses splitmerge)
-  - [ ] return ego in BREM fit object
-  - [ ] Role of priors?  Hierarchical portion?
-  - [ ] Learn mu and sigma?
+- [-] BREM function (that uses splitmerge)
+  - [X] return ego in BREM fit object
+  - [X] Role of priors?  Hierarchical portion?
+  - [X] Learn mu and sigma?
   - [ ] Fixed K vs DP option
-  - [ ] Allow different priors on different effects p?
-- [ ] Double check pshift implementation; is it global? fix
+  - [X] Allow different priors on different effects p?
+- [X] Double check pshift implementation; is it global? fix
   description in paper
 - [X] Set up reality mining
 - [ ] classroom example

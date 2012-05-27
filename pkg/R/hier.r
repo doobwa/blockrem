@@ -76,7 +76,7 @@ sample_beta <- function(beta,z,mu,sigma,priors,kx=NULL,collapse.sigma=TRUE) {
 }
 
 
-brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,do.sm=FALSE,num.extra=2,niter=20,verbose=TRUE) {
+brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,do.sm=FALSE,num.extra=2,niter=20,verbose=TRUE,outfile=NULL) {
   M <- nrow(train)
   P <- 13
   ego <- ego*1  # RemStat doesn't want boolean
@@ -147,13 +147,10 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
     cat(iter,":",lps[iter],"\n")
     if (verbose) cat(z,"\n")
     samples[[iter]] <- params
-#    browser()
-
+    fit <- list(params=params,samples=samples,ego=ego,priors=priors,s=s)
+    class(fit) <- "brem"
+    if (!is.null(outfile)) save(fit,file=outfile)
   }
 
-  # TODO: Save to outfile.  Pull it out of mcmc.blockmodel.
-
-  fit <- list(params=params,samples=samples,ego=ego,priors=priors,s=s)
-  class(fit) <- "brem"
   return(fit)
 }
