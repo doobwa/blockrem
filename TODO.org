@@ -227,6 +227,7 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
   - [X] return ego in BREM fit object
   - [X] Role of priors?  Hierarchical portion?
   - [X] Learn mu and sigma?
+  - [ ] transform degree effects?
   - [ ] Fixed K vs DP option
   - [X] Allow different priors on different effects p?
 - [X] Double check pshift implementation; is it global? fix
