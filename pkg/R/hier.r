@@ -114,12 +114,12 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
     ## Split merge move
     if (do.sm) {
       lpost <- function(phi,z,priors) {
-        params$phi <- phi
-        params$z <- z
-        lposterior(params,priors)
+        lposterior(list(beta=phi,z=z,mu=mu,sigma=sigma),priors)$all
       }
-
-      sm <- splitmerge(beta,z,lpost,llk_node,priors,verbose=verbose)
+      prs <- priors
+      prs$phi <- list(mu=mu,sigma=sigma)
+      prs$tau <- sigma/2
+      sm <- splitmerge(beta,z,lpost,llk_node,prs,verbose=verbose)
       beta <- sm$final$phi
       z <- sm$final$z
       acc[iter] <- sm$final$accepted
