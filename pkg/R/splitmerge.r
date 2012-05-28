@@ -6,11 +6,11 @@ split_phi <- function(phi.merge,k,l,priors) {
   K <- dim(phi.merge)[2]
   phi.split <- phi.merge
   for (r in 1:K) {
-    phi.split[,l,r] <- rnorm(P,phi.merge[,k,r],priors$sigma)
-    phi.split[,r,l] <- rnorm(P,phi.merge[,r,k],priors$sigma)
+    phi.split[,l,r] <- rnorm(P,phi.merge[,k,r],priors$tau)
+    phi.split[,r,l] <- rnorm(P,phi.merge[,r,k],priors$tau)
   }
-  phi.split[,l,l] <- rnorm(P,phi.merge[,k,k],priors$sigma)
-  phi.split[,k,k] <- rnorm(P,phi.merge[,k,k],priors$sigma)
+  phi.split[,l,l] <- rnorm(P,phi.merge[,k,k],priors$tau)
+  phi.split[,k,k] <- rnorm(P,phi.merge[,k,k],priors$tau)
   return(phi.split)
 }
 
@@ -18,12 +18,12 @@ split_phi <- function(phi.merge,k,l,priors) {
 merge_phi <- function(phi,k,l,priors) {
   P <- dim(phi)[1]
   K <- dim(phi)[2]
-  phi[,k,k] <- rnorm(P,.5 * (phi[,k,k] + phi[,l,l]),priors$sigma)
+  phi[,k,k] <- rnorm(P,.5 * (phi[,k,k] + phi[,l,l]),priors$tau)
   if (K > 2) {
     rs <- (1:K)[-c(k,l)]
     for (r in rs) {
-      phi[,k,r] <- rnorm(P,.5 * (phi[,k,r] + phi[,l,r]),priors$sigma)
-      phi[,r,k] <- rnorm(P,.5 * (phi[,r,k] + phi[,r,l]),priors$sigma)
+      phi[,k,r] <- rnorm(P,.5 * (phi[,k,r] + phi[,l,r]),priors$tau)
+      phi[,r,k] <- rnorm(P,.5 * (phi[,r,k] + phi[,r,l]),priors$tau)
     }
   }
   phi <- sample_cluster_from_prior(phi,l,priors)
@@ -128,10 +128,10 @@ gibbs_restricted <- function(phi,z,S,k,l,llk_node,priors,prob.only=FALSE) {
 ##' Computes the ratio q(phi^m -> phi^s)/p(phi^s)
 pm2ps <- function(phi.merge,phi.split,k,l,K,priors) {
   q <-
-    dnorm(phi.split[,k,k],phi.merge[,k,k],priors$sigma,log=TRUE) +
-    dnorm(phi.split[,l,l],phi.merge[,k,k],priors$sigma,log=TRUE) +
-    dnorm(phi.split[,k,l],phi.merge[,k,k],priors$sigma,log=TRUE) +
-    dnorm(phi.split[,l,k],phi.merge[,k,k],priors$sigma,log=TRUE) -
+    dnorm(phi.split[,k,k],phi.merge[,k,k],priors$tau,log=TRUE) +
+    dnorm(phi.split[,l,l],phi.merge[,k,k],priors$tau,log=TRUE) +
+    dnorm(phi.split[,k,l],phi.merge[,k,k],priors$tau,log=TRUE) +
+    dnorm(phi.split[,l,k],phi.merge[,k,k],priors$tau,log=TRUE) -
     dnorm(phi.split[,k,k],priors$phi$mu,priors$phi$sigma,log=TRUE) -
     dnorm(phi.split[,l,l],priors$phi$mu,priors$phi$sigma,log=TRUE) -
     dnorm(phi.split[,k,l],priors$phi$mu,priors$phi$sigma,log=TRUE) -
@@ -141,8 +141,8 @@ pm2ps <- function(phi.merge,phi.split,k,l,K,priors) {
     rs <- (1:K)[-c(k,l)]
     for (r in rs) {
       q <- q +
-        dnorm(phi.split[,r,l],phi.merge[,r,k],priors$sigma,log=TRUE) +
-        dnorm(phi.split[,l,r],phi.merge[,k,r],priors$sigma,log=TRUE) -
+        dnorm(phi.split[,r,l],phi.merge[,r,k],priors$tau,log=TRUE) +
+        dnorm(phi.split[,l,r],phi.merge[,k,r],priors$tau,log=TRUE) -
         dnorm(phi.split[,r,l],priors$phi$mu,priors$phi$sigma,log=TRUE) -
         dnorm(phi.split[,l,r],priors$phi$mu,priors$phi$sigma,log=TRUE)
     }
@@ -153,7 +153,7 @@ pm2ps <- function(phi.merge,phi.split,k,l,K,priors) {
 ##' Computes the ratio q(phi^s -> phi^m)/p(phi^m)
 ps2pm <- function(phi.split,phi.merge,k,l,K,priors) {
   q <-
-    dnorm(phi.merge[,k,k],.5*(phi.split[,k,k] + phi.split[,l,l]),priors$sigma,log=TRUE) -
+    dnorm(phi.merge[,k,k],.5*(phi.split[,k,k] + phi.split[,l,l]),priors$tau,log=TRUE) -
   dnorm(phi.merge[,k,k],priors$phi$mu,priors$phi$sigma,log=TRUE)
   return(sum(q))
 }
@@ -245,7 +245,7 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
 ##' @return 
 ##' @author chris
 mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE,num.extra=0,verbose=FALSE,sigma.proposal=.1) {
-  priors$sigma <- sigma
+  priors$tau <- sigma.proposal
   phi <- array(0,c(P,K,K))
   phi[1,,] <- rnorm(K^2)
   z <- sample(1:K,N,rep=T)
