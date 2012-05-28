@@ -228,7 +228,7 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
   - [X] Role of priors?  Hierarchical portion?
   - [X] Learn mu and sigma?
   - [ ] Make sure new clusters from upper level mu and sigma
-  - [ ] Bug in llk_node maybe keeps z's from being sampled? Give warning
+  - [X] Bug in llk_node maybe keeps z's from being sampled? Give warning
   - [X] transform degree effects?
   - [ ] Fixed K vs DP option
   - [X] Allow different priors on different effects p?
@@ -266,4 +266,4 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 
 * Bugs
 ** TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
-** TODO 
+** TODO Huge hit in loglikelihood as soon as a new cluster appears?

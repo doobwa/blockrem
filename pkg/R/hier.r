@@ -1,3 +1,10 @@
+## lpz <- function(count,priors) {
+##   log(count + priors$alpha)
+## }
+lpz <- function(count,priors) {
+#  log(count + priors$alpha)
+  dnbinom(count,priors$shape,mu=priors$meansize,log=TRUE)
+}
 
 ##' RemStat object s required in environment
 ##' @title 
@@ -119,7 +126,7 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
       prs <- priors
       prs$phi <- list(mu=mu,sigma=sigma)
       prs$tau <- sigma/2
-      sm <- splitmerge(beta,z,lpost,llk_node,prs,verbose=verbose)
+      sm <- splitmerge(beta,z,lpost,llk_node,lpz,prs,verbose=verbose)
       beta <- sm$final$phi
       z <- sm$final$z
       acc[iter] <- sm$final$accepted
@@ -139,7 +146,7 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
     }
 
     ## Gibbs sample assignments
-    h <- gibbs(beta,z,1:N,llk_node,N,priors)
+    h <- gibbs(beta,z,1:N,llk_node,lpz,N,priors)
     z <- h$z
 
     ## Remove empty clusters

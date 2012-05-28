@@ -65,7 +65,7 @@ lnormalize <- function(ps) {
   return(ps/sum(ps))
 }
 
-gibbs <- function(phi,z,S,llk_node,N,priors) {
+gibbs <- function(phi,z,S,llk_node,lpz,N,priors) {
 
   # Randomly assign nodes that are currently either in k or l
   K <- dim(phi)[2]
@@ -76,10 +76,11 @@ gibbs <- function(phi,z,S,llk_node,N,priors) {
     counts[z[a]] <- counts[z[a]] - 1
     for (j in 1:K) {
       z[a] <- j
-      ys[a,j] <- llk_node(a,phi,z,priors) + log(counts[j] + priors$alpha)
+      ys[a,j] <- llk_node(a,phi,z,priors) + lpz(counts[j]+1,priors)
     }
     if (any(is.nan(ys[a,]))) {
-      warning("nan likelihood during Gibbs sampling; continued w/o sampling")
+#      cat("nan likelihood during Gibbs sampling; continued w/o sampling\n")
+      stop("nan likelihood during Gibbs sampling; continued w/o sampling")
       z[a] <- z.init[a]   # TODO: Bug in llk_node causes nans sometimes?
     } else {
       z[a] <- sample(1:K,1,prob=lnormalize(ys[a,])) #rcatlog(ys[a,])
@@ -96,7 +97,7 @@ gibbs <- function(phi,z,S,llk_node,N,priors) {
 ##' p(z|phi) = prod_{a in S} p(z_a|z_prev, phi).
 ##' Randomly initializes z_a's.  If prob. only, set z_a to provided z.
 ##' Otherwise, Gibbs sample p(z|phi). Returns z and the transition prob.
-gibbs_restricted <- function(phi,z,S,k,l,llk_node,priors,prob.only=FALSE) {
+gibbs_restricted <- function(phi,z,S,k,l,llk_node,lpz,priors,prob.only=FALSE) {
 
   # Randomly assign nodes that are currently either in k or l
   K <- dim(phi)[2]
@@ -110,7 +111,7 @@ gibbs_restricted <- function(phi,z,S,k,l,llk_node,priors,prob.only=FALSE) {
     counts[z[a]] <- counts[z[a]] - 1
     for (j in clusters) {
       z[a] <- j
-      ys[a,j] <- llk_node(a,phi,z,priors) + log(counts[j] + priors$alpha)
+      ys[a,j] <- llk_node(a,phi,z,priors) + lpz(counts[j]+1,priors)
     }
     if (!prob.only) {
       z[a] <- sample(clusters,1,prob=lnormalize(ys[a,clusters])) #rcatlog(ys[a,])
@@ -159,7 +160,7 @@ ps2pm <- function(phi.split,phi.merge,k,l,K,priors) {
   return(sum(q))
 }
 
-splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
+splitmerge <- function(phi,z,lposterior,llk_node,lpz,priors,sigma=.1,verbose=TRUE) {
   N <- length(z)
   K <- dim(phi)[2]
   init <- split <- merge <- list(z=z,phi=phi)
@@ -174,12 +175,12 @@ splitmerge <- function(phi,z,lposterior,llk_node,priors,sigma=.1,verbose=TRUE) {
     l <- K+1
     split$phi <- add_cluster(split$phi)
     split$phi <- split_phi(split$phi,k,l,priors)
-    h <- gibbs_restricted(split$phi,split$z,S,k,l,llk_node,priors,prob.only=FALSE)
+    h <- gibbs_restricted(split$phi,split$z,S,k,l,llk_node,lpz,priors,prob.only=FALSE)
     split$z <- h$z    
   } else {
     merge$z[S] <- k
     merge$phi <- merge_phi(split$phi,k,l,priors)
-    h <- gibbs_restricted(merge$phi,split$z,S,k,l,llk_node,priors,prob.only=TRUE)
+    h <- gibbs_restricted(merge$phi,split$z,S,k,l,llk_node,lpz,priors,prob.only=TRUE)
   }
   lp <- list()
   lp$split <- lposterior(split$phi,split$z,priors)
@@ -257,7 +258,7 @@ mcmc.blockmodel <- function(lposterior,llk_node,priors,N,P,K,niter=20,do.sm=TRUE
 
     ## Split merge move
     if (do.sm) {
-      sm <- splitmerge(phi,z,lposterior,llk_node,priors,verbose=verbose)
+      sm <- splitmerge(phi,z,lposterior,llk_node,lpz,priors,verbose=verbose)
       phi <- sm$final$phi
       z <- sm$final$z
       acc[iter] <- sm$final$accepted

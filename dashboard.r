@@ -8,6 +8,8 @@ option_list <- list(
                     and results at /results/[dataset]/."),
   make_option(c("-p", "--predictions"), default=FALSE,
               help="compute prediction experiments?"),
+  make_option(c("-b", "--save.dashboard"), default=FALSE,
+              help=""),
   make_option(c("-s", "--save.figs"),default=FALSE,
               help="Save each individual figure to figs/[dataset]/ [default %default]."))
 parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
@@ -58,7 +60,7 @@ llks <- lapply(1:length(fits),function(i) {
 })
 llks <- do.call(rbind,llks)
 
-llks <- subset(llks,iter<100)
+llks <- subset(llks,iter<50)
 if (opts$dataset == "synthetic") {
   load("data/synthetic.rdata")
   q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model))+ geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() #+ limits(c(min(llks$llk),0),"y")
@@ -66,14 +68,17 @@ if (opts$dataset == "synthetic") {
   q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 }
 
-
+cat("Trace plot of beta.\n")
 library(coda)
-load(paste("results/",opts$dataset,"/full.rdata",sep=""))
+load(paste("results/",opts$dataset,"/",chosen.model,".rdata",sep=""))
 r <- melt(fit$samples)
-r <- subset(r,L1 < 60)
+r <- subset(r,L1 < 500)
 r <- subset(r,!is.na(Var1))
 q1a <- qplot(L1,value,data=r, colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3)#,scales="free")
 
+cat("Plot of posterior probabilities at each level of the hierarchy")
+plot.posterior(train,N,fit)
+y <- RemLogLikelihoodPc(fit$params$beta, fit$params$z - 1, s$ptr(), K)
 
 cat("Plot overall rate\n")
 if (FALSE) {
@@ -107,7 +112,7 @@ q2 <- qplot(Var1,Var2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1) 
 cat("Compute distribution of activity using results from the full model.\n")
 tb <- table(factor(c(train[,2],train[,3]),1:N))
 fx <- grep(chosen.model,names(fits))
-z <- fits[[fx]]$z
+z <- fits[[fx]]$params$z
 df <- data.frame(group=z,count=tb)
 q3a <- qplot(log(count.Freq),data=df,geom="histogram")+facet_grid(group~.,scales="free")+labs(y="number of users",x="log(number of events)") + theme_bw()
 
@@ -115,7 +120,7 @@ cat("Compute dyad counts for each pshift using results from the true model.\n")
 fx <- grep(chosen.model,fnames)
 if (length(fx) > 0) {
   if (!opts$dataset %in% c("synthetic","synthetic-1")) {
-    z <- fits[[fx]]$z
+    z <- fits[[fx]]$params$z
   } else  {
     z <- c(1,1,1,1,1,2,2,2,2,2)
   }
@@ -263,11 +268,13 @@ if (opts$predictions) {
 }
 
 cat("Creating dashboard.\n")
-library(gridExtra)
-pdf(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=25,height=10)
-blankPanel <- grid.rect(gp=gpar(col="white"))
-grid.arrange(q1, q1a, q2, q3, q3a, q4, q5, q6,ncol=4)
-dev.off()
+if (save.dashboard) {
+  library(gridExtra)
+  pdf(paste("figs/",opts$dataset,"/dashboard.pdf",sep=""),width=25,height=10)
+  blankPanel <- grid.rect(gp=gpar(col="white"))
+  grid.arrange(q1, q1a, q2, q3, q3a, q4, q5, q6,ncol=4)
+  dev.off()
+}
 
 if (opts$dataset=="eckmann-small") {
 #n  load("data/eckmann-small.rdata")
@@ -493,7 +500,7 @@ if (opts$save.figs) {
   print(q1)
   ggsave(paste("figs/",opts$dataset,"/lpost.pdf",sep=""),height=4,width=5)
   print(q1a)
-  ggsave(paste("figs/",opts$dataset,"/lpost-iter.pdf",sep=""),height=4,width=5)
+  ggsave(paste("figs/",opts$dataset,"/lpost-iter.pdf",sep=""),height=30,width=30)
   print(q2)
   ggsave(paste("figs/",opts$dataset,"/zs.pdf",sep=""),height=4,width=5)
   print(q3)

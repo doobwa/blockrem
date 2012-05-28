@@ -7,8 +7,10 @@
 ##' @return 
 ##' @author chris
 plot.posterior <- function(train,N,fit) {
+  
   M <- nrow(train)
-  P <- 13
+  P <- dim(fit$params$beta)[1]
+  K <- dim(fit$params$beta)[2]
   ego <- fit$ego*1  # RemStat doesn't want boolean
   s <- new(RemStat,
            train[,1],
@@ -16,8 +18,7 @@ plot.posterior <- function(train,N,fit) {
            as.integer(train[,3])-1,
            N,M,P,ego)
   s$precompute()  
-  P <- dim(fit$params$beta)[1]
-  K <- dim(fit$params$beta)[2]
+  s$transform()
   sigma <- fit$params$sigma
   mu <- fit$params$mu
   beta  <- fit$params$beta
@@ -26,22 +27,34 @@ plot.posterior <- function(train,N,fit) {
     mu <- rep(mu,P)
     sigma <- rep(sigma,P)
   }
-  lbetas <- ys <- list()
+
+ # par(mfrow=c(K,K),mar=c(2,2,1,1))
+  lbetas <- ws <- ys <- list()
   for (k1 in 1:K) {
-    lbetas[[k1]] <- ys[[k1]] <- list()
+    lbetas[[k1]] <- ys[[k1]] <- ws[[k1]] <- list()
     for (k2 in 1:K) {
       lbetas[[k1]][[k2]] <- dnorm(beta[,k1,k2],mu,sigma,log=TRUE)
       k1nodes <- which(z==k1)
       k2nodes <- which(z==k2)
       ys[[k1]][[k2]] <- RemLogLikelihoodBlockPc(k1-1,k2-1,k1nodes-1,k2nodes-1,beta,z-1,s$ptr(),K)
+      ws[[k1]][[k2]] <- ys[[k1]][[k2]][-length(ys[[k1]][[k2]])]
+     # hist(ys[[k1]][[k2]])
     }
   }
+
   lsigmas <- dgamma(sigma,fit$priors$sigma$alpha,fit$priors$sigma$beta,log=TRUE)
 
-  par(mfrow=c(1,3))
+  tb <- table(factor(z,1:K))
+  lzs <- log(tb[z] + priors$alpha)
+
+  
+
+  par(mfrow=c(3,2))
   hist(unlist(lsigmas),main="Parameters sigma_p",xlab="logprob")
   hist(unlist(lbetas),main="Parameters beta_p,k1,k2",xlab="logprob")
   hist(unlist(ys),main="Observations",xlab="logprob")
+  hist(unlist(ws),main="Observations",xlab="logprob")
+  hist(unlist(lzs),main="Parameters z")
 }
 
 plot.posterior.pc <- function(lp) {

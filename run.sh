@@ -46,6 +46,7 @@ rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
 # Helper commands
 cd ~/Documents/blockrem/
 rsync -auvz pkg duboisc@d1:/extra/duboisc0/blockrem/ --exclude '*.so' --exclude '*.o'
+rsync -auvz pkg/R/splitmerge.r duboisc@d1:/extra/duboisc0/blockrem/pkg/R/
 rsync -auvz brem.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz predict.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz getcounts.r duboisc@d1:/extra/duboisc0/blockrem/
