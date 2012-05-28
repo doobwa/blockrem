@@ -27,8 +27,9 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-chosen.model <- "full"
-#opts <- list(dataset="synthetic-1",predictions=TRUE)
+chosen.model <- "10-FALSE.10"
+opts <- list(dataset="synthetic-1",predictions=TRUE)
+opts <- list(dataset="eckmann-small",predictions=TRUE)
 
 # Pull data from each saved file and grab the name of the fit
 results.dir <- paste("results/",opts$dataset,sep="")
@@ -64,6 +65,7 @@ if (opts$dataset == "synthetic") {
 } else {
   q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 }
+
 
 library(coda)
 load(paste("results/",opts$dataset,"/full.rdata",sep=""))
@@ -269,7 +271,7 @@ dev.off()
 
 if (opts$dataset=="eckmann-small") {
 #n  load("data/eckmann-small.rdata")
-#  load(paste("results/eckmann-small/",chosen.model,".rdata",sep=""))
+  load(paste("results/eckmann-small/",chosen.model,".rdata",sep=""))
   b <- lapply(fit$samples,function(x) x$beta)
   b <- melt(b)
   colnames(b) <- c ("p","k1","k2","value","iter")

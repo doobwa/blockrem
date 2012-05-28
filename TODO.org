@@ -228,11 +228,11 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
   - [X] Role of priors?  Hierarchical portion?
   - [X] Learn mu and sigma?
   - [ ] Make sure new clusters from upper level mu and sigma
-  - [ ] transform degree effects?
+  - [ ] Bug in llk_node maybe keeps z's from being sampled? Give warning
+  - [X] transform degree effects?
   - [ ] Fixed K vs DP option
   - [X] Allow different priors on different effects p?
-- [X] Double check pshift implementation; is it global? fix
-  description in paper
+- [X] Double check pshift implementation; is it global? 
 - [X] Set up reality mining
 - [ ] classroom example
 - [ ] Set up enron dataset
@@ -260,8 +260,9 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
     last changepoint for a given dyad.   Or should we use that
     notation throughout?  
 - [ ] Fix Gibbs sampling equation, e.g. z_{i_m} instead of i_m ?
-- [ ] Incorporate SNRG notes
-  
+- [ ] Incorporate SNRG note
+- [ ] fix  description in paper for pshift ('ego' issue)
+- [ ]   cite reality mining paper
 
 * Bugs
 ** TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.

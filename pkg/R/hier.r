@@ -130,9 +130,11 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
 
     ## Add clusters from prior (Neal 2000)
     if (num.extra > 0) {
+      prs <- priors
+      prs$phi <- list(mu=mu,sigma=sigma)
       for (j in 1:num.extra) {
         beta <- add_cluster(beta)
-        beta <- sample_cluster_from_prior(beta,dim(beta)[2],priors)
+        beta <- sample_cluster_from_prior(beta,dim(beta)[2],prs)
       }
     }
 
