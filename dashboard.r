@@ -268,21 +268,21 @@ grid.arrange(q1, q1a, q2, q3, q3a, q4, q5, q6,ncol=4)
 dev.off()
 
 if (opts$dataset=="eckmann-small") {
-  load("data/eckmann-small.rdata")
-  load(paste("results/eckmann-small/",chosen.model,".rdata",sep=""))
+#n  load("data/eckmann-small.rdata")
+#  load(paste("results/eckmann-small/",chosen.model,".rdata",sep=""))
   b <- lapply(fit$samples,function(x) x$beta)
   b <- melt(b)
   colnames(b) <- c ("p","k1","k2","value","iter")
-  b <- subset(b, value != 0 & iter > 50)
+  b <- subset(b, value != 0)# & iter > 50)
   pnames <- c("intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdegree","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
   b$p <- pnames[b$p]
   d <- ddply(b,.(p,k1,k2),function(x) c(mean=mean(x$value),quantile(x$value,c(.025,.2,.8,.975))))
   
   d$p <- factor(as.character(d$p),rev(pnames))
-  
+
+  pdf(paste("figs/",opts$dataset,"/params-estimates.pdf",sep=""),width=30,height=30)
   ggplot(d) + geom_point(aes(x=p,y=mean),colour="black") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="black") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="black")  +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
-  
-  ggsave("figs/eckmann-small/params-estimates.pdf",width=5,height=4)  
+  dev.off()
 }
 
 if (opts$dataset=="synthetic") {
@@ -323,9 +323,10 @@ if (opts$dataset=="synthetic") {
 }
 
 cat("N x N plot of mean beta_p,z_i,z_j for a given p.\n")
-load(paste("results/",opts$dataset,"/20-FALSE.20.rdata",sep=""))
+load(paste("data/",opts$dataset,".rdata",sep=""))
+load(paste("results/",opts$dataset,"/10-FALSE.10.rdata",sep=""))
 plot(fit$lps)
-iters <- 40:80#f1fit$niter
+iters <- 5:20#40:80#f1fit$niter
 mats <- vector("list",length=P)
 for (p in 1:P) {
   mats[[p]] <- 0
@@ -353,8 +354,21 @@ o <- order(z)
 dir.create(paste("figs/",opts$dataset,sep=""),showWarn=FALSE)
 dir.create(paste("figs/",opts$dataset,"/parmat/",sep=""),showWarn=FALSE)
 px <- which(sigma.hat!=0)
-par(mfrow=c(3,3))
+pdf(paste("figs/",opts$dataset,"/parmat/all.pdf",sep=""),height=20,width=20)
+par(mfrow=c(3,3),mar=c(3,1,1,1))
+tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
+image(log(tb[o,o]+1),xaxt="n",yaxt="n",col=grey.colors(100))
+#image(mats[[1]][o,o],xaxt="n",yaxt="n",col=grey.colors(100))
 #par(mar=c(0,0,0,0))
+plot(1,xlim=c(1,N),ylim=c(1,N))
+zs <- sort(z)
+for (i in 2:N) {
+  if (zs[i] != zs[i-1]) {
+    print(i)
+    text(i,i,label=paste(zs[i],zs[i]))
+    abline(v=i,h=i)
+  }
+}
 for (p in px) {
   mat <- (mats[[p]] - mu.hat[p]) / sigma.hat[p]
   mat <- mat[o,o]
@@ -362,6 +376,37 @@ for (p in px) {
   image(mat,xaxt="n",yaxt="n",col=grey.colors(100),main=pnames[p])
   #dev.off()
 }
+dev.off()
+
+k1 <- 4
+k2 <- 4
+k3 <- 5
+tb <- table(z[train[,2]],z[train[,3]])
+num <- outer(table(z),table(z),"*")
+lam <- tb/num
+tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
+
+ik1 <- which(z[o] == k1)            # members of k2
+ik2 <- which(z[o] == k2)            # members of k2
+ik3 <- which(z[o] == k3)
+counts <- colSums(tb[o,o][ik1,c(ik2,ik3)])
+
+mats[[1]][k1,k2]
+mats[[1]][k1,k3]
+mats[[2]][k1,k2]
+mats[[2]][k1,k3]
+beta[1,4,4]
+beta[1,7,4]
+beta[2,4,4]
+beta[2,7,4]
+
+# 4 and 7 look good.  Did they mix?  Are they significant??
+betas <- array(0,c(length(iters),P,K,K))
+for (i in 1:length(iters)) {
+  betas[i,,,] <- fit$samples[[iters[i]]]$beta
+}
+
+plot(as.vector(tb),as.vector(mats[[1]]))
 
 ## Find cases where beta_p1,k1,k2 > beta_p1,k1,k3 but beta_p2,k1,k2 < beta_p2,k1,k3.  Just use last draw
 K <- dim(fit$params$beta)[2]
@@ -389,7 +434,7 @@ for (k1 in 1:K) {
 spots <- do.call(rbind,current)
 colnames(spots) <- c("p1","p2","k1","k2","k3")
 spots <- data.frame(spots)
-tmp <- subset(spots,#p1 == 1 & p2 %in% c(3,6) &
+tmp <- subset(spots,p1 == 1 & p2 %in% c(3,6) &
               k1 %in% c(1:4,7,9,11,12,15,16) &
               k2 %in% c(1:4,7,9,11,12,15,16) &
               k3 %in% c(1:4,7,9,11,12,15,16))
@@ -409,7 +454,13 @@ profile <- function(train,fit,p1,p2,k1,k2,k3) {
   as.vector(c(table(train[ix,3]),table(train[iy,3])))
 }
 
-
+## Profile plot working off of posterior mean
+tb <- table(z[train[,2]],z[train[,3]])
+tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
+ik1 <- which(z == k1)            # members of k2
+ik2 <- which(z == k2)            # members of k2
+ik3 <- which(z == k3)
+counts <- colSums(tb[ik1,c(ik2,ik3)])
 
 ## # Old version
 ## beta.ij <- lapply(fit$samples[iters],function(s) {

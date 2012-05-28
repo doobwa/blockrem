@@ -19,7 +19,7 @@ option_list <- list(
 parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 #library(brem); opts <- list(dataset="twitter-small",numclusters=20,numiterations=100,splitmerge=FALSE,numextra=5,model.type="full")
-#library(brem); opts <- list(dataset="eckmann-small",numclusters=20,numiterations=500,splitmerge=FALSE,numextra=5,model.type="full")
+#library(brem); opts <- list(dataset="eckmann-small",numclusters=10,numiterations=500,splitmerge=FALSE,numextra=5,model.type="full")
 #library(brem); opts <- list(dataset="realitymining-small",numclusters=20,numiterations=500,splitmerge=FALSE,numextra=5,model.type="full")
 
 
