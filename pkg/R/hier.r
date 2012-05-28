@@ -3,7 +3,11 @@
 ## }
 lpz <- function(count,priors) {
 #  log(count + priors$alpha)
-  dnbinom(count,priors$shape,mu=priors$meansize,log=TRUE)
+  if (!is.null(priors$nb)) {
+    dnbinom(count,priors$shape,mu=priors$meansize,log=TRUE)
+  } else {
+    log(count + priors$alpha)
+  }
 }
 
 ##' RemStat object s required in environment
@@ -31,13 +35,14 @@ lposterior <- function(params,priors,collapse.sigma=TRUE) {
   # Prior on z
   tb <- table(factor(params$z,1:K))
   tb <- tb[which(tb>0)]
-  z <- sum(log(sapply(tb - 1,factorial)))
+  #z <- sum(log(sapply(tb - 1,factorial)))
+  z <- sapply(tb,function(count) count * lpz(count,priors))
 
   # Prior on sigma
   sigma <- dgamma(params$sigma,priors$sigma$alpha,priors$sigma$beta,log=TRUE)
 
   r <- list(y=y,beta=beta,z=z,sigma=sigma)
-  r$all <- sum(r$sigma[priors$px]) + y + beta + z
+  r$all <- sum(r$sigma[priors$px]) + y + beta + sum(z)
   return(r)
 }
 

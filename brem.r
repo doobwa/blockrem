@@ -19,9 +19,8 @@ option_list <- list(
 parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 #library(brem); opts <- list(dataset="twitter-small",numclusters=20,numiterations=100,splitmerge=FALSE,numextra=5,model.type="full")
-#library(brem); opts <- list(dataset="eckmann-small",numclusters=10,numiterations=500,splitmerge=FALSE,numextra=5,model.type="full")
 #library(brem); opts <- list(dataset="realitymining-small",numclusters=20,numiterations=500,splitmerge=FALSE,numextra=5,model.type="full")
-
+#library(brem); opts <- list(dataset="eckmann-small",numclusters=3,numiterations=500,splitmerge=FALSE,numextra=5)
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
 
@@ -29,11 +28,12 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 # N should be loaded by dataset
 P <- 13
 K <- opts$numclusters
-opts$model.type <- paste(opts$numclusters,opts$splitmerge,sep="-")
+opts$model.type <- paste(opts$numclusters,opts$splitmerge,K,sep=".")
 
-outfile <- paste("results/",opts$dataset,"/",opts$model.type,".",K,".rdata",sep="")
+outfile <- paste("results/",opts$dataset,"/",opts$model.type,".rdata",sep="")
 effects <- c("intercept","abba","abby","abay","sen_outdeg","sen_indeg","dyad_count")
 priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=3,beta=1))
+if (opts$nb) priors$nb <- list(shape = 3, mu=N/K))
 
 # Fit and save model
 fit <- brem(train,N,K,effects,do.sm=opts$splitmerge,num.extra=opts$numextra,niter=opts$numiterations,outfile=outfile)
