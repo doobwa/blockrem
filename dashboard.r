@@ -374,8 +374,9 @@ for (k1 in 1:K) {
    for (k3 in (1:K)[-c(k1,k2)]) {
     for (p1 in 1) {
       for (p2 in px) {
-        if (((beta[p1,k1,k2] - mu.hat[p1]) / sigma.hat[p1]) >
-            ((beta[p1,k1,k3] - mu.hat[p1]) / sigma.hat[p1])  &
+        if (#abs(beta[p1,k1,k2] - beta[p1,k1,k3]) < sigma.hat[p1] &
+            (beta[p1,k1,k2] - mu.hat[p1]) / sigma.hat[p1] > 2 &
+            (beta[p1,k1,k3] - mu.hat[p1]) / sigma.hat[p1] > 2 &            
             ((beta[p2,k1,k2] - mu.hat[p2]) / sigma.hat[p2])*2 <
             ((beta[p2,k1,k3] - mu.hat[p2]) / sigma.hat[p2])) {
           current[[i <- i+1]] <- c(p1,p2,k1,k2,k3)
@@ -388,11 +389,27 @@ for (k1 in 1:K) {
 spots <- do.call(rbind,current)
 colnames(spots) <- c("p1","p2","k1","k2","k3")
 spots <- data.frame(spots)
-spots <- subset(spots,p1 == 2 & p2 %in% c(3,6))
+tmp <- subset(spots,#p1 == 1 & p2 %in% c(3,6) &
+              k1 %in% c(1:4,7,9,11,12,15,16) &
+              k2 %in% c(1:4,7,9,11,12,15,16) &
+              k3 %in% c(1:4,7,9,11,12,15,16))
 
-plot.profile <- function(beta,p1,p2,k1,k2,k3) {
-  
+res <- lapply(1:length(tmp),function(i) {
+  profile(train,fit,tmp$p1[i],tmp$p2[i],tmp$k1[i],tmp$k2[i],tmp$k3[i])
+})
+
+profile <- function(train,fit,p1,p2,k1,k2,k3) {
+  c(beta[p1,k1,k2], beta[p1,k1,k3], beta[p2,k1,k2], beta[p2,k1,k3])
+  z <- fit$params$z
+  ik1 <- which(z == k1)            # members of k2
+  ik2 <- which(z == k2)            # members of k2
+  ik3 <- which(z == k3)
+  ix <- which(train[,2] %in% ik1 & train[,3] %in% ik2)
+  iy <- which(train[,2] %in% ik1 & train[,3] %in% ik3)
+  as.vector(c(table(train[ix,3]),table(train[iy,3])))
 }
+
+
 
 ## # Old version
 ## beta.ij <- lapply(fit$samples[iters],function(s) {
