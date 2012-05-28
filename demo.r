@@ -7,7 +7,7 @@ effects <- c("intercept","abba","abby","abay")
 priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=3,beta=1))
 
 # Fit and save model
-fit <- brem(train,N,K,effects)
+fit <- brem(train,N,K,effects,niter=500)
 save(fit,file=outfile)
 
 train.ix <- 1:nrow(train)

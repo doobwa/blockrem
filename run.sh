@@ -3,7 +3,7 @@
 
 # Fit models
 ./parallel --sshlogin 4/d6 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s FALSE' ::: "synthetic-1" ::: 10
-./parallel --sshlogin 4/d8 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 300 -s FALSE' ::: "eckmann-small" "twitter-small" "realitymining-small" ::: 20
+./parallel --sshlogin 4/d7 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 300 -s FALSE' ::: "eckmann-small" "twitter-small" "realitymining-small" ::: 20
 
 ./parallel --sshlogin 6/d5,6/m 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 200 -t {3} -s TRUE' ::: "eckmann-small" ::: 3 ::: "full"
 

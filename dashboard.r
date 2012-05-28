@@ -27,7 +27,7 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-
+chosen.model <- "full"
 #opts <- list(dataset="synthetic-1",predictions=TRUE)
 
 # Pull data from each saved file and grab the name of the fit
@@ -68,8 +68,9 @@ if (opts$dataset == "synthetic") {
 library(coda)
 load(paste("results/",opts$dataset,"/full.rdata",sep=""))
 r <- melt(fit$samples)
-r <- subset(r,Var1 < 60)
-q1a <- qplot(L2,value,data=r, colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3,scales="free")
+r <- subset(r,L1 < 60)
+r <- subset(r,!is.na(Var1))
+q1a <- qplot(L1,value,data=r, colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3)#,scales="free")
 
 
 cat("Plot overall rate\n")
@@ -93,32 +94,38 @@ if (FALSE) {
 #qplot(iter,log(-llk + 1),data=subset(llks,iter < 20 & iter > 15),geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 
 cat("Plotting progress of z at each MCMC iteration.\n")
-zs <- lapply(fits,function(f) do.call(rbind,f$samples$z))
+zs <- lapply(fits,function(f) {
+  z <- lapply(f$samples,function(s) s$z)
+  do.call(rbind,z)
+})
 names(zs) <- names(fits)
 zs <- melt(zs)
-q2 <- qplot(X1,X2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1) + labs(x="iteration",y="node")
+q2 <- qplot(Var1,Var2,data=zs,geom="tile",fill=factor(value)) + facet_wrap(~L1) + labs(x="iteration",y="node")
 
 cat("Compute distribution of activity using results from the full model.\n")
 tb <- table(factor(c(train[,2],train[,3]),1:N))
-fx <- grep("full.2",names(fits))
+fx <- grep(chosen.model,names(fits))
 z <- fits[[fx]]$z
 df <- data.frame(group=z,count=tb)
 q3a <- qplot(log(count.Freq),data=df,geom="histogram")+facet_grid(group~.,scales="free")+labs(y="number of users",x="log(number of events)") + theme_bw()
 
 cat("Compute dyad counts for each pshift using results from the true model.\n")
-fx <- grep("full.2",fnames)
+fx <- grep(chosen.model,fnames)
 if (length(fx) > 0) {
-  if (opts$dataset!="synthetic") z <- fits[[fx]]$z
-  else z <- c(1,1,1,1,1,2,2,2,2,2)
+  if (!opts$dataset %in% c("synthetic","synthetic-1")) {
+    z <- fits[[fx]]$z
+  } else  {
+    z <- c(1,1,1,1,1,2,2,2,2,2)
+  }
   
   df <- dyad.ps(train,N)
   df <- melt(df)
-  df$i <- z[df$X1]
-  df$j <- z[df$X2]
-  df <- subset(df,X3 != "AB-AB")
-  df$X3 <- factor(as.character(df$X3))
-  levels(df$X3) <- rev(list("AB-BA"="ab-ba","AB-BY"="ab-by","AB-XA"="ab-xa","AB-XB"="ab-xb","AB-AY"="ab-ay"))#,"AB-AB"="ab-ab"))
-  q3 <- qplot(X3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="",y="count for a given dyad") + coord_flip()# +opts(axis.text.x=theme_text(angle=90)) 
+  df$i <- z[df$Var1]
+  df$j <- z[df$Var2]
+  df <- subset(df,Var3 != "AB-AB")
+  df$Var3 <- factor(as.character(df$Var3))
+  levels(df$Var3) <- rev(list("AB-BA"="ab-ba","AB-BY"="ab-by","AB-XA"="ab-xa","AB-XB"="ab-xb","AB-AY"="ab-ay"))#,"AB-AB"="ab-ab"))
+  q3 <- qplot(Var3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="",y="count for a given dyad") + coord_flip()# +opts(axis.text.x=theme_text(angle=90)) 
   q3
   ggsave("figs/synthetic/counts.pdf",width=4,height=4)
 } else {
@@ -180,12 +187,13 @@ print(q5)
 # ggsave(paste("figs/",opts$dataset,"/rank.v.count.pdf",sep=""),width=20,height=12)
 
 cat("Plotting parameter estimates.\n")
-betas <- lapply(fits,function(f) f$beta)
+betas <- lapply(fits,function(f) f$params$beta)
 names(betas) <- names(fits)
 b <- melt(betas)
-q6 <- qplot(X1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
+q6 <- qplot(Var1,value,data=b,geom="point",colour=factor(L1)) + facet_grid(Var2~Var3) + theme_bw() #+ labs(colour="model")
 #qplot(X1,value,data=subset(b,L1=="full.3"),geom="point") + facet_grid(X2~X3) + theme_bw() #+ labs(colour="model")
 
+# Get names
 if (opts$dataset=="twitter-small") {
   lapply(1:3,function(k) nmap[which(z==k)])
 }
@@ -246,7 +254,8 @@ if (opts$predictions) {
         cbind(likelihood="mult",type="test",
               ddply(mllks.test,.(L1),summarise,value=mean(value)))
               )
-  df$L1 <- factor(df$L1,c("uniform","marg","online","full.1","full.2","full.3","dp","truth"))
+ # TODO: Fix this up 
+#  df$L1 <- factor(df$L1,c("uniform","marg","online","full.1","full.2","full.3","dp","truth"))
   df$dataset <- opts$dataset
   save(df,file=paste("results/",opts$dataset,"/final/results.rdata",sep=""))
 }
@@ -260,11 +269,12 @@ dev.off()
 
 if (opts$dataset=="eckmann-small") {
   load("data/eckmann-small.rdata")
-  load("results/eckmann-small-bk2/full.2.rdata")
-  b <- melt(fit$param)
-  colnames(b) <- c ("iter","p","k1","k2","value")
-  b <- subset(b, iter > 50 & value != 0)
-  pnames <- c("Intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdegree","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
+  load(paste("results/eckmann-small/",chosen.model,".rdata",sep=""))
+  b <- lapply(fit$samples,function(x) x$beta)
+  b <- melt(b)
+  colnames(b) <- c ("p","k1","k2","value","iter")
+  b <- subset(b, value != 0 & iter > 50)
+  pnames <- c("intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdegree","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
   b$p <- pnames[b$p]
   d <- ddply(b,.(p,k1,k2),function(x) c(mean=mean(x$value),quantile(x$value,c(.025,.2,.8,.975))))
   
@@ -276,28 +286,32 @@ if (opts$dataset=="eckmann-small") {
 }
 
 if (opts$dataset=="synthetic") {
-  load("data/synthetic.rdata")
-  load("results/synthetic-bk/full.2.rdata")
-  b <- melt(fit$param)
-  colnames(b) <- c ("iter","p","k1","k2","value")
+
+  load("data/synthetic-1.rdata")
+  load(paste("results/synthetic-1/",chosen.model,".rdata",sep=""))
+  b <- lapply(fit$samples,function(x) x$beta)
+  b <- melt(b)
+  colnames(b) <- c ("p","k1","k2","value","iter")
   b <- subset(b, iter > 50 & value != 0)
-  pnames <- c("Intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdegree","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
+  pnames <- c("intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","sen. outdegree","rec. outdegree","sen. indegree","rec. indegree","dyad count","total")
   dimnames(beta)[[1]] <- pnames
   tb <- melt(beta)
+  colnames(b) <- c ("p","k1","k2","value","iter")
   colnames(tb) <- c("p","k1","k2","value")
  # tb <- subset(tb,!(p %in% c("ab-ab","total")))
   d <- ddply(b,.(p,k1,k2),function(x) c(mean=mean(x$value),quantile(x$value,c(.025,.2,.8,.975))))
   
   # Fix group assignments
-  if (fit$z[1]==2) {
+  if (fit$params$z[1]==2) {
     d$k1 <- c(2,1)[d$k1]
     d$k2 <- c(2,1)[d$k2]
   }
   
   # Fix parameter names
   d$p <- pnames[d$p]
-  d <- subset(d,! p %in% c("ab-ab","total","rec. indegree","sen. indegree","rec. outdegree","sen. outdegree","dyad count"))
-  tb <- subset(tb,! p %in% c("ab-ab","total","rec. indegree","sen. indegree","rec. outdegree","sen. outdegree","dyad count"))
+  ignore <- c("ab-ab","ab-xa","ab-xb","total","rec. indegree","sen. indegree","rec. outdegree","sen. outdegree","dyad count")
+  d <- subset(d,! p %in% ignore)
+  tb <- subset(tb,! p %in% ignore)
   d$p <- factor(as.character(d$p),rev(pnames[-c(7:13)]))
   tb$p <- factor(as.character(tb$p),rev(pnames[-c(7:13)]))
   
@@ -307,6 +321,102 @@ if (opts$dataset=="synthetic") {
   ggsave("figs/synthetic/params-estimates.pdf",width=5,height=4)
   
 }
+
+cat("N x N plot of mean beta_p,z_i,z_j for a given p.\n")
+load(paste("results/",opts$dataset,"/20-FALSE.20.rdata",sep=""))
+plot(fit$lps)
+iters <- 40:80#f1fit$niter
+mats <- vector("list",length=P)
+for (p in 1:P) {
+  mats[[p]] <- 0
+}
+for (i in iters) {
+  s <- fit$samples[[i]]
+  for (p in 1:P) {
+    mats[[p]] <- mats[[p]] + s$beta[p,s$z,s$z]
+  }
+}
+for (p in 1:P) {
+  mats[[p]] <- mats[[p]]/length(iters)
+}
+
+## Get upper level mean and variance for each effect p
+mus <- do.call(rbind,lapply(fit$samples[iters],function(s) s$mu))
+mu.hat <- colMeans(mus)
+sigmas <- do.call(rbind,lapply(fit$samples[iters],function(s) s$sigma))
+sigma.hat <- colMeans(sigmas)
+
+## Order rows according to z from last sample
+z <- fit$params$z
+o <- order(z)
+
+dir.create(paste("figs/",opts$dataset,sep=""),showWarn=FALSE)
+dir.create(paste("figs/",opts$dataset,"/parmat/",sep=""),showWarn=FALSE)
+px <- which(sigma.hat!=0)
+par(mfrow=c(3,3))
+#par(mar=c(0,0,0,0))
+for (p in px) {
+  mat <- (mats[[p]] - mu.hat[p]) / sigma.hat[p]
+  mat <- mat[o,o]
+  #pdf(paste("figs/",opts$dataset,"/parmat/",p,".pdf",sep=""),height=4,width=4)
+  image(mat,xaxt="n",yaxt="n",col=grey.colors(100),main=pnames[p])
+  #dev.off()
+}
+
+## Find cases where beta_p1,k1,k2 > beta_p1,k1,k3 but beta_p2,k1,k2 < beta_p2,k1,k3.  Just use last draw
+K <- dim(fit$params$beta)[2]
+beta <- fit$params$beta
+current <- list()
+i <- 0
+for (k1 in 1:K) {
+  print(k1)
+  for (k2 in (1:K)[-k1]) {
+   for (k3 in (1:K)[-c(k1,k2)]) {
+    for (p1 in 1) {
+      for (p2 in px) {
+        if (((beta[p1,k1,k2] - mu.hat[p1]) / sigma.hat[p1]) >
+            ((beta[p1,k1,k3] - mu.hat[p1]) / sigma.hat[p1])  &
+            ((beta[p2,k1,k2] - mu.hat[p2]) / sigma.hat[p2])*2 <
+            ((beta[p2,k1,k3] - mu.hat[p2]) / sigma.hat[p2])) {
+          current[[i <- i+1]] <- c(p1,p2,k1,k2,k3)
+        }
+      }
+    }
+   }
+  }
+}
+spots <- do.call(rbind,current)
+colnames(spots) <- c("p1","p2","k1","k2","k3")
+spots <- data.frame(spots)
+spots <- subset(spots,p1 == 2 & p2 %in% c(3,6))
+
+plot.profile <- function(beta,p1,p2,k1,k2,k3) {
+  
+}
+
+## # Old version
+## beta.ij <- lapply(fit$samples[iters],function(s) {
+##   lapply(1:P,function(p) {
+##     s$beta[p,s$z,s$z]
+##   })
+## })
+## beta.ij <- melt(beta.ij)
+## colnames(beta.ij) <- c("Var1","Var2","value","L2","L1")
+## tmp <- ddply(beta.ij,.(Var1,Var2,L2),summarise,mean=mean(value))
+
+## dir.create(paste("figs/",opts$dataset,sep=""),showWarn=FALSE)
+## dir.create(paste("figs/",opts$dataset,"/parmat/",sep=""),showWarn=FALSE)
+## px <- which(sigma.hat!=0)
+## for (p in px) {
+##   a <- subset(tmp,L2==p)
+##   a <- data.frame(X1=a$Var1,X2=a$Var2,value=a$mean)
+## #  plotmat(a,limits=c(-2,0))
+##   mat <- as.matrix(cast(a,X1~X2)[,-1])
+##   mat <- (mat - mu.hat[p]) / sigma.hat[p]
+##   pdf(paste("figs/",opts$dataset,"/parmat/",p,".pdf",sep=""),height=4,width=4)
+##   image(mat,xaxt="n",yaxt="n",col=grey.colors(100))#rainbow(100))
+##   dev.off()
+## }
 
 cat("Saving figures\n")
 if (opts$save.figs) {
