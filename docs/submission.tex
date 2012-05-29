@@ -146,7 +146,7 @@ where for each pair of clusters $(k,l)$ we have a vector of parameters $\boldsym
 
  In practice we may believe an interaction between one dyad should not affect the rate of an entirely separate dyad.  As shown in Figure \ref{fig:example}, we allow each intensity function $\lambda_{ij}(t)$ to only change following an event involving either $i$ or $j$.  In the Appendix we show how this reduces the computational complexity of computing the above likelihood.\footnote{This is analogous to a Markov condition for this class of models.}
 
-We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \sim N(0,1)$ and $\sigma_p^2 \sim \mbox{Gamma}(3,1)$ (TODO). 
+We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \sim N(0,1)$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(3,1)$ (TODO). 
 
 \subsection{Model specification}
   
@@ -299,9 +299,12 @@ Each of the following data sets are sequences of dyadic events, where each event
 
 \begin{itemize}
 \item Kiel email: \cite{Ebel2002}
-\item Enron email:
+\item Classrooms: \cite{McFarland2003}
+\item Eckmann email: dyadic emails  \cite{Eckmann}
+\item Enron email: dyadic emails between months [TODO], 3000 training and 1000 test events among 141 actors \cite{Enron}
+\item Irvine: dyadic interactions among 401 actors each having more than 30 events,  \cite{Opsahl}
 \item Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.\footnote{Will be made publicly available.}  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.  Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.  We use the subset of 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
-\item MIT Reality Mining: 
+\item MIT Reality Mining:  \cite{MITreality}
 \end{itemize}
 
 \subsection{Prediction experiments}

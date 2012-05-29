@@ -269,7 +269,11 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [ ] ditch handcock/schweinberger reference?
 - [ ] remove old effects from table
 - [ ] mention CRP at the end of Section 2
-- [ ] Sample mu and sigma
+- [ ] Describe sampling of mu and sigma 
+- [ ] Fix description of intensities to have new ego setup
+- [ ] Mention what happens with cluster pairs that have no
+  events... shrinkage towards upper level mu
 * Bugs
 ** TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
 ** TODO Huge hit in loglikelihood as soon as a new cluster appears?
+- [ ] add statistic transformation as an option in brem()
