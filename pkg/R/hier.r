@@ -135,7 +135,7 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
   for (iter in 1:niter) {
 
     ## Add clusters from prior (Neal 2000)
-    if (num.extra > 0) {
+    if (num.extra > 0 & K!=1) {
       prs <- priors
       prs$phi <- list(mu=mu,sigma=sigma)
       for (j in 1:num.extra) {
@@ -157,7 +157,7 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
     K <- max(z)
 
     ## Split merge move
-    if (do.sm) {
+    if (do.sm & K != 1) {
       lpost <- function(phi,z,priors) {
         lposterior(list(beta=phi,z=z,mu=mu,sigma=sigma),priors)$all
       }
@@ -174,11 +174,13 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
     beta <- sample_beta(beta,z,mu,sigma,priors)$beta
     
     ## Fit hierarchical portion
-    theta <- t(array(beta,dim=c(P,K^2)))
-    pr <- list(theta=theta,mu=mu,sigma=sigma)
-    mu <- gibbs.mu.hier.gaussian(pr,priors)$mu
-    sigma <- gibbs.sigma.hier.gaussian(pr,priors)$sigma
-
+    if (K != 1) {
+      theta <- t(array(beta,dim=c(P,K^2)))
+      pr <- list(theta=theta,mu=mu,sigma=sigma)
+      mu <- gibbs.mu.hier.gaussian(pr,priors)$mu
+      sigma <- gibbs.sigma.hier.gaussian(pr,priors)$sigma
+    }
+    
     ## Save progress
     # not included in likelihood, so set to 0 for display purposes
     mu[-priors$px] <- sigma[-priors$px] <- 0
