@@ -29,3 +29,12 @@ Making predictions:
    "synthetic-1" "realitymining-small" "eckmann-small" \
    "classroom-16" "classroom-17" "classroom-27" "classroom-29"\
    "classroom-31" "enron-small"
+
+Other files:
+      pkg/        Code to fit BREM models.
+      results.r   Generate results tables.
+      figs/       Figures and the scripts that create them
+      dashboard.r A variety of useful figures for monitoring progress.
+      data/       Data sets applicable to relational event modeling.
+      process/    Scripts for processing data into the form needed for BREM.      
+
