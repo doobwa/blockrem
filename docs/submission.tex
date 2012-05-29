@@ -150,28 +150,10 @@ where for each pair of clusters $(k,l)$ we have a vector of parameters $\boldsym
 
  In practice we may believe an interaction between one dyad should not affect the rate of an entirely separate dyad.  As shown in Figure \ref{fig:example}, we allow each intensity function $\lambda_{ij}(t)$ to only change following an event where $i$ was the sender or the recipient.  This is sensible in distributed settings where $i$ has limited knowledge about interactions among other actors.  In the Appendix we show how this assumption also reduces the computational complexity of computing the above likelihood.\footnote{This is analogous to a Markov condition for this class of models.}
 
-We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \sim N(0,1)$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(3,1)$ (TODO). 
+We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \sim N(0,1)$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(3,1)$.  The cluster assignments are given a non-parameteric priors $z_i \sim \mbox{CRP}(\alpha)$.
 
 \subsection{Model specification}
   
-% \begin{enumerate}
-% \item Intercept: $s_{0}(t,i,j) = 1$
-% \item Dyad count: $s_{1}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i) )$
-% \item Sender out-degree: $s_{1}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i) )$
-% \item Sender in-degree: $s_{2}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=i) )$
-% \item Receiver out-degree: $s_{3}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=j))$
-% \item Receiver in-degree: $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=j))$
-% \item Reciprocity (AB-BA): $s_{5}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$
-% \item Turn-taking (AB-BY): $s_{6}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$
-% \item Turn-usurping (AB-XA): $s_{7}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$
-% \item Turn-usurping (AB-XB): $s_{8}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$
-% \item Turn-continuing (AB-AY): $s_{9}(t,i,j) =  I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$
-% %\item Number of shared two-paths: $s_{10}(t,i,j) =   \sum_{m:t_m<t} \sum_{r=1}^NI(i_m=i,j_m=r or i_m=r,j_m=j)$
-% % \item Shared contacts (since last occurrence): $s_{ij10}(t,i,j) = \sum_{r=1}^N I(i_m=i,j_m=j,i_{v_{mij}}=i,j_{v_{mij}}=r)$
-% % \item Triadic closure (since last occurrence): $s_{ij11}(t,i,j) = \sum_{r=1}^N I(i_m=i,j_m=j,i_{v_{mij}}=r,j_{v_{mij}}=j)$
-% % \item Shared contacts (since last occurrence): $s_{ij12}(t,i,j) = \sum_{r=1}^N I(i_m=i,j_m=j,i_{v_{mij}}=r,j_{v_{mij}}=r)$
-% \end{enumerate}
-
 \begin{table}[t]
 \footnotesize
 \center
@@ -181,16 +163,16 @@ Statistic & Formula \\
 \hline
 \hline
 Intercept& $s_{0}(t,i,j) = 1$\\
-Dyad count& $s_{1}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
-Sender out-degree& $s_{1}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i) )$\\
-Sender in-degree& $s_{2}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=i) )$\\
-Receiver out-degree& $s_{3}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=j))$\\
-Receiver in-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=j))$\\
-Reciprocity (AB-BA)& $s_{5}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$\\
-Turn-taking (AB-BY)&$s_{6}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}\ne i)$\\
-Turn-usurping (AB-XA)& $s_{7}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne j,j_{v_{mij}}=i)$\\
-Turn-usurping (AB-XB)&$s_{8}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne i,j_{v_{mij}}=j)$\\
-Turn-continuing (AB-AY)& $s_{9}(t,i,j) =  I(i_m=i,j_m=j,i_{v_{mij}}=i,j_{v_{mij}}\ne j)$\\
+Reciprocity (AB-BA)& $s_{1}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$\\
+Turn-continuing (AB-AY)& $s_{2}(t,i,j) =  I(i_m=i,j_m=j,i_{v_{mij}}=i,j_{v_{mij}}\ne j)$\\
+Turn-taking (AB-BY)&$s_{3}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}\ne i)$\\
+%Turn-usurping (AB-XA)& $s_{7}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne j,j_{v_{mij}}=i)$\\
+%Turn-usurping (AB-XB)&$s_{8}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne i,j_{v_{mij}}=j)$\\
+Sender out-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i) )$\\
+Sender in-degree& $s_{5}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=i) )$\\
+Dyad count& $s_{6}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
+%Receiver out-degree& $s_{3}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=j))$\\
+%Receiver in-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=j))$\\
 \hline
 \end{tabular}
 \label{tab:stats}
@@ -255,16 +237,19 @@ p(\mathcal{A}|\mathbf{z},\boldsymbol{\beta}) &\propto \prod_{m=1}^M \lambda_{i_m
 \end{align*}
 where $\mathcal{V}_{k,l} = \{(i,j): z_{i} \in \{k,l\} \ \mbox{or} \ z_{j} \in \{k,l\} \}$ is the set of dyads with a sender in group $k$ and a recipient in $l$.  This distribution is sampled using slice sampling.
 
-\subsection{Split-merge algorithm}
+\subsection*{Sampling $\mu$  and $\sigma$ given $\beta$ }
 
-%Motivation: simply Gibbs sampling does not seem to mix well.  \footnote{This section is planned future work. In the experiments we evaluate the performance of the model when restricting the number of clusters $K$.  For these chains we do not propose split moves when the number of non-empty clusters is already $K$.}
-
-Here we describe a novel split-merge move for non-conjugate blockmodels.\footnote{IRM (modeling Bernoulli data with a conjugate Beta prior) used a split-merge algorithm \cite{Kempe2006}.}  For illustration, we consider the model
-\begin{align*}
-  y_{ij} & \sim \mbox{Poisson}(\Lambda_{z_i,z_j}) & \Lambda_{ij} &\sim \mbox{Gamma}(\alpha_{\Lambda},\beta_{\Lambda})  & z_i &\sim \mbox{CRP}(\gamma)
-\end{align*}
-
-IDEA: References are Dahl 2003, Wang, Blei 2012, Neal 2000 (alg 8).  A proposed split has REM parameters that are only slightly different than those for the original block.  Merges of two sets of REM parameters are performed by using the parameter for one blocks, and doing so for each dimension independently.  By keeping track of the probability of each of these transitions we can correctly compute the Metropolis-Hastings acceptance probability needed to guarantee we have an MCMC transition that leaves the posterior distribution invariant.
+The inverse gamma distribution is a conjugate prior to a Gaussian distribution with known location parameter, thus $\sigma$ can be sampled from the conditional distribution
+\begin{align}
+\label{eqn:gibbs.sigma}
+\sigma_p^2 &| \boldsymbol{\beta}, \mu_p,  \alpha_{\sigma}, \beta_{\sigma} \sim
+ \mbox{Inv-Gamma}\left(\alpha_{\sigma} + \frac{K^2}{2}, \beta_{\sigma} + \frac{1}{2} \sum_{k=1}^K\sum_{l=1}^K (\beta_{p,k,l} - \mu_p)^2\right).
+\end{align}
+The posterior distribution of $\mu$ given $\sigma$ and the lower level parameters can in turn be written as
+\begin{align}
+\label{eqn:gibbs.mu}
+\mu_p | \boldsymbol{\beta},\sigma_p^2 &\sim \mbox{Normal}\left(\frac{1}{K}\sum_{k=1}^K \beta_{k,p},\frac{ \sigma_p^2}{\sqrt{K}}\right),
+\end{align}
 
 
 %$\boldsymbol{\phi}_{l,r}^{split} \sim G_0$, $\boldsymbol{\phi}_{r,l}^{split} \sim G_0$, and $\boldsymbol{\phi}_{l,l}^{split} \sim G_0$ (or actually $N(\mu_{\phi},\Sigma_{\phi})$
@@ -291,7 +276,7 @@ IDEA: References are Dahl 2003, Wang, Blei 2012, Neal 2000 (alg 8).  A proposed 
 
 \section{Simulation}
 
-We check our model fitting procedure using a small synthetic data set involving 10 nodes from 2 clusters where 1) the first cluster has an increased tendency for reciprocity, 2) members of the second cluster have an increased tendency to continue speaking, and 3) interactions between groups are more likely to be repeated.  The specification of $\textbf{s}$ is therefore $s(t,i,j) = [s_0, s_{5}(t,i,j), s_{9}(t,i,j)]$.  For the synthetic data set we use parameter vectors $\boldsymbol{\beta}_{1,1} = (0,3,0)$,  $\boldsymbol{\beta}_{1,2} = \boldsymbol{\beta}_{2,1} = (-1,0,0)$, and $\boldsymbol{\beta}_{2,2} = (0,0,2)$.  This is done by sequentially computing $\lambda_{ij}(t_m|\cdot)$ for all $(i,j) \in \mathcal{R}$, drawing $t_{m+1}-t_m \sim \mbox{Exp}(\sum_{ij} \lambda_{ij}(t_m|\cdot))$, and drawing the dyad $(i,j) \sim \mbox{Categorical}(\lambda_{ij}(t_m|\cdot) / \sum_{ij}\lambda_{ij}(t_m|\cdot))$.  
+We check our model fitting procedure using a small synthetic data set involving 10 nodes from 2 clusters where 1) the first cluster has an increased tendency for reciprocity, 2) members of the second cluster have an increased tendency to subsequently talk to someone within their cluster.  The specification of $\textbf{s}$ is therefore $s(t,i,j) = [s_0, s_{1}(t,i,j), s_{2}(t,i,j)]$.  For the synthetic data set we use parameter vectors $\boldsymbol{\beta}_{1,1} = (0,3,0)$,  $\boldsymbol{\beta}_{1,2} = \boldsymbol{\beta}_{2,1} = (-1,0,0)$, and $\boldsymbol{\beta}_{2,2} = (0,2,0)$.  This is done by sequentially computing $\lambda_{ij}(t_m|\cdot)$ for all $(i,j) \in \mathcal{R}$, drawing $t_{m+1}-t_m \sim \mbox{Exp}(\sum_{ij} \lambda_{ij}(t_m|\cdot))$, and drawing the dyad $(i,j) \sim \mbox{Categorical}(\lambda_{ij}(t_m|\cdot) / \sum_{ij}\lambda_{ij}(t_m|\cdot))$.  
 
 Though the dyad counts for the synthetic data set suggest a stochastic blockmodel (as seen in Figure  \ref{fig:syncounts}),  the center plot shows each block has empirical differences in their dynamics.  Intensities for reciprocal actions among nodes in block 1 are $e^3$ times greater, intensities for turn-taking actions among nodes in group 2 are $e^2$ times greater, and intensities for dyadic interactions between the two groups have a multiplicative effect of $e^{-1}$ and thus occur less often.  Fitting the model with $K=2$ has similar  predictive accuracy as the true model (see Table \ref{tab:results}), recovers the true latent classes, and the posterior credible intervals of the parameters cover the true parameter values (see Figure \ref{fig:syncounts}c).
 
@@ -302,13 +287,13 @@ Though the dyad counts for the synthetic data set suggest a stochastic blockmode
 Each of the following data sets are sequences of dyadic events, where each event has a time associated with it, a sender, and a recipient.
 
 \begin{itemize}
-\item Kiel email: \cite{Ebel2002}
-\item Classrooms: \cite{McFarland2003}
-\item Eckmann email: dyadic emails  \cite{Eckmann}
+%\item Kiel email: \cite{Ebel2002}
+\item Classrooms: TODO describe datasets. Each have about 20 people and 400 events.  \cite{McFarland2003}
+\item Eckmann email: dyadic emails.  2000 training events among 88 people and 1300 test events.  \cite{Eckmann}
 \item Enron email: dyadic emails between months [TODO], 3000 training and 1000 test events among 141 actors \cite{Enron}
 \item Irvine: dyadic interactions among 401 actors each having more than 30 events,  \cite{Opsahl}
 \item Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.\footnote{Will be made publicly available.}  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.  Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.  We use the subset of 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
-\item MIT Reality Mining:  \cite{MITreality}
+\item MIT Reality Mining: phone calls among the 89 recipients between the dates , using of 2000 training events followed by 1000 test events. \cite{MITreality}
 \end{itemize}
 
 \subsection{Prediction experiments}
@@ -317,24 +302,25 @@ We evaluate the predictive ability of the fitted models by comparing models base
 
 In addition, we compute recall to evaluate whether the next observed event is among the most likely according to the model.  At each event $m$ we sort the predicted intensities of all possible events in decreasing order, find the rank of the observed event in the list of predicted intensities, and compute the mean rank across the $M$ events.  
 
-\input{../figs/results.tex}
+\input{../figs/results-llk.tex}
 
 \subsection{Baselines}
 
-Several baselines are included for comparison: \texttt{uniform} places uniform probability on all possible dyads, \texttt{online} ranks events at time $t$ by the number of times the dyad has occurred previously $r_{online}(i,j) = \sum_{m:t_m < t} I(i_m=i,j_m=j)$, and \texttt{marginal} uses the product of the observed marginal frequencies $r_{marg} = \sum_{m:t_m < t} I(i_m=i) \sum_{m:t_m < t} I(j_m=j)$.  Note for processes that are homogeneous over time, \texttt{online} should do well with large amounts of data while \texttt{marginal} should roughly model heterogeneity in activity among individuals.  
+Several baselines are included for comparison: \texttt{uniform} places uniform probability on all possible dyads, \texttt{online} ranks events at time $t$ by the number of times the dyad has occurred previously $r_{online}(m,i,j) = \sum_{m:t_m < t} I(i_m=i,j_m=j)$, and \texttt{marginal} uses the product of the observed marginal frequencies $r_{marg}(m,i,j) = \sum_{m:t_m < t} I(i_m=i) \sum_{m:t_m < t} I(j_m=j)$.  Note for processes that are homogeneous over time, \texttt{online} should do well with large amounts of data while \texttt{marginal} should roughly model heterogeneity in activity among individuals.  
 
-Our method jointly models \emph{which} dyads occur and \emph{when} they occur.  To compare the above baselines to our model using the likelihood of observed data, we assume each dyad is a Poisson process with estimated  rate $\hat{\lambda}_{i,j} = \frac{M}{t_M} \frac{r_{b}(i,j) + \xi}{\sum_{ij} r_{b}(i,j) + \xi}$, where $r_b(i,j)$ is the statistic a baseline (described above) and $\xi=1$ is a smoothing parameter.
+Our method jointly models \emph{which} dyads occur and \emph{when} they occur.  To compare the above baselines to our model using the likelihood of observed data, we assume each dyad is a Poisson process with estimated  rate $\hat{\lambda}_{i,j}(t_m) = \frac{M}{t_M} \frac{r_{b}(i,j) + \xi}{\sum_{ij} r_{b}(i,j) + \xi}$, where $r_b(i,j)$ is the statistic a baseline (described above) and $\xi=1$ is a smoothing parameter.
 
 
+\input{../figs/results-recall.tex}
 
-\begin{figure}[t]
-\center
-\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-\fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-\caption{Recall plots showing predictive performance on a ranking task.  Left: Eckmann.  Right: Another dataset.  (TODO)}
-\label{fig:recall}
-\end{figure}
+% \begin{figure}[t]
+% \center
+% \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+% \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+% \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+% \caption{Recall plots showing predictive performance on a ranking task.  Left: Eckmann.  Right: Another dataset.  (TODO)}
+% \label{fig:recall}
+% \end{figure}
 
 \subsection{Results}
 
@@ -399,9 +385,11 @@ Figure \ref{fig:recall} will provide recall curves for several of the datasets.
 
  We propose a hierarchical approach for modeling event-based network data that is analogous to recent hierarchical extensions for latent position models \cite{Handcock2007} and exponential random graph models \cite{Schweinberger2011}.  The method combines a latent variable framework (stochastic blockmodels) with a local dependence model for event sequences (relational event models) to provide detailed models of event dynamics among subsets of nodes while allowing for heterogeneity in dynamics of the network as a whole.
 
-Figure \ref{fig:posteriorparams} shows examples of model estimates from data sets of dyadic interactions for the Eckmann data. Panels contain posterior credible intervals for parameters pertaining to dyads belonging to a particular block.  %For example, events among nodes in cluster 1 have an increased propensity for reciprocal events -- after node A sends to node B, an event from B to A has an intensity that is $e^4$ larger, all else held constant.  Interestingly, degree effects seem to vary by block: in block (2,2) active senders are more likely to be a sender whereas in block (1,1) the number of previous occurrences for a given dyad has a larger multiplicative effect.  
+Figure \ref{fig:posteriorparams} shows examples of model estimates from data sets of dyadic interactions for the Eckmann data. Panels contain posterior credible intervals for parameters pertaining to dyads belonging to a particular block.  
 
-This analysis suggests key differences exist in typical behaviors or roles that subsets of nodes share.  Other theories could be explored by including relevant statistics in the specification of $\mathbf{s}(t,i,j)$, and similarly one use our method to study how their role varies across nodes.
+%For example, events among nodes in cluster 1 have an increased propensity for reciprocal events -- after node A sends to node B, an event from B to A has an intensity that is $e^4$ larger, all else held constant.  Interestingly, degree effects seem to vary by block: in block (2,2) active senders are more likely to be a sender whereas in block (1,1) the number of previous occurrences for a given dyad has a larger multiplicative effect.  
+
+This analysis suggests key differences exist in typical behaviors or roles that subsets of nodes share.  Other theories could be explored by including relevant statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, and similarly one can use our method to study how the roles of these statistics vary across nodes.
 
 In Section \ref{sec:experiments} we show the model has improved predictive accuracy over baseline methods on real data with respect to ranking tasks and the likelihood of unobserved data.  We also note that we improve over the situation where we constrain $K=1$.
 
@@ -428,6 +416,16 @@ We take advantage of our restriction on the types of statistics $s$ to reduce th
  By limiting the changepoints to times when either node is involved, computing the likelihood $p(A|z,\beta,\mbox{node} \ r \ \mbox{involved})$ is $O(|\mathcal{U}_r| \cdot P \cdot N)$.  We precompute $\tau_{m,i,j}$ and $\mathbf{s}(t_m,i,j)$ for all $m$, $i$, and $j$. 
 
 \appendix{\textbf{Split-merge Metropolis-Hastings move for non-conjugate stochastic blockmodels}}
+
+%Motivation: simply Gibbs sampling does not seem to mix well.  \footnote{This section is planned future work. In the experiments we evaluate the performance of the model when restricting the number of clusters $K$.  For these chains we do not propose split moves when the number of non-empty clusters is already $K$.}
+
+Here we describe a novel split-merge move for non-conjugate blockmodels.\footnote{IRM (modeling Bernoulli data with a conjugate Beta prior) used a split-merge algorithm \cite{Kempe2006}.}  For illustration, we consider the model
+\begin{align*}
+  y_{ij} & \sim \mbox{Poisson}(\Lambda_{z_i,z_j}) & \Lambda_{ij} &\sim \mbox{Gamma}(\alpha_{\Lambda},\beta_{\Lambda})  & z_i &\sim \mbox{CRP}(\gamma)
+\end{align*}
+
+IDEA: References are Dahl 2003, Wang, Blei 2012, Neal 2000 (alg 8).  A proposed split has REM parameters that are only slightly different than those for the original block.  Merges of two sets of REM parameters are performed by using the parameter for one blocks, and doing so for each dimension independently.  By keeping track of the probability of each of these transitions we can correctly compute the Metropolis-Hastings acceptance probability needed to guarantee we have an MCMC transition that leaves the posterior distribution invariant.
+
 
 This is a two-stage MH procedure.  First, pick two nodes $i,j$ uniformly.  If they belong to the same block $k$ (i.e. $z_i=z_j=k$), then let the ``merge'' state $(\boldsymbol{\phi}^{m},\mathbf{z}^{m}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``split'' state $(\boldsymbol{\phi}^{s},\mathbf{z}^{s})$ with new cluster $l$:
 \begin{itemize}
