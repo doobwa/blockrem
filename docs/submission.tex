@@ -6,7 +6,8 @@
 \usepackage{url}
 \usepackage{graphicx, color}
 \usepackage{amsmath}
-\usepackage{subfigure}
+\usepackage{caption}
+\usepackage{subcaption}
 
 \title{Stochastic Blockmodels for Relational Event Data} 
 
@@ -74,53 +75,53 @@ One can extend the above to marked point processes where each event contains add
 \end{align}
 %\prod_{(i,j) \in \mathcal{R}}\exp\{ - (t - t_{M}) \lambda_{ij}(t | \cdot) \}.
 
-\begin{figure}
-\centering 
-\subfigure[Dynamic network data]
-{
-\begin{tikzpicture}[scale=.8,transform shape,thick]
-  \node[vertex] (n1) at (0,0)  {1};
-  \node[vertex] (n2) at (2,2)  {2};
-  \node[vertex] (n3) at (4,0) {3};
-  \node[vertex] (n4) at (2,-2) {4};
-\draw[-stealth] (.4,.4) -- (1.6,1.6);
-\draw[-stealth] (2.4,1.6) -- (3.6,.4);
-\node at (.7,1.1) {$t_1$};
-\node at (3.3,1.1) {$t_2$};
-\end{tikzpicture}
-}
-\subfigure[Intensities for two dyads]
-{
-\begin{tikzpicture}[scale=1,transform shape,thick]
-\draw[-stealth] (0,0) -- (0,3);
-\draw[-stealth] (0,0) -- (5,0);
+% \begin{figure}
+% \centering 
+% \begin{subfigure}
+% \begin{tikzpicture}[scale=.8,transform shape,thick]
+%   \node[vertex] (n1) at (0,0)  {1};
+%   \node[vertex] (n2) at (2,2)  {2};
+%   \node[vertex] (n3) at (4,0) {3};
+%   \node[vertex] (n4) at (2,-2) {4};
+% \draw[-stealth] (.4,.4) -- (1.6,1.6);
+% \draw[-stealth] (2.4,1.6) -- (3.6,.4);
+% \node at (.7,1.1) {$t_1$};
+% \node at (3.3,1.1) {$t_2$};
+% \end{tikzpicture}
+% \caption{Dynamic network data}
+% \end{subfigure}
+% \begin{subfigure}
+% \begin{tikzpicture}[scale=1,transform shape,thick]
+% \draw[-stealth] (0,0) -- (0,3);
+% \draw[-stealth] (0,0) -- (5,0);
 
-% First timeline
-\draw (0,2) -- (1,2);
-\draw[fill=black] (1,2) circle (0.75mm);
-\draw (1,1.7) circle (0.75mm);
-\draw (1.08,1.7) -- (3,1.7);
-\draw[fill=black] (3,1.7) circle (0.75mm);
-\draw (3,1.7) circle (0.75mm);
-\draw (3,2.2) circle (0.75mm);
-\draw[-stealth] (3.05,2.2) -- (5,2.2);
+% % First timeline
+% \draw (0,2) -- (1,2);
+% \draw[fill=black] (1,2) circle (0.75mm);
+% \draw (1,1.7) circle (0.75mm);
+% \draw (1.08,1.7) -- (3,1.7);
+% \draw[fill=black] (3,1.7) circle (0.75mm);
+% \draw (3,1.7) circle (0.75mm);
+% \draw (3,2.2) circle (0.75mm);
+% \draw[-stealth] (3.05,2.2) -- (5,2.2);
 
-% second timeline
-\draw[dashed] (0,1) -- (3,1);
-\draw[fill=black] (3,1) circle (0.75mm);
-\draw (3,.75) circle (0.75mm);
-\draw[dashed, -stealth] (3.08,.75) -- (5,.75);
+% % second timeline
+% \draw[dashed] (0,1) -- (3,1);
+% \draw[fill=black] (3,1) circle (0.75mm);
+% \draw (3,.75) circle (0.75mm);
+% \draw[dashed, -stealth] (3.08,.75) -- (5,.75);
 
-% labels
-\node at (-.5,2) {$\lambda_{1,2}$};
-\node at (-.5,1) {$\lambda_{3,4}$};
-\node at (1,-.3) {$t_1$};
-\node at (3,-.3) {$t_2$};
-\end{tikzpicture}
-}
-\caption[]{Illustration of event data and the assumptions of the model.  Left: An sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Right: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  Note $\lambda_{34}$ can only change when events occur that involve either node 3 or node 4.\footnotemark }
-\label{fig:example}
-\end{figure}
+% % labels
+% \node at (-.5,2) {$\lambda_{1,2}$};
+% \node at (-.5,1) {$\lambda_{3,4}$};
+% \node at (1,-.3) {$t_1$};
+% \node at (3,-.3) {$t_2$};
+% \end{tikzpicture}
+% \caption{Intensities for two dyads}
+% \end{subfigure}
+% \caption[]{Illustration of event data and the assumptions of the model.  Left: An sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Right: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  Note $\lambda_{34}$ can only change when events occur that involve either node 3 or node 4.\footnotemark }
+% \label{fig:example}
+% \end{figure}
 
 \footnotetext{TODO? Illustration of the block model, where events in cluster 1 (circles) are governed by the vector $\beta_{1,1}$, events in cluster 2 (squares) are governed by $\beta_{2,2}$, and an circle-to-square event governed by $\beta_{1,2}$.}
 
@@ -141,7 +142,7 @@ We aim to learn about the dynamics between subsets of nodes.   To facilitate thi
 %z_i &\sim \mbox{CRP}(\alpha) &
 %\boldsymbol{\beta}_{k,l} &\sim %\mbox{N}_p(\boldsymbol{\mu},\boldsymbol{\sigma}^2I)
 \end{align*}
-where for each pair of clusters $(k,l)$ we have a vector of parameters $\boldsymbol{\beta}_{k,l} \sim \mbox{N}_p(\boldsymbol{\mu},\boldsymbol{\sigma}^2I)$ that corresponds to the vector of $P$ statistics $\mathbf{s}(t,i,j,\mathcal{A}_t)$ computed from the previous history $\mathcal{A}_t$.  Thus, our model for the rate of $(i,j)$ events has the same parameters as for other dyads occurring between group $z_i$ and $z_j$.  
+where for each pair of clusters $(k,l)$ we have a vector of parameters $\boldsymbol{\beta}_{k,l} \sim \mbox{N}_P(\boldsymbol{\mu},\boldsymbol{\sigma}^2I)$ that corresponds to the vector of $P$ statistics $\mathbf{s}(t,i,j,\mathcal{A}_t)$ computed from the previous history $\mathcal{A}_t$.  Thus, our model for the rate of $(i,j)$ events has the same parameters as for other dyads occurring between group $z_i$ and $z_j$.  
 
  In practice we may believe an interaction between one dyad should not affect the rate of an entirely separate dyad.  As shown in Figure \ref{fig:example}, we allow each intensity function $\lambda_{ij}(t)$ to only change following an event involving either $i$ or $j$.  In the Appendix we show how this reduces the computational complexity of computing the above likelihood.\footnote{This is analogous to a Markov condition for this class of models.}
 
@@ -342,9 +343,19 @@ Figure \ref{fig:recall} will provide recall curves for several of the datasets.
 %% TODO: Describe and include posterior predictive checks.
 
 \begin{figure}[t]
-\includegraphics[width=3in]{../figs/eckmann-small/params-estimates}
-\fbox{\rule[.5cm]{0cm}{5cm} \rule[.5cm]{5cm}{0cm}}
-\caption{Left: Posterior credible intervals for parameter estimates from fitting the $K=2$ model to the Eckmann subset.  Right: Posterior distribution of $K$ when fitting the model and allowing for flexible $K$.}
+\begin{subfigure}[b]{0.5\textwidth}
+\includegraphics[scale=.5]{../figs/eckmann-small/example-obs-stats}
+%\caption{Observed counts}
+\end{subfigure}
+\qquad
+\begin{subfigure}[b]{0.5\textwidth}
+\includegraphics[scale=.5]{../figs/eckmann-small/example-estimates}
+%\caption{Samples of $\beta_{p,k,l}$}
+\end{subfigure}
+
+%\fbox{\rule[.5cm]{0cm}{5cm} \rule[.5cm]{5cm}{0cm}}
+\caption{%Observed counts versus model estimates from Eckmann email data.
+ Left: Observed statistics across all dyadic email interactions from members of group 1 to group 3 (178 total events in total) and from members of group 3 to group 1 (179 events in total).  Right: Posterior samples of the corresponding $\beta_{p,1,3}$ and $\beta_{p,3,1}$.  In addition to finding differences in mean activity for these dyads, the model learns that events from 3 to 1 have a higher propensity for \texttt{ab-by} transitions.}
 \label{fig:posteriorparams}
 \end{figure}
 

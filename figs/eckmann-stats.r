@@ -13,12 +13,12 @@ df <- melt(df)
 z <- fit$params$z  # use latest clustering
 df$i <- z[df$Var1]
 df$j <- z[df$Var2]
-df <- subset(df,Var3 %in% c("total","ab-ba","ab-ay","ab-by"))
-df$Var3 <- factor(as.character(df$Var3),c("total","ab-ba","ab-ay","ab-by"))
+df <- subset(df,Var3 %in% c("total","ab-ba","ab-by"))
+df$Var3 <- factor(as.character(df$Var3),c("total","ab-ba","ab-by"))
 df <- subset(df,(i==1 & j==3) | (i==3 & j==1))
 q3 <- qplot(Var3,value,data=df,geom="boxplot",outlier.size=0.5) + facet_wrap( ~ i+j) + theme_bw() + labs(x="",y="count for a given dyad") + scale_y_continuous(limits=c(0,35))
 
-pdf("figs/eckmann-small/example-obs-stats.pdf",width=5,height=4)
+pdf("figs/eckmann-small/example-obs-stats.pdf",width=4,height=3)
 q3
 dev.off()
 
@@ -26,10 +26,10 @@ dev.off()
 effs <- c("intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab")
 b <- lapply(fit$samples,function(s) s$beta)
 b <- melt(b)
-b <- subset(b,Var1 %in% fit$priors$px & L1 > 20 &
+b <- subset(b,Var1 %in% c(1,2,3) & L1 > 20 &
             ((Var2 == 1 & Var3 == 3) | (Var2 ==3 & Var3 == 1)))
-b$stat <- factor(effs[b$Var1],effs)
+b$stat <- factor(effs[b$Var1],c("intercept","ab-ba","ab-by"))
 
-pdf("figs/eckmann-small/example-estimates.pdf",width=5,height=4)
+pdf("figs/eckmann-small/example-estimates.pdf",width=4,height=3)
 qplot(stat,value,data=b,geom="boxplot",outlier.size=0.5)+facet_wrap(~Var2 + Var3) + theme_bw() + xlab("parameter")
 dev.off()
