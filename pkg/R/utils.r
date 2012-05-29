@@ -148,7 +148,7 @@ eval.rank <- function(edgelist,lrm,i,...) {
 ##' @param ... options to pass to rank()
 ##' @return list of mllk, rks
 ##' @export
-evaluate <- function(edgelist,N,train.ix,test.ix,fit,...) {
+evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,...) {
   train <- edgelist[train.ix,]
   test  <- edgelist[test.ix,]
   P <- dim(fit$params$beta)[1]
@@ -159,25 +159,43 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,...) {
   stest$precompute()
   stest$transform()
 
+  # If not averaging across samples, use latest sample
+  last <- length(fit$samples)
+  if (is.null(niters)) {
+    iters <- last
+  } else {
+    iters <- (last-niters):last
+  }
+  
   # Compute loglikelihoods
   llk <- list(train = rep(0,nrow(train)),
               test  = rep(0,length(test.ix)))
   rks <- mllk <- llk
   for (m in 1:nrow(train)) {
-    lrm <- brem.lrm.fast.subset(strain, fit$params$z, fit$params$beta, m)
+    lrm <- posterior.mean.lrm(strain,fit$samples,m,iters)
+#    lrm <- brem.lrm.fast.subset(strain, fit$params$z, fit$params$beta, m)
     lrm <- lrm[1,,]    
     llk$train[m]  <- eval.brem(train,lrm,m)
     mllk$train[m] <- eval.mult(train,lrm,m)
     rks$train[m]  <- eval.rank(train,lrm,m,...)
   }
   for (m in 1:length(test.ix)) {
-    lrm <- brem.lrm.fast.subset(stest, fit$params$z, fit$params$beta, test.ix[m])
+    lrm <- posterior.mean.lrm(stest,fit$samples,test.ix[m],iters)
+#    lrm <- brem.lrm.fast.subset(stest, fit$params$z, fit$params$beta, test.ix[m])
     lrm <- lrm[1,,]
     llk$test[m]  <- eval.brem(edgelist,lrm,test.ix[m])
     mllk$test[m] <- eval.mult(edgelist,lrm,test.ix[m])
     rks$test[m]  <- eval.rank(edgelist,lrm,test.ix[m],...)
   }
   return(list(llk=llk,mllk=mllk,rks=rks))
+}
+
+posterior.mean.lrm <- function(strain,samples,ix,iters) {
+  lrms <- lapply(samples[iters],function(s) {
+    brem.lrm.fast.subset(strain, s$z, s$beta, ix)
+  })
+  lrm <- abind(lrms,along=4)
+  apply(lrm,1:3,mean)
 }
 
 ##' @title Same as eval.online, but for a particular baseline method

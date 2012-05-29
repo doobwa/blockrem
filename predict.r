@@ -46,8 +46,9 @@ for (model in c("online","uniform","marg")) {
 results.dir <- paste("results/",opts$dataset,"/fits",sep="")
 models <- filenames(results.dir)
 for (model in models) {
+  print(model)
   load(paste(results.dir,"/",model,".rdata",sep=""))
-  pred <- evaluate(A,N,train.ix,test.ix,fit)
+  pred <- evaluate(A,N,train.ix,test.ix,fit,niters=20)
   save.pred(pred,dataset,model)
 }
 
@@ -104,7 +105,24 @@ library(plyr)
               )
  # TODO: Fix this up 
 #  df$L1 <- factor(df$L1,c("uniform","marg","online","full.1","full.2","full.3","dp","truth"))
-  df$dataset <- opts$dataset
+  df$dataset <- dataset
+
+# Get mean and sd of K over each fit
+folder <- paste("results/",dataset,"/fits/",sep="")
+models <- filenames(folder)
+ks <- lapply(models,function(model) {
+  load(paste(folder,model,".rdata",sep=""))
+  K <- sapply(fit$samples,function(s) max(s$z))
+  data.frame(model=model,mean.K=mean(K),sd.K=sd(K))
+})
+names(ks) <- models
+
+for (m in c("uniform","marg","online")) {
+  ks[[m]] <- data.frame(model=m,mean.K=NA,sd.K=NA)
+}
+
+df$mean.k <- sapply(as.character(df$L1),function(m) ks[[m]]$mean.K)
+df$sd.k <- sapply(as.character(df$L1),function(m) ks[[m]]$sd.K)
 
   save(df,file=paste("results/",dataset,"/final/results.rdata",sep=""))
 
