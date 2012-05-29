@@ -4,7 +4,7 @@
 lpz <- function(count,priors) {
 #  log(count + priors$alpha)
   if (!is.null(priors$nb)) {
-    dnbinom(count,priors$shape,mu=priors$meansize,log=TRUE)
+    dnbinom(count,priors$nb$shape,mu=priors$nb$mu,log=TRUE)
   } else {
     log(count + priors$alpha)
   }
@@ -34,7 +34,6 @@ lposterior <- function(params,priors,collapse.sigma=TRUE) {
 
   # Prior on z
   tb <- table(factor(params$z,1:K))
-  tb <- tb[which(tb>0)]
   #z <- sum(log(sapply(tb - 1,factorial)))
   z <- sapply(tb,function(count) count * lpz(count,priors))
 
@@ -93,7 +92,7 @@ sample_beta <- function(beta,z,mu,sigma,priors,kx=NULL,collapse.sigma=TRUE) {
 }
 
 
-brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,do.sm=FALSE,num.extra=2,niter=20,verbose=TRUE,outfile=NULL) {
+brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,do.sm=FALSE,num.extra=2,niter=20,verbose=TRUE,outfile=NULL) {
   M <- nrow(train)
   P <- 13
   ego <- ego*1  # RemStat doesn't want boolean
@@ -118,27 +117,11 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
   z     <- sample(1:K,N,rep=T)
   mu    <- rep(0,P)
   sigma <- rgamma(P,priors$sigma$alpha,priors$sigma$beta)
+  beta  <- sample_beta(beta,z,mu,sigma,priors)$beta
 
   samples <- list()
   lps <- acc <- rep(0,niter)
   for (iter in 1:niter) {
-
-    ## Split merge move
-    if (do.sm) {
-      lpost <- function(phi,z,priors) {
-        lposterior(list(beta=phi,z=z,mu=mu,sigma=sigma),priors)$all
-      }
-      prs <- priors
-      prs$phi <- list(mu=mu,sigma=sigma)
-      prs$tau <- sigma/2
-      sm <- splitmerge(beta,z,lpost,llk_node,lpz,prs,verbose=verbose)
-      beta <- sm$final$phi
-      z <- sm$final$z
-      acc[iter] <- sm$final$accepted
-    }
-
-    ## Sample phi
-    beta <- sample_beta(beta,z,mu,sigma,priors)$beta
 
     ## Add clusters from prior (Neal 2000)
     if (num.extra > 0) {
@@ -162,6 +145,23 @@ brem <- function(train,N,K=2,effects=c("intercept","abba","abby","abay"),ego=TRU
     }
     K <- max(z)
 
+    ## Split merge move
+    if (do.sm) {
+      lpost <- function(phi,z,priors) {
+        lposterior(list(beta=phi,z=z,mu=mu,sigma=sigma),priors)$all
+      }
+      prs <- priors
+      prs$phi <- list(mu=mu,sigma=sigma)
+      prs$tau <- sigma/2
+      sm <- splitmerge(beta,z,lpost,llk_node,lpz,prs,verbose=verbose)
+      beta <- sm$final$phi
+      z <- sm$final$z
+      acc[iter] <- sm$final$accepted
+    }
+
+    ## Sample phi
+    beta <- sample_beta(beta,z,mu,sigma,priors)$beta
+    
     ## Fit hierarchical portion
     theta <- t(array(beta,dim=c(P,K^2)))
     pr <- list(theta=theta,mu=mu,sigma=sigma)
