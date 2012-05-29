@@ -1,11 +1,12 @@
 
-res <- lapply(c("synthetic","eckmann-small"),function(x) {
+res <- lapply(c("synthetic-1","eckmann-small"),function(x) {
   load(paste("results/",x,"/final/results.rdata",sep=""))
   return(df)
 })
 res <- do.call(rbind,res)
-res$dataset <- factor(res$dataset,c("synthetic","eckmann-small"))
+res$dataset <- factor(res$dataset,c("synthetic-1","eckmann-small"))
 
+library(reshape)
 r <- cast(res,dataset + likelihood + type ~ L1,add.missing=TRUE)
 
 # Clean up

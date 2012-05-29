@@ -154,8 +154,10 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,...) {
   P <- dim(fit$params$beta)[1]
   strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P,as.integer(fit$ego))
   strain$precompute()
+  strain$transform()
   stest <- new(RemStat,edgelist[,1],as.integer(edgelist[,2])-1,as.integer(edgelist[,3])-1,N,nrow(edgelist),P,as.integer(fit$ego))
   stest$precompute()
+  stest$transform()
 
   # Compute loglikelihoods
   llk <- list(train = rep(0,nrow(train)),
