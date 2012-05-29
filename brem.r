@@ -13,6 +13,8 @@ option_list <- list(
               help="Perform split merge moves."),
   make_option(c("-g", "--degrees"), default=FALSE,
               help="Include degree effects."),
+  make_option(c("-b", "--negbinom"), default=FALSE,
+              help="Use negative binomial prior instead of DP"),
   make_option(c("-e", "--numextra"), type="integer", default=2,
               help="Number of extra clusters to sample from the prior")
   )
@@ -20,14 +22,14 @@ parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 #library(brem); opts <- list(dataset="twitter-small",numclusters=20,numiterations=100,splitmerge=FALSE,numextra=5,model.type="full")
 #library(brem); opts <- list(dataset="realitymining-small",numclusters=20,numiterations=500,splitmerge=FALSE,numextra=5,model.type="full")
-#library(brem); opts <- list(dataset="eckmann-small",numclusters=3,numiterations=500,splitmerge=FALSE,numextra=5,nb=FALSE,degrees=FALSE)
+#library(brem); opts <- list(dataset="eckmann-small",numclusters=10,numiterations=500,splitmerge=FALSE,numextra=5,negbinom=FALSE,degrees=FALSE)
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
 
 # Precompute data structures
 # N should be loaded by dataset
 P <- 13
-opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$nb*1,".deg",opts$degrees*1,sep="")
+opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".deg",opts$degrees*1,sep="")
 
 outfile <- paste("results/",opts$dataset,"/",opts$model.type,".rdata",sep="")
 
@@ -38,7 +40,7 @@ if (opts$degrees) {
 }
 
 priors <- list(alpha=.1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=2,beta=2))
-if (opts$nb) priors$nb <- list(shape = 3, mu=N/K)
+if (opts$nb) priors$negbinom <- list(shape = 3, mu=N/K)
 K <- opts$numclusters
 
 # Fit and save model
