@@ -343,25 +343,56 @@ Figure \ref{fig:recall} will provide recall curves for several of the datasets.
 %% TODO: Describe and include posterior predictive checks.
 
 \begin{figure}[t]
-\begin{subfigure}[b]{0.5\textwidth}
+\centering
+\begin{subfigure}[b]{0.45\textwidth}
+\centering
 \includegraphics[scale=.5]{../figs/eckmann-small/example-obs-stats}
 %\caption{Observed counts}
 \end{subfigure}
 \qquad
-\begin{subfigure}[b]{0.5\textwidth}
+\begin{subfigure}[b]{0.45\textwidth}
+\centering
 \includegraphics[scale=.5]{../figs/eckmann-small/example-estimates}
 %\caption{Samples of $\beta_{p,k,l}$}
 \end{subfigure}
 
-%\fbox{\rule[.5cm]{0cm}{5cm} \rule[.5cm]{5cm}{0cm}}
 \caption{%Observed counts versus model estimates from Eckmann email data.
  Left: Observed statistics across all dyadic email interactions from members of group 1 to group 3 (178 total events in total) and from members of group 3 to group 1 (179 events in total).  Right: Posterior samples of the corresponding $\beta_{p,1,3}$ and $\beta_{p,3,1}$.  In addition to finding differences in mean activity for these dyads, the model learns that events from 3 to 1 have a higher propensity for \texttt{ab-by} transitions.}
 \label{fig:posteriorparams}
 \end{figure}
 
+\begin{figure}[t]
+\centering
+\begin{subfigure}[b]{0.22\textwidth}
+\centering
+\includegraphics[scale=.25]{../figs/eckmann-small/parmat/observed}
+\caption{Observed counts}
+\end{subfigure}
+~
+\begin{subfigure}[b]{0.22\textwidth}
+\centering
+\includegraphics[scale=.25]{../figs/eckmann-small/parmat/1}
+\caption{Intercept estimates}
+\end{subfigure}
+~
+\begin{subfigure}[b]{0.22\textwidth}
+\centering
+\includegraphics[scale=.25]{../figs/eckmann-small/parmat/2}
+\caption{\texttt{ab-ba} estimates}
+\end{subfigure}
+~
+\begin{subfigure}[b]{0.22\textwidth}
+\centering
+\includegraphics[scale=.25]{../figs/eckmann-small/parmat/3}
+\caption{\texttt{ab-by} estimates}
+\end{subfigure}
+\caption{Comparing observed counts and parameter estimates.  Darker values are larger.  Estimates are rescaled posterior means $(\hat{\beta}_{p,z_i,z_j} - \hat{\mu}_p)/\hat{\sigma}_p$ for each dyad $(i,j)$.  Learned parameters suggest heterogeneity exists in both total activity (b) as well as dynamics as seen in (c) and (d).}
+\label{fig:parmats}
+\end{figure}
+
  We propose a hierarchical approach for modeling event-based network data that is analogous to recent hierarchical extensions for latent position models \cite{Handcock2007} and exponential random graph models \cite{Schweinberger2011}.  The method combines a latent variable framework (stochastic blockmodels) with a local dependence model for event sequences (relational event models) to provide detailed models of event dynamics among subsets of nodes while allowing for heterogeneity in dynamics of the network as a whole.
 
-Figure \ref{fig:posteriorparams} shows examples of model estimates from data sets of dyadic interactions for the Eckmann data. Panels contain posterior credible intervals for parameters pertaining to dyads belonging to a particular block.  For example, events among nodes in cluster 1 have an increased propensity for reciprocal events -- after node A sends to node B, an event from B to A has an intensity that is $e^4$ larger, all else held constant.  Interestingly, degree effects seem to vary by block: in block (2,2) active senders are more likely to be a sender whereas in block (1,1) the number of previous occurrences for a given dyad has a larger multiplicative effect.  
+Figure \ref{fig:posteriorparams} shows examples of model estimates from data sets of dyadic interactions for the Eckmann data. Panels contain posterior credible intervals for parameters pertaining to dyads belonging to a particular block.  %For example, events among nodes in cluster 1 have an increased propensity for reciprocal events -- after node A sends to node B, an event from B to A has an intensity that is $e^4$ larger, all else held constant.  Interestingly, degree effects seem to vary by block: in block (2,2) active senders are more likely to be a sender whereas in block (1,1) the number of previous occurrences for a given dyad has a larger multiplicative effect.  
 
 This analysis suggests key differences exist in typical behaviors or roles that subsets of nodes share.  Other theories could be explored by including relevant statistics in the specification of $\mathbf{s}(t,i,j)$, and similarly one use our method to study how their role varies across nodes.
 
