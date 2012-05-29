@@ -45,9 +45,7 @@ plot.posterior <- function(train,N,fit) {
   lsigmas <- dgamma(sigma,fit$priors$sigma$alpha,fit$priors$sigma$beta,log=TRUE)
 
   tb <- table(factor(z,1:K))
-  lzs <- log(tb[z] + priors$alpha)
-
-  
+  lzs <- log(tb[z] + fit$priors$alpha)
 
   par(mfrow=c(3,2))
   hist(unlist(lsigmas),main="Parameters sigma_p",xlab="logprob")
@@ -420,8 +418,8 @@ recall <- function(rs,top=c(1:20)) {
   data.frame(k=top,recall=sapply(top,function(k) mean(rs <= k)))
 }
 
-dyad.ps <- function(A,N) {
-  x <- array(0,c(N,N,6))
+dyad.ps <- function(A,N,ego=TRUE) {
+  x <- array(0,c(N,N,7))
   mp <- matrix(0,N,N)
   M <- nrow(A)
   for (m in 1:M) {
@@ -434,11 +432,13 @@ dyad.ps <- function(A,N) {
       x[i,j,] <- x[i,j,] + pshift(i,j,a,b)
     }
     mp[i,] <- m
-    mp[,i] <- m
     mp[j,] <- m
-    mp[,j] <- m
+    if (ego == 0) {
+      mp[,i] <- m
+      mp[,j] <- m
+    }
   }
-  dimnames(x)[[3]] <- c("AB-BA","AB-BY","AB-XA","AB-XB","AB-AY","AB-AB")
+  dimnames(x)[[3]] <- c("AB-BA","AB-BY","AB-XA","AB-XB","AB-AY","AB-AB","Total")
   return(x)
 }
 
@@ -473,7 +473,7 @@ RLogLambda <- function(i,j,a,b,beta,px) {
   return(lam)
 }
 pshift <- function(i,j,a,b) {
-  x <- rep(0,6)
+  x <- rep(0,7)
   if (i!=a & i==b & j==a & j!=b) { # ab-ba
     x[1] <- 1
   }
@@ -489,9 +489,10 @@ pshift <- function(i,j,a,b) {
   if (i==a & i!=b & j!=a & j!=b) { # ab-ay
     x[5] <- 1
   }
-  #   if (i==a & i!=b & j!=a & j==b) { # ab-ab
-  #     x[6] <- 1
-  #   }
+  if (i==a & i!=b & j!=a & j==b) { # ab-ab
+    x[6] <- 1
+  }
+  x[7] <- 1
   return(x)
 }
 block.ps <- function(A,z) {
