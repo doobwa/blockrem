@@ -31,7 +31,9 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 P <- 13
 opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".deg",opts$degrees*1,sep="")
 
-outfile <- paste("results/",opts$dataset,"/",opts$model.type,".rdata",sep="")
+dir.create(paste("results/",opts$dataset,sep=""),showWarn=FALSE)
+dir.create(paste("results/",opts$dataset,"/fits/",sep=""),showWarn=FALSE)
+outfile <- paste("results/",opts$dataset,"/fits/",opts$model.type,".rdata",sep="")
 
 if (opts$degrees) {
   effects <- c("intercept","abba","abby","abay","sen_outdeg","sen_indeg","dyad_count")
@@ -40,8 +42,9 @@ if (opts$degrees) {
 }
 
 priors <- list(alpha=.1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=2,beta=2))
-if (opts$nb) priors$negbinom <- list(shape = 3, mu=N/K)
+
 K <- opts$numclusters
+if (opts$negbinom) priors$negbinom <- list(shape = 3, mu=N/K)
 
 # Fit and save model
 fit <- brem(train,N,priors,K,effects,do.sm=opts$splitmerge,num.extra=opts$numextra,niter=opts$numiterations,outfile=outfile)

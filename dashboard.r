@@ -29,7 +29,7 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-chosen.model <- "3.FALSE.3"
+chosen.model <- "kinit10.sm0.nb1.deg0.rdata"
 opts <- list(dataset="synthetic-1",predictions=TRUE)
 opts <- list(dataset="eckmann-small",predictions=TRUE)
 
@@ -70,7 +70,7 @@ if (opts$dataset == "synthetic") {
 
 cat("Trace plot of beta.\n")
 library(coda)
-load(paste("results/",opts$dataset,"/",chosen.model,".rdata",sep=""))
+load(paste("results/",opts$dataset,"/fits/",chosen.model,".rdata",sep=""))
 table(fit$params$z)
 betas <- lapply(fit$samples,function(s) s$beta)
 r <- melt(betas)
@@ -264,36 +264,6 @@ if (opts$dataset=="twitter-small") {
 
 if (opts$predictions) {
   # # Compute out of sample log posterior
-  load(paste("data/",opts$dataset,".rdata",sep=""))
-  folder <- paste("results/",opts$dataset,"/llks/",sep="")
-  fs <- dir(folder,full.names=TRUE)
-  llks.test <- lapply(fs,function(f) {
-    load(f)
-    return(llk.test)
-  })
-  llks.train <- lapply(fs,function(f) {
-    load(f)
-    return(llk.train)
-  })
-  mllks.test <- lapply(fs,function(f) {
-    load(f)
-    return(llkm.test)
-  })
-  mllks.train <- lapply(fs,function(f) {
-    load(f)
-    return(llkm.train)
-  })
-  names(llks.test) <- names(llks.train) <- names(mllks.test) <- names(mllks.train) <- strsplit(dir(folder),".rdata")
-  
-  llks.train <- melt(llks.train)
-  llks.train$event <- 1:nrow(train)
-  llks.test <- melt(llks.test)
-  llks.test$event <- 1:nrow(test)
-  mllks.train <- melt(mllks.train)
-  mllks.train$event <- 1:nrow(train)
-  mllks.test <- melt(mllks.test)
-  mllks.test$event <- 1:nrow(test)
-  
   if (length(grep("full.2",fs) & length(grep("online",fs)) > 0)) {
     tmp <- subset(llks.test,L1 %in% c("full.2","online"))
     tmp <- cast(tmp, event ~ L1)
@@ -302,22 +272,6 @@ if (opts$predictions) {
     print(q7)
     dev.off()
   }
-  
-  # Make results table
-  df <- rbind(
-        cbind(likelihood="rem",type="train",
-              ddply(llks.train,.(L1),summarise,value=mean(value))),
-        cbind(likelihood="rem",type="test",
-              ddply(llks.test,.(L1),summarise,value=mean(value))),
-        cbind(likelihood="mult",type="train",
-              ddply(mllks.train,.(L1),summarise,value=mean(value))),
-        cbind(likelihood="mult",type="test",
-              ddply(mllks.test,.(L1),summarise,value=mean(value)))
-              )
- # TODO: Fix this up 
-#  df$L1 <- factor(df$L1,c("uniform","marg","online","full.1","full.2","full.3","dp","truth"))
-  df$dataset <- opts$dataset
-  save(df,file=paste("results/",opts$dataset,"/final/results.rdata",sep=""))
 }
 
 cat("Creating dashboard.\n")

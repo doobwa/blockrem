@@ -182,14 +182,14 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
     ## Save progress
     # not included in likelihood, so set to 0 for display purposes
     mu[-priors$px] <- sigma[-priors$px] <- 0
-    params <- list(beta=beta,z=z,mu=mu,sigma=sigma)
+    params <- list(beta=beta,z=z,mu=mu,sigma=sigma,ego=ego)
     lp <- lposterior(params,priors)
     lps[iter] <- lp$all
     llks[iter] <- lp$y
     cat("\n",iter,": llk",llks[iter]," lp",lps[iter],"\n")
     if (verbose) cat(z,"\n")
     samples[[iter]] <- params
-    fit <- list(params=params,samples=samples,ego=ego,priors=priors,lps=lps,llks=llks,effects=effects,lp=lp,niter=niter)
+    fit <- list(params=params,samples=samples,ego=ego,priors=priors,lps=lps,llks=llks,effects=effects,lp=lp,iter=iter,niter=niter)
     class(fit) <- "brem"
     if (!is.null(outfile)) save(fit,file=outfile)
   }
