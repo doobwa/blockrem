@@ -1,0 +1,8 @@
+The enron data as I received it from Romain (enron_email_interaction.csv) as well as a list of positions within the company (as best as I could gather from the internet).  Enron-edgelist.csv is processed and has columns:
+
+mid: message id
+sec: second
+s: sender
+r: receiver
+
+The first email should be 5/11/1999.  Finally, in enron.topegos.pdf I show a visualization for each of the top 18 most active users (each participate in more than 1500 emails). The x-axis is day, y-axis is the alter id (ordered by the time when we first observe an email between them and the ego), and the color is the number of emails for that day.  I do see some places where I hope our method can pick up on the change in typical senders as well as the change in the rate of participation for that group.  Some people, however, are fairly homogeneous.
