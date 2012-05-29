@@ -255,7 +255,7 @@ We check our model fitting procedure using a small synthetic data set involving 
 
 Though the dyad counts for the synthetic data set suggest a stochastic blockmodel (as seen in Figure  \ref{fig:syncounts}),  the center plot shows each block has empirical differences in their dynamics.  Intensities for reciprocal actions among nodes in block 1 are $e^3$ times greater, intensities for turn-taking actions among nodes in group 2 are $e^2$ times greater, and intensities for dyadic interactions between the two groups have a multiplicative effect of $e^{-1}$ and thus occur less often.  Fitting the model with $K=2$ has similar  predictive accuracy as the true model (see Table \ref{tab:results}), recovers the true latent classes, and the posterior credible intervals of the parameters cover the true parameter values (see Figure \ref{fig:syncounts}c).
 
-\section{Model checking and experiments}
+\section{Model fitting and experiments}
 
 \subsection{Data}
 
@@ -270,6 +270,11 @@ Each of the following data sets are sequences of dyadic events, where each event
 \item Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.\footnote{Will be made publicly available.}  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.  Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.  We use the subset of 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
 \item MIT Reality Mining: phone calls among the 89 recipients between the dates , using of 2000 training events followed by 1000 test events. \cite{MITreality}
 \end{itemize}
+
+\subsection{Exploratory analysis}
+
+Figure \ref{fig:posteriorparams} shows examples of model estimates from data sets of dyadic interactions for the Eckmann email data. On the left we 
+
 
 \subsection{Prediction experiments}
 
@@ -299,11 +304,11 @@ Our method jointly models \emph{which} dyads occur and \emph{when} they occur.  
 
 \subsection{Results}
 
- Table \ref{tab:results} compares the train and test likelihood for each method and data set combination.  For the synthetic data generated with $K=2$ clusters, the model with $K=2$ is best as expected.  Fitting the model with a single cluster also outperforms the simple baselines with respect to both likelihoods.  
+TODO: Quickly describe main take-aways from the results tables.
 
-For the Eckmann subset the fitted model with $K=2$ performs best except for the test data using the conditional logit likelihood.  This may be because the model has overfit the training set, or the sampler has not properly converged (as is the case with $K=3$).  \footnote{Will need to discuss results for other datasets once they are complete.}
+% Table \ref{tab:results} compares the train and test likelihood for each method and data set combination.  For the synthetic data generated with $K=2$ clusters, the model with $K=2$ is best as expected.  Fitting the model with a single cluster also outperforms the simple baselines with respect to both likelihoods.  
 
-Figure \ref{fig:recall} will provide recall curves for several of the datasets.
+%For the Eckmann subset the fitted model with $K=2$ performs best except for the test data using the conditional logit likelihood.  This may be because the model has overfit the training set, or the sampler has not properly converged (as is the case with $K=3$).  \footnote{Will need to discuss results for other datasets once they are complete.}
 
 \section{Discussion}
 
@@ -358,15 +363,15 @@ Figure \ref{fig:recall} will provide recall curves for several of the datasets.
 \label{fig:parmats}
 \end{figure}
 
- We propose a hierarchical approach for modeling event-based network data that is analogous to recent hierarchical extensions for latent position models \cite{Handcock2007} and exponential random graph models \cite{Schweinberger2011}.  The method combines a latent variable framework (stochastic blockmodels) with a local dependence model for event sequences (relational event models) to provide detailed models of event dynamics among subsets of nodes while allowing for heterogeneity in dynamics of the network as a whole.
+ We propose a hierarchical approach for modeling event-based network data that is analogous to recent hierarchical extensions for latent position models \cite{Handcock2007} and exponential random graph models \cite{Schweinberger2011}.  The method combines a latent variable framework (stochastic blockmodels) with a local dependence model for event sequences (relational event models \cite{Butts2008}).  This provides detailed models of event dynamics among subsets of nodes while allowing for heterogeneity in dynamics of the network as a whole.
 
-Figure \ref{fig:posteriorparams} shows examples of model estimates from data sets of dyadic interactions for the Eckmann data. Panels contain posterior credible intervals for parameters pertaining to dyads belonging to a particular block.  
+%Panels contain posterior credible intervals for parameters pertaining to dyads belonging to a particular block.  
 
 %For example, events among nodes in cluster 1 have an increased propensity for reciprocal events -- after node A sends to node B, an event from B to A has an intensity that is $e^4$ larger, all else held constant.  Interestingly, degree effects seem to vary by block: in block (2,2) active senders are more likely to be a sender whereas in block (1,1) the number of previous occurrences for a given dyad has a larger multiplicative effect.  
 
-This analysis suggests key differences exist in typical behaviors or roles that subsets of nodes share.  Other theories could be explored by including relevant statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, and similarly one can use our method to study how the roles of these statistics vary across nodes.
+This analysis suggests key differences exist in typical behaviors or roles that subsets of nodes share across a variety of data sets.  Other theories could be explored by including relevant statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, and similarly one can use our method to study how the roles of these statistics vary across nodes.  
 
-In Section \ref{sec:experiments} we show the model has improved predictive accuracy over baseline methods on real data with respect to ranking tasks and the likelihood of unobserved data.  We also note that we improve over the situation where we constrain $K=1$.
+In Section \ref{sec:experiments} we show the model has improved predictive accuracy over baseline methods on real data with respect to ranking tasks and the likelihood of unobserved data.  We also note that we improve over the situation where we constrain $K=1$.  
 
 Relational event models \cite{Butts2008} require a knot at each observed event, while other approaches such as \cite{Gunawardana2011} learn the regions where an intensity is constant.  By using decision trees,  \cite{Gunawardana2011} also allow for a nonlinear relationship between statistics and intensity functions, while here we use latent variables to allow for heterogeneity in intensities across possible events.
 
