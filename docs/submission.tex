@@ -320,8 +320,14 @@ We use the subset of 487 users who participated in more than one event, using a 
 
 \subsection{Exploratory analysis}
 
-Figure \ref{fig:posteriorparams} shows examples of model estimates from data sets of dyadic interactions for the Eckmann email data. On the left we 
-
+Figure \ref{fig:posteriorparams} uses a fitted model to provide an example of the differences in the dynamics that can exist between two groups of dyads with similar rate of occurrence.  
+We focus on the interactions between members of block 1 to members of block 3; 179 events occurred originating from a member of group 3 and 178 originated from group 1.
+For this example we fit a model with an intercept $s_0$, $\texttt{ab-ba}$ effects $s_1$, and $\texttt{ab-by}$ effects $s_3$.  
+The two panels on the left show the variation in $s_0(t_M,i,j)$, $s_1(t_M,i,j)$ and $s_3(t_M,i,j)$ across the dyads $(i,j)$ in blocks $(1,3)$ and $(3,1)$, respectively.
+The boxplots on the right describe the posterior samples of the corresponding parameters $\beta_{p,1,3}$ and $\beta_{p,3,1}$. 
+Under the model, events from group 3 to group 1 occur roughly $e^1$ times as often.  
+Similarly, block (3,1) has a higher propensity for \texttt{ab-by} transitions under the model.
+The model has learned that this structure exists in the data and our inferences from the parameter estimates are sensible given the observed statistics.
 
 \subsection{Prediction experiments}
 
@@ -383,7 +389,7 @@ TODO: Quickly describe main take-aways from the results tables.
 \end{subfigure}
 
 \caption{%Observed counts versus model estimates from Eckmann email data.
- Left: Observed statistics across all dyadic email interactions from members of group 1 to group 3 (178 total events in total) and from members of group 3 to group 1 (179 events in total).  Right: Posterior samples of the corresponding $\beta_{p,1,3}$ and $\beta_{p,3,1}$.  In addition to finding differences in mean activity for these dyads, the model learns that events from 3 to 1 have a higher propensity for \texttt{ab-by} transitions.}
+ Left: Observed statistics across all dyadic email interactions between  members of group 1 and group 3.  Right: Posterior samples of the corresponding $\beta_{p,1,3}$ and $\beta_{p,3,1}$.  In addition to finding differences in mean activity for these dyads, estimates suggest events from 3 to 1 have a higher propensity for \texttt{ab-by} transitions.}
 \label{fig:posteriorparams}
 \end{figure}
 
