@@ -1,0 +1,31 @@
+Chris DuBois
+Block relational event models
+May 2012
+
+Compiling the paper:
+
+cd docs/
+pdflatex submission.tex
+bibtex submission
+pdflatex submission.tex
+pdflatex submission.tex
+
+Fitting a BREM model to several datasets on several datalab machines 
+with a variety of settings:
+
+./parallel --sshlogin 8/d7,8/d8 \
+   'cd /extra/duboisc0/blockrem;./brem.r \
+   -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' \
+   ::: "synthetic-1" "eckmann-small" "twitter-small" "realitymining-small" \
+   ::: 10 \
+   ::: FALSE \
+   ::: FALSE TRUE \
+   ::: FALSE TRUE
+
+Making predictions:
+
+./parallel --sshlogin  4/d11,6/d12 \
+   'cd /extra/duboisc0/blockrem;./predict.r -d {1}' ::: \
+   "synthetic-1" "realitymining-small" "eckmann-small" \
+   "classroom-16" "classroom-17" "classroom-27" "classroom-29"\
+   "classroom-31" "enron-small"
