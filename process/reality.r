@@ -7,14 +7,18 @@ colnames(a) <- c("id","core")
 nodes <- a$id[which(a$core == 1)]
 A <- x[which(x$sen %in% nodes & x$rec %in% nodes),]
 
+bad <- which(A$sen == A$rec)
+A <- A[-bad,]
+
 A$sctime <- A$time - A$time[1]
-A$sctime <- A$sctime/max(A$sctime)
+A$sctime <- A$sctime/max(A$sctime) * 1000
 A$sen <- A$sen + 1
 A$rec <- A$rec + 1
 A <- as.matrix(A[,c("sctime","sen","rec")])
 N <- length(nodes)
-test.ix <- 2001:2964
-train <- A[-test.ix,]
+train.ix <- 1:1500
+test.ix <- 1501:nrow(A)
+train <- A[train.ix,]
 test  <- A[test.ix,]
 save(A,N,train,test,test.ix,file="data/realitymining-sm.rdata")
 
