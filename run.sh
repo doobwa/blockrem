@@ -3,7 +3,13 @@
 
 # Fit models
 ./parallel --sshlogin 4/d6 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s FALSE' ::: "synthetic-1" ::: 10
-./parallel --sshlogin 8/d7,8/d8 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -e 5' ::: "synthetic-1" "eckmann-small" "twitter-small" "realitymining-small" ::: 10 ::: FALSE ::: FALSE TRUE
+
+./parallel --sshlogin 8/d7,8/d8 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "synthetic-1" "eckmann-small" "twitter-small" "realitymining-small" ::: 10 ::: FALSE ::: FALSE TRUE ::: FALSE TRUE
+
+./parallel --sshlogin 8/d11,8/d12 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "classroom-16" "classroom-17" "classroom-27" "classroom-29" "classroom-31" "enron-small" "irvine" ::: 10 ::: FALSE ::: FALSE TRUE ::: FALSE TRUE
+
+./parallel --sshlogin  4/d11,6/d12 'cd /extra/duboisc0/blockrem;./predict.r -d {1}' ::: "synthetic-1" "realitymining-small" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "classroom-29" "classroom-31" "enron-small"
+
 
 ./parallel --sshlogin 4/d7 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 300 -s TRUE' ::: "eckmann-small" "twitter-small" "realitymining-small" ::: 20
 
@@ -28,7 +34,6 @@
 ./parallel './predict.r -d {1} -t {2}' ::: "synthetic-1" ::: "full" "uniform" "online" "marg"
 
 
-./parallel --sshlogin  7/m 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "twitter-small" ::: "full.1" "full.2" "online" "full.3" "shared.2" "shared.3" "uniform" "online" "marg"
 
 ./parallel --sshlogin 2/d4,2/d5,2/d6,2/d7 'cd /extra/duboisc0/blockrem;./predict.r -d {1} -t {2}' ::: "synthetic" ::: "full.2" "full.1" "uniform" "online" "marg" "truth"
 
@@ -54,6 +59,9 @@ rsync -auvz getcounts.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz data/synthetic.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz data/twitter-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz data/eckmann-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
+rsync -auvz data/enron-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
+rsync -auvz data/irvine.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
+rsync -auvz data/classroom-* duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz tmp.rdata duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results .

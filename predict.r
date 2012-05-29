@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages(library(optparse))
 suppressPackageStartupMessages(library(brem))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(reshape2))
 
 option_list <- list(
   make_option(c("-d", "--dataset"), 
@@ -9,7 +11,7 @@ option_list <- list(
 parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 
-#library(brem);opts <- list(dataset="eckmann-small")
+#library(brem);opts <- list(dataset="enron-small")
 
 options(verbose=FALSE)
 
@@ -28,6 +30,7 @@ save.pred <- function(pred,dataset,model) {
   rk.train  <- pred$rks$train
   rk.test <- pred$rks$test
 
+  dir.create(paste("results/",dataset,"/final/",sep=""),showWarnings=FALSE)
   dir.create(paste("results/",dataset,"/llks/",sep=""),showWarnings=FALSE)
   save(llkm.train,llkm.test,llk.train,llk.test,opts,file=paste("results/",dataset,"/llks/",model,".rdata",sep=""))
   dir.create(paste("results/",dataset,"/ranks/",sep=""),showWarnings=FALSE)
@@ -56,7 +59,7 @@ for (model in models) {
 
 if (dataset == "synthetic-1") {
   niter <- 500
-  fit <- list(params=list(beta=beta,z=z),llks=rep(true.lpost,niter),niter=niter,zs=rep(list(z),niter),param=beta,ego=1)  # true values
+  fit <- list(params=list(beta=beta,z=z),llks=rep(true.lpost,niter),niter=niter,zs=rep(list(z),niter),param=beta,ego=1,transform=TRUE)  # true values
   pred <- evaluate(A,N,train.ix,test.ix,fit)
   save.pred(pred,dataset,"truth")
 }

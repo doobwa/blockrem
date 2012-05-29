@@ -180,8 +180,8 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,...) {
     rks$train[m]  <- eval.rank(train,lrm,m,...)
   }
   for (m in 1:length(test.ix)) {
-    lrm <- posterior.mean.lrm(stest,fit$samples,test.ix[m],iters)
-#    lrm <- brem.lrm.fast.subset(stest, fit$params$z, fit$params$beta, test.ix[m])
+ #   lrm <- posterior.mean.lrm(stest,fit$samples,test.ix[m],iters)
+    lrm <- brem.lrm.fast.subset(stest, fit$params$z, fit$params$beta, test.ix[m])
     lrm <- lrm[1,,]
     llk$test[m]  <- eval.brem(edgelist,lrm,test.ix[m])
     mllk$test[m] <- eval.mult(edgelist,lrm,test.ix[m])
