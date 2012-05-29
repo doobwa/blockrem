@@ -103,7 +103,7 @@ sample_beta <- function(beta,z,mu,sigma,priors,kx=NULL,collapse.sigma=TRUE) {
 ##' @param outfile save progress to this file
 ##' @return 
 ##' @author chris
-brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,do.sm=FALSE,num.extra=2,niter=20,verbose=TRUE,outfile=NULL) {
+brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,transform=FALSE,do.sm=FALSE,num.extra=2,niter=20,verbose=TRUE,outfile=NULL) {
   M <- nrow(train)
   P <- 13
   ego <- ego*1  # RemStat doesn't want boolean
@@ -113,7 +113,7 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
            as.integer(train[,3])-1,
            N,M,P,ego)
   s$precompute()
-  s$transform()
+  if (transform) s$transform()
   # TODO: Transform
 
   enam <- c("intercept","abba","abby","abxa","abxb","abay","abab",
@@ -189,7 +189,7 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
     cat("\n",iter,": llk",llks[iter]," lp",lps[iter],"\n")
     if (verbose) cat(z,"\n")
     samples[[iter]] <- params
-    fit <- list(params=params,samples=samples,ego=ego,priors=priors,lps=lps,llks=llks,effects=effects,lp=lp,iter=iter,niter=niter)
+    fit <- list(params=params,samples=samples,ego=ego,transform=transform,priors=priors,lps=lps,llks=llks,effects=effects,lp=lp,iter=iter,niter=niter)
     class(fit) <- "brem"
     if (!is.null(outfile)) save(fit,file=outfile)
   }

@@ -154,10 +154,10 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,...) {
   P <- dim(fit$params$beta)[1]
   strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P,as.integer(fit$ego))
   strain$precompute()
-  strain$transform()
+  if (fit$transform) strain$transform()
   stest <- new(RemStat,edgelist[,1],as.integer(edgelist[,2])-1,as.integer(edgelist[,3])-1,N,nrow(edgelist),P,as.integer(fit$ego))
   stest$precompute()
-  stest$transform()
+  if (fit$transform) stest$transform()
 
   # If not averaging across samples, use latest sample
   last <- length(fit$samples)
@@ -172,8 +172,8 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,...) {
               test  = rep(0,length(test.ix)))
   rks <- mllk <- llk
   for (m in 1:nrow(train)) {
-    lrm <- posterior.mean.lrm(strain,fit$samples,m,iters)
-#    lrm <- brem.lrm.fast.subset(strain, fit$params$z, fit$params$beta, m)
+#    lrm <- posterior.mean.lrm(strain,fit$samples,m,iters)
+    lrm <- brem.lrm.fast.subset(strain, fit$params$z, fit$params$beta, m)
     lrm <- lrm[1,,]    
     llk$train[m]  <- eval.brem(train,lrm,m)
     mllk$train[m] <- eval.mult(train,lrm,m)

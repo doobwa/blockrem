@@ -9,7 +9,7 @@ option_list <- list(
 parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 
-#opts <- list(dataset="eckmann-small")
+#library(brem);opts <- list(dataset="eckmann-small")
 
 options(verbose=FALSE)
 
@@ -39,16 +39,17 @@ filenames <- function(folder) {
 }
 
 for (model in c("online","uniform","marg")) {
-  pred <- evaluate.baseline(A,N,train.ix,test.ix,model)
+  cat(model,"\n")
+  pred <- evaluate.baseline(A,N,train.ix,test.ix,model,ties.method="random")
   save.pred(pred,dataset,model)
 }
 
 results.dir <- paste("results/",opts$dataset,"/fits",sep="")
 models <- filenames(results.dir)
 for (model in models) {
-  print(model)
+  cat(model,"\n")
   load(paste(results.dir,"/",model,".rdata",sep=""))
-  pred <- evaluate(A,N,train.ix,test.ix,fit,niters=20)
+  pred <- evaluate(A,N,train.ix,test.ix,fit,niters=NULL,ties.method="random")
   save.pred(pred,dataset,model)
 }
 
@@ -149,6 +150,9 @@ ds <- lapply(rks,function(r) {
 for (i in 1:length(ds)) ds[[i]]$model <- models[i]
 ds <- do.call(rbind,ds)
 rownames(ds) <- c()
+save(ds,file=paste("results/",dataset,"/final/recall.rdata",sep=""))
+
+load(paste("results/",dataset,"/final/recall.rdata",sep=""))
 
 # Recall at k
 q3 <- qplot(k,value,data=subset(ds,L2=="recall.30"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")

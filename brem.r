@@ -13,6 +13,8 @@ option_list <- list(
               help="Perform split merge moves."),
   make_option(c("-g", "--degrees"), default=FALSE,
               help="Include degree effects."),
+  make_option(c("-t", "--transform"), default=TRUE,
+              help="Transform degree effects using log"),
   make_option(c("-b", "--negbinom"), default=FALSE,
               help="Use negative binomial prior instead of DP"),
   make_option(c("-e", "--numextra"), type="integer", default=2,
@@ -29,7 +31,7 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 # Precompute data structures
 # N should be loaded by dataset
 P <- 13
-opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".deg",opts$degrees*1,sep="")
+opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".deg",opts$degrees*1,".trans",opts$transform*1,sep="")
 
 dir.create(paste("results/",opts$dataset,sep=""),showWarn=FALSE)
 dir.create(paste("results/",opts$dataset,"/fits/",sep=""),showWarn=FALSE)
@@ -47,5 +49,5 @@ K <- opts$numclusters
 if (opts$negbinom) priors$negbinom <- list(shape = 3, mu=N/K)
 
 # Fit and save model
-fit <- brem(train,N,priors,K,effects,do.sm=opts$splitmerge,num.extra=opts$numextra,niter=opts$numiterations,outfile=outfile)
+fit <- brem(train,N,priors,K,effects,transform=opts$transform,do.sm=opts$splitmerge,num.extra=opts$numextra,niter=opts$numiterations,outfile=outfile)
 save(fit,file=outfile)
