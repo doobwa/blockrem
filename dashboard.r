@@ -29,7 +29,7 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-chosen.model <- "10-FALSE.10"
+chosen.model <- "3.FALSE.3"
 opts <- list(dataset="synthetic-1",predictions=TRUE)
 opts <- list(dataset="eckmann-small",predictions=TRUE)
 
@@ -60,7 +60,7 @@ llks <- lapply(1:length(fits),function(i) {
 })
 llks <- do.call(rbind,llks)
 
-llks <- subset(llks,iter<50)
+llks <- subset(llks,iter>50)
 if (opts$dataset == "synthetic") {
   load("data/synthetic.rdata")
   q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model))+ geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() #+ limits(c(min(llks$llk),0),"y")
@@ -71,14 +71,41 @@ if (opts$dataset == "synthetic") {
 cat("Trace plot of beta.\n")
 library(coda)
 load(paste("results/",opts$dataset,"/",chosen.model,".rdata",sep=""))
-r <- melt(fit$samples)
-r <- subset(r,L1 < 500)
-r <- subset(r,!is.na(Var1))
-q1a <- qplot(L1,value,data=r, colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3)#,scales="free")
+table(fit$params$z)
+betas <- lapply(fit$samples,function(s) s$beta)
+r <- melt(betas)
+
+# Trace plot of intercept and pshifts
+r <- subset(r, Var2 < 6 & Var3 < 6)
+q1a <- qplot(L1,value,data=subset(r, L1 > 10 & Var1 %in% c(1,2,3,6)), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3)#,scales="free")
+q1a
+
+# Trace plot of degree effects
+q1b <- qplot(L1,value,data=subset(r, L1 > 10 & Var1 %in% c(8,10,12)), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3,scales="free")
+q1b
+
+# Trace plot of all effects
+q1b <- qplot(L1,value,data=subset(r, L1 > 40 & Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3,scales="free")
+q1b
+
+# Trace plot of upper level means
+mus <- lapply(fit$samples,function(s) {
+  as.matrix(s$mu)
+})
+r <- melt(mus)
+q1c <- qplot(L1,value,data=subset(r, Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw()# + facet_grid(Var2~Var3,scales="free")
+q1c
+
+# Trace plot of upper level sigmas
+sigmas <- lapply(fit$samples,function(s) {
+  as.matrix(s$sigma)
+})
+r <- melt(sigmas)
+q1d <- qplot(L1,value,data=subset(r, Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw()# + facet_grid(Var2~Var3,scales="free")
+q1d
 
 cat("Plot of posterior probabilities at each level of the hierarchy")
 plot.posterior(train,N,fit)
-y <- RemLogLikelihoodPc(fit$params$beta, fit$params$z - 1, s$ptr(), K)
 
 cat("Plot overall rate\n")
 if (FALSE) {
@@ -138,6 +165,32 @@ if (length(fx) > 0) {
 } else {
   q3 <- qplot(0,0,label="not available",geom="text")
 }
+
+
+# Plot stats for particular example
+
+  df <- dyad.ps(train,N)
+dimnames(df)[[3]] <- c("ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab","total")
+  df <- melt(df)
+  df$i <- z[df$Var1]
+  df$j <- z[df$Var2]
+  df <- subset(df,Var3 %in% c("total","ab-ba","ab-ay","ab-by"))
+  df$Var3 <- factor(as.character(df$Var3),c("total","ab-ba","ab-ay","ab-by"))
+  df <- subset(df,(i==1 & j==3) | (i==3 & j==1))
+#  levels(df$Var3) <- rev(list("AB-BA"="ab-ba","AB-BY"="ab-by","AB-XA"="ab-xa","AB-XB"="ab-xb","AB-AY"="ab-ay"))#,"AB-AB"="ab-ab"))
+  q3 <- qplot(Var3,value,data=df,geom="boxplot",outlier.size=0.5) + facet_wrap( ~ i+j) + theme_bw() + labs(x="",y="count for a given dyad") + scale_y_continuous(limits=c(0,35))
+  q3
+
+effs <- c("intercept","ab-ba","ab-by","ab-xa","ab-xb","ab-ay","ab-ab")
+b <- lapply(fit$samples,function(s) s$beta)
+b <- melt(b)
+b <- subset(b,Var1 %in% fit$priors$px & L1 > 20 &
+            ((Var2 == 1 & Var3 == 3) | (Var2 ==3 & Var3 == 1)))
+b$stat <- factor(effs[b$Var1],effs)
+
+qplot(stat,value,data=b,geom="boxplot",outlier.size=0.5)+facet_wrap(~Var2 + Var3) + theme_bw() + xlab("parameter")
+
+
 
 cat("Recall experiment on training data.\n")
 
@@ -333,9 +386,10 @@ if (opts$dataset=="synthetic") {
 
 cat("N x N plot of mean beta_p,z_i,z_j for a given p.\n")
 load(paste("data/",opts$dataset,".rdata",sep=""))
-load(paste("results/",opts$dataset,"/10-FALSE.10.rdata",sep=""))
-plot(fit$lps)
-iters <- 5:20#40:80#f1fit$niter
+load(paste("results/",opts$dataset,"/3.FALSE.3.rdata",sep=""))
+plot(fit$lps[-1])
+
+iters <- 20:45#5:20#40:80#f1fit$niter
 mats <- vector("list",length=P)
 for (p in 1:P) {
   mats[[p]] <- 0
@@ -349,6 +403,7 @@ for (i in iters) {
 for (p in 1:P) {
   mats[[p]] <- mats[[p]]/length(iters)
 }
+beta.pm <- mats
 
 ## Get upper level mean and variance for each effect p
 mus <- do.call(rbind,lapply(fit$samples[iters],function(s) s$mu))
@@ -364,11 +419,17 @@ dir.create(paste("figs/",opts$dataset,sep=""),showWarn=FALSE)
 dir.create(paste("figs/",opts$dataset,"/parmat/",sep=""),showWarn=FALSE)
 px <- which(sigma.hat!=0)
 pdf(paste("figs/",opts$dataset,"/parmat/all.pdf",sep=""),height=20,width=20)
+
 par(mfrow=c(3,3),mar=c(3,1,1,1))
+
+# Plot observed data with cols nad rows sorted
 tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
 image(log(tb[o,o]+1),xaxt="n",yaxt="n",col=grey.colors(100))
 #image(mats[[1]][o,o],xaxt="n",yaxt="n",col=grey.colors(100))
 #par(mar=c(0,0,0,0))
+px <- fit$priors$px
+
+# Plot blocks
 plot(1,xlim=c(1,N),ylim=c(1,N))
 zs <- sort(z)
 for (i in 2:N) {
@@ -378,6 +439,8 @@ for (i in 2:N) {
     abline(v=i,h=i)
   }
 }
+
+# Plot matrix of each effect
 for (p in px) {
   mat <- (mats[[p]] - mu.hat[p]) / sigma.hat[p]
   mat <- mat[o,o]
@@ -385,37 +448,99 @@ for (p in px) {
   image(mat,xaxt="n",yaxt="n",col=grey.colors(100),main=pnames[p])
   #dev.off()
 }
+
 dev.off()
 
-k1 <- 4
+# Plot pshifts
+tb <- table(z[train[,2]],z[train[,3]])
+df <- dyad.ps(train,N,ego=1)
+df <- melt(df)
+stats1 <- cast(subset(df,Var3=="AB-BA"), Var1 ~ Var2)
+
+df$zi <- z[df$Var1]
+df$zj <- z[df$Var2]
+table(df$zi,df$zj)
+df <- subset(df,Var3 != "AB-AB")
+df$Var3 <- factor(as.character(df$Var3))
+#levels(df$Var3) <- rev(list("AB-BA"="ab-ba","AB-BY"="ab-by","AB-XA"="ab-xa","AB-XB"="ab-xb","AB-AY"="ab-ay"))#,"AB-AB"="ab-ab"))
+q3 <- qplot(Var3,value,data=subset(df,i < 4 & j < 4),geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="",y="count for a given dyad") + coord_flip()# +opts(axis.text.x=theme_text(angle=90)) 
+  q3
+
+# Plot of each (i,j) of beta_p,k1,k2 from a given (k1,k2)
+tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
+tb <- melt(tb)
+colnames(tb) <- c("i","j","count")
+tb$i <- as.numeric(as.character(tb$i))
+tb$j <- as.numeric(as.character(tb$j))
+tb$zi <- z[tb$i]
+tb$zj <- z[tb$j]
+tb$pair <- paste(tb$zi,tb$zj)
+tb <- subset(tb,pair %in% c("1 3","3 1"))
+
+tb$beta1 <- beta.pm[[1]][as.matrix(tb[,1:2])]
+tb$beta2 <- beta.pm[[2]][as.matrix(tb[,1:2])]
+
+qplot(beta1,count,data=tb) +facet_wrap(~pair)
+
+# LATEST: Plot of beta_p,k1,k2 across samples for two blocks
+# Counts
+qplot(pair,count,data=tb,geom="boxplot")  # observed
+b <- lapply(fit$samples,function(s) s$beta)
+b <- melt(b)
+b <- subset(b,Var1 %in% fit$priors$px & L1 > 20 &
+            ((Var2 == 1 & Var3 == 3) | (Var2 ==3 & Var3 == 1)))
+qplot(factor(Var1),value,data=b,geom="boxplot")+facet_wrap(~Var2 + Var3)
+
+# Pshifts
+tmp <- df
+tmp$zi <- z[as.numeric(as.character(tmp$Var1))]
+tmp$zj <- z[as.numeric(as.character(tmp$Var2))]
+tmp$pair <- paste(tmp$zi,tmp$zj)
+tmp <- subset(tmp,pair %in% c("1 3","3 1"))
+qplot(pair,value,data=tmp,geom="boxplot")+facet_grid(~Var3)
+
+
+
+
+
+#for (i in 1:length(k1)) {
+  k <- k1[i]
+  l <- k2[i]
+  x$pair <- paste(x$zi,x$zj)
+  x <- subset(x,pair %in% c("1 3","3 1") & L2 %in% fit$priors$px)
+  qplot(pair,value,data=x,geom="boxplot",outlier.size=0)+scale_y_continuous(limits=c(-1,1))
+
+  qplot(factor(j),value,data=x,geom="boxplot",outlier.size=0)
+
+
+betas <- lapply(fit$samples[20:70],function(s) s$beta)
+betas <- melt(betas)
+
+
+
+k1 <- 1
+
+
+k1 <- 
 k2 <- 4
 k3 <- 5
 tb <- table(z[train[,2]],z[train[,3]])
 num <- outer(table(z),table(z),"*")
 lam <- tb/num
-tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
-
-ik1 <- which(z[o] == k1)            # members of k2
-ik2 <- which(z[o] == k2)            # members of k2
 ik3 <- which(z[o] == k3)
 counts <- colSums(tb[o,o][ik1,c(ik2,ik3)])
 
-mats[[1]][k1,k2]
-mats[[1]][k1,k3]
+mats[[1]][ik1,ik2]
+mats[[1]][ik1,k3]
 mats[[2]][k1,k2]
 mats[[2]][k1,k3]
-beta[1,4,4]
-beta[1,7,4]
-beta[2,4,4]
-beta[2,7,4]
 
-# 4 and 7 look good.  Did they mix?  Are they significant??
-betas <- array(0,c(length(iters),P,K,K))
-for (i in 1:length(iters)) {
-  betas[i,,,] <- fit$samples[[iters[i]]]$beta
-}
+k1 <- 2; k2 <- 5
+beta[1,2,5]
+beta[1,5,2]
+beta[3,2,5]
+beta[3,5,2]
 
-plot(as.vector(tb),as.vector(mats[[1]]))
 
 ## Find cases where beta_p1,k1,k2 > beta_p1,k1,k3 but beta_p2,k1,k2 < beta_p2,k1,k3.  Just use last draw
 K <- dim(fit$params$beta)[2]

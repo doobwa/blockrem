@@ -262,7 +262,8 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [ ] Fix Gibbs sampling equation, e.g. z_{i_m} instead of i_m ?
 - [ ] Incorporate SNRG note
 - [ ] fix  description in paper for pshift ('ego' issue)
-- [ ]   cite reality mining paper
+- [ ] cite reality mining paper
+- [ ] mention why we can't use EM
 
 * Bugs
 ** TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
