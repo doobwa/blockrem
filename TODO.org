@@ -259,7 +259,7 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
     would write the likelihood using a variable that refers to the
     last changepoint for a given dyad.   Or should we use that
     notation throughout?  
-- [ ] Fix Gibbs sampling equation, e.g. z_{i_m} instead of i_m ?
+- [X] Fix Gibbs sampling equation, e.g. z_{i_m} instead of i_m ?
 - [ ] Incorporate SNRG note
 - [ ] fix  description in paper for pshift ('ego' issue)
 - [ ] cite reality mining paper
@@ -273,6 +273,7 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [ ] Fix description of intensities to have new ego setup
 - [ ] Mention what happens with cluster pairs that have no
   events... shrinkage towards upper level mu
+- [ ] Move split merge entirely to appendix
 * Bugs
 ** TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
 ** TODO Huge hit in loglikelihood as soon as a new cluster appears?

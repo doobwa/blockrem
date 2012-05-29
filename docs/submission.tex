@@ -8,6 +8,8 @@
 \usepackage{amsmath}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{footnote}
+
 
 \title{Stochastic Blockmodels for Relational Event Data} 
 
@@ -34,6 +36,8 @@ Address \\
 \begin{document} 
 
 \maketitle
+
+\savenotes
 
 \begin{abstract}
 Observing network data as a stream of relational events provides an opportunity to understand differences in how nodes interact given the past.  For continuous-time network data, recent methods model the rate of dyadic events conditioned on the observed history of events and covariates about the nodes.  For static networks, methods such as stochastic blockmodels often account for node-level heterogeneity by assuming latent groups of individuals have similar tendencies in their group-wise interactions.  We propose to combine these two approaches by modeling the event dynamics within and between clusters of nodes.  The method is illustrated using dyadic interaction data such as email and Twitter direct messages.  Parameter estimates from the model clearly reveal heterogeneity in the dynamics among groups of individuals.  The fitted models have better predictive accuracy than baselines and relational event models without the latent structure.  Our approach illustrates the efficacy of combining a detailed model for local dependencies and a latent variable model for meso-scale dependencies.
@@ -75,53 +79,53 @@ One can extend the above to marked point processes where each event contains add
 \end{align}
 %\prod_{(i,j) \in \mathcal{R}}\exp\{ - (t - t_{M}) \lambda_{ij}(t | \cdot) \}.
 
-% \begin{figure}
-% \centering 
-% \begin{subfigure}
-% \begin{tikzpicture}[scale=.8,transform shape,thick]
-%   \node[vertex] (n1) at (0,0)  {1};
-%   \node[vertex] (n2) at (2,2)  {2};
-%   \node[vertex] (n3) at (4,0) {3};
-%   \node[vertex] (n4) at (2,-2) {4};
-% \draw[-stealth] (.4,.4) -- (1.6,1.6);
-% \draw[-stealth] (2.4,1.6) -- (3.6,.4);
-% \node at (.7,1.1) {$t_1$};
-% \node at (3.3,1.1) {$t_2$};
-% \end{tikzpicture}
-% \caption{Dynamic network data}
-% \end{subfigure}
-% \begin{subfigure}
-% \begin{tikzpicture}[scale=1,transform shape,thick]
-% \draw[-stealth] (0,0) -- (0,3);
-% \draw[-stealth] (0,0) -- (5,0);
+\begin{figure}
+\centering 
+\begin{minipage}[b]{0.45\linewidth}
+  \begin{tikzpicture}[scale=.8,transform shape,thick]
+    \node[vertex] (n1) at (0,0)  {1};
+    \node[vertex] (n2) at (2,2)  {2};
+    \node[vertex] (n3) at (4,0) {3};
+    \node[vertex] (n4) at (2,-2) {4};
+    \draw[-stealth] (.4,.4) -- (1.6,1.6);
+    \draw[-stealth] (2.4,1.6) -- (3.6,.4);
+    \node at (.7,1.1) {$t_1$};
+    \node at (3.3,1.1) {$t_2$};
+  \end{tikzpicture}
+  \caption{Dynamic network data}
+\end{minipage}
+\begin{minipage}[b]{0.45\linewidth}
+\begin{tikzpicture}[scale=1,transform shape,thick]
+\draw[-stealth] (0,0) -- (0,3);
+\draw[-stealth] (0,0) -- (5,0);
 
-% % First timeline
-% \draw (0,2) -- (1,2);
-% \draw[fill=black] (1,2) circle (0.75mm);
-% \draw (1,1.7) circle (0.75mm);
-% \draw (1.08,1.7) -- (3,1.7);
-% \draw[fill=black] (3,1.7) circle (0.75mm);
-% \draw (3,1.7) circle (0.75mm);
-% \draw (3,2.2) circle (0.75mm);
-% \draw[-stealth] (3.05,2.2) -- (5,2.2);
+% First timeline
+\draw (0,2) -- (1,2);
+\draw[fill=black] (1,2) circle (0.75mm);
+\draw (1,1.7) circle (0.75mm);
+\draw (1.08,1.7) -- (3,1.7);
+\draw[fill=black] (3,1.7) circle (0.75mm);
+\draw (3,1.7) circle (0.75mm);
+\draw (3,2.2) circle (0.75mm);
+\draw[-stealth] (3.05,2.2) -- (5,2.2);
 
-% % second timeline
-% \draw[dashed] (0,1) -- (3,1);
-% \draw[fill=black] (3,1) circle (0.75mm);
-% \draw (3,.75) circle (0.75mm);
-% \draw[dashed, -stealth] (3.08,.75) -- (5,.75);
+% second timeline
+\draw[dashed] (0,1) -- (3,1);
+\draw[fill=black] (3,1) circle (0.75mm);
+\draw (3,.75) circle (0.75mm);
+\draw[dashed, -stealth] (3.08,.75) -- (5,.75);
 
-% % labels
-% \node at (-.5,2) {$\lambda_{1,2}$};
-% \node at (-.5,1) {$\lambda_{3,4}$};
-% \node at (1,-.3) {$t_1$};
-% \node at (3,-.3) {$t_2$};
-% \end{tikzpicture}
-% \caption{Intensities for two dyads}
-% \end{subfigure}
-% \caption[]{Illustration of event data and the assumptions of the model.  Left: An sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Right: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  Note $\lambda_{34}$ can only change when events occur that involve either node 3 or node 4.\footnotemark }
-% \label{fig:example}
-% \end{figure}
+% labels
+\node at (-.5,2) {$\lambda_{1,2}$};
+\node at (-.5,1) {$\lambda_{3,4}$};
+\node at (1,-.3) {$t_1$};
+\node at (3,-.3) {$t_2$};
+\end{tikzpicture}
+\caption{Intensities for two dyads}
+\end{minipage}
+\caption[]{Illustration of event data and the assumptions of the model.  Left: An sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Right: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  We assume $\lambda_{34}$ can only change after events sent or received by node 3.\footnotemark }
+\label{fig:example}
+\end{figure}
 
 \footnotetext{TODO? Illustration of the block model, where events in cluster 1 (circles) are governed by the vector $\beta_{1,1}$, events in cluster 2 (squares) are governed by $\beta_{2,2}$, and an circle-to-square event governed by $\beta_{1,2}$.}
 
@@ -144,7 +148,7 @@ We aim to learn about the dynamics between subsets of nodes.   To facilitate thi
 \end{align*}
 where for each pair of clusters $(k,l)$ we have a vector of parameters $\boldsymbol{\beta}_{k,l} \sim \mbox{N}_P(\boldsymbol{\mu},\boldsymbol{\sigma}^2I)$ that corresponds to the vector of $P$ statistics $\mathbf{s}(t,i,j,\mathcal{A}_t)$ computed from the previous history $\mathcal{A}_t$.  Thus, our model for the rate of $(i,j)$ events has the same parameters as for other dyads occurring between group $z_i$ and $z_j$.  
 
- In practice we may believe an interaction between one dyad should not affect the rate of an entirely separate dyad.  As shown in Figure \ref{fig:example}, we allow each intensity function $\lambda_{ij}(t)$ to only change following an event involving either $i$ or $j$.  In the Appendix we show how this reduces the computational complexity of computing the above likelihood.\footnote{This is analogous to a Markov condition for this class of models.}
+ In practice we may believe an interaction between one dyad should not affect the rate of an entirely separate dyad.  As shown in Figure \ref{fig:example}, we allow each intensity function $\lambda_{ij}(t)$ to only change following an event where $i$ was the sender or the recipient.  This is sensible in distributed settings where $i$ has limited knowledge about interactions among other actors.  In the Appendix we show how this assumption also reduces the computational complexity of computing the above likelihood.\footnote{This is analogous to a Markov condition for this class of models.}
 
 We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \sim N(0,1)$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(3,1)$ (TODO). 
 
@@ -217,7 +221,7 @@ The functional form is similar to conditional logit models used for discrete cho
 
 \section{Inference}
 
-We use Markov chain Monte Carlo to sample from the posterior distribution of our parameters.  
+We use Markov chain Monte Carlo to sample from the posterior distribution of our parameters.\footnote{TODO: Describe why EM is hard.} % Note that approaches such as EM are difficult since the form of the likelihood does not admit an analytic expression for the expected complete data log likelihood.
 
 \subsection*{Sampling $\mathbf{z}$ given $\boldsymbol{\beta}$ and $\mathcal{A}$ }
 
@@ -230,10 +234,10 @@ We use Gibbs sampling to sample the latent class assignments $\mathbf{z}$ from t
 \begin{align*}
 p(z_r | \mathbf{z}_{-r},\mathcal{A},\alpha,\boldsymbol{\beta}) \propto&  p(\mathcal{A}|\mathbf{z},\boldsymbol{\beta}) p(z_r | \mathbf{z}_{-r},\alpha) \\
 p(\mathcal{A}|\mathbf{z},\boldsymbol{\beta}) \propto &
-\prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot)^{I(r \in \{i_m,j_m\})}  \prod_{(i,j) \in \mathcal{R}_r} \exp \{ -(t_m - t_{m-1}) \lambda_{ij}(t_m|\cdot)\} 
+\prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot)^{\mathbf{1}[r \in \{i_m,j_m\}]}  \prod_{(i,j) \in \mathcal{R}_r} \exp \{ -(t_m - t_{m-1}) \lambda_{ij}(t_m|\cdot)\} 
 %& \prod_{(i,j) \in \mathcal{R}_r} \exp \{ -(t - t_{M}) \lambda_{ij}(t|\cdot)\}  
 \end{align*} 
-where $\mathcal{R}_r = \{(i,j) \in \mathcal{R}: r \in \{i,j\}\}$ is the set of dyads involving node $r$.  Under a CRP($\alpha$) prior, we have $p(z_i = k | z_{-i},\alpha) = n_k $ and $p(z_i = \mbox{new} |  z_{-i},\alpha) = \alpha$ where $n_k$ is the number of nodes assigned to cluster $k$. 
+where $\mathcal{R}_r = \{(i,j) \in \mathcal{R}: r \in \{i,j\}\}$ is the set of dyads involving node $r$.  Under a CRP($\alpha$) prior, we have $p(z_i = k | z_{-i},\alpha) = n_k $ and $p(z_i = \mbox{new} |  z_{-i},\alpha) = \alpha$ where $n_k$ is the number of nodes assigned to cluster $k$.  In our experiments we use $\alpha=0.1$ and use Algorithm 8 from \cite{Neal2001} with 5 extra clusters drawn from the prior.\footnote{I also tried out a prior for cluster sizes such that $n_k \sim \mbox{NegBinom}(3,N/K)$, where $K$ is chosen a priori.  This aims for similarly sized groups.}
 % \begin{align*}
 % p(z_i = k | z_{-i},\alpha) &= n_k & p(z_i = \mbox{new} |  z_{-i},\alpha) &= \alpha
 % \end{align*}
@@ -244,7 +248,7 @@ For each block $(k,l)$ we need to sample the vector of parameters $\boldsymbol{\
 \begin{align*}
 p(\boldsymbol{\beta}_{k,l} | \mathcal{A}, \textbf{z}, \boldsymbol{\mu}, \boldsymbol{\sigma}) &\propto p(\boldsymbol{\beta}_{k,l} | \boldsymbol{\mu}, \boldsymbol{\sigma}) p( \mathcal{A}| \textbf{z}, \boldsymbol{\beta}) \\ %, \mbox{cluster} \ k \ \mbox{or} \ l \ \mbox{involved}) \\  
 p(\boldsymbol{\beta}_{k,l} | \mu, \sigma) &= \prod_{p=1}^Pp(\beta_{k,l,p}|\mu_p,\sigma_p^2)\\
-p(\mathcal{A}|\mathbf{z},\boldsymbol{\beta}) &\propto \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot)
+p(\mathcal{A}|\mathbf{z},\boldsymbol{\beta}) &\propto \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot)^{\mathbf{1}[(i_m,j_m) \in \mathcal{V}_{k,l}]} 
 \prod_{(i,j) \in \mathcal{V}_{k,l}} \exp \{ -(t_m - t_{m-1}) \lambda_{ij}(t_m|\cdot)\}
 %p(\mathcal{A}|\mathbf{z},\boldsymbol{\beta}, \mbox{cluster} \ k \ \mbox{or} \ l \ \mbox{involved}) &= \prod_{a \in \mathcal{U}_r} \lambda_{i_a,j_a}(t_a|\cdot)
 %\prod_{(i,j) \in \mathcal{R}_{i_a,j_a}} \exp \{ -(t_a - \tau_{aij}) \lambda_{ij}(t_a|\cdot)\}
@@ -347,13 +351,13 @@ Figure \ref{fig:recall} will provide recall curves for several of the datasets.
 
 \begin{figure}[t]
 \centering
-\begin{subfigure}[b]{0.45\textwidth}
+\begin{subfigure}[b]{0.35\textwidth}
 \centering
 \includegraphics[scale=.5]{../figs/eckmann-small/example-obs-stats}
 %\caption{Observed counts}
 \end{subfigure}
 \qquad
-\begin{subfigure}[b]{0.45\textwidth}
+\begin{subfigure}[b]{0.35\textwidth}
 \centering
 \includegraphics[scale=.5]{../figs/eckmann-small/example-estimates}
 %\caption{Samples of $\beta_{p,k,l}$}
@@ -389,7 +393,7 @@ Figure \ref{fig:recall} will provide recall curves for several of the datasets.
 \includegraphics[scale=.25]{../figs/eckmann-small/parmat/3}
 \caption{\texttt{ab-by} estimates}
 \end{subfigure}
-\caption{Comparing observed counts and parameter estimates.  Darker values are larger.  Estimates are rescaled posterior means $(\hat{\beta}_{p,z_i,z_j} - \hat{\mu}_p)/\hat{\sigma}_p$ for each dyad $(i,j)$.  Learned parameters suggest heterogeneity exists in both total activity (b) as well as dynamics as seen in (c) and (d).}
+\caption{Comparing observed counts and parameter estimates.  Darker values are larger.  Estimates are rescaled posterior means $(\hat{\beta}_{p,z_i,z_j} - \hat{\mu}_p)/\hat{\sigma}_p$ for each dyad $(i,j)$.  Learned parameters suggest heterogeneity exists in both total activity (b) as well as dynamics, as seen in (c) and (d).}
 \label{fig:parmats}
 \end{figure}
 
@@ -450,66 +454,6 @@ $q(\boldsymbol{\phi}^{s} \rightarrow
 
 Since the proposed split vectors $\phi^s$ are close the $\phi^m$, this has a higher probability than the split states having arisen from the proposed merge state, which is closer to the midpoint between the two $\phi^s$ vectors.  This increases the acceptance probability for splits (and decreases the probability of merges).  However, the probability of getting assigned to each cluster (through the restricted Gibbs scan) might balance things out.
 
-
-%  \appendix{\textbf{Split-merge Metropolis-Hastings Move for Relational Event Blockmodel}}
-
-% This is a two-stage MH procedure, first picking two nodes at random then creating a new set of parameters.  We also use an auxilary variable to avoid changing dimensionality (similar to Neal 2000, alg. 8).
-
-% %$\boldsymbol{\phi}_{l,r}^{split} \sim G_0$, $\boldsymbol{\phi}_{r,l}^{split} \sim G_0$, and $\boldsymbol{\phi}_{l,l}^{split} \sim G_0$ (or actually $N(\mu_{\phi},\Sigma_{\phi})$
-
-% Next pick two nodes $i,j$ uniformly.  If they belong to the same block $k$ (i.e. $z_i=z_j=k$), then we call the current state the ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``split'' state $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ by letting $l=K+1$ and for $p \in [1,P], r \in [1,K]$
-% \begin{itemize}
-% %\item For $p \in [1,P], r \in [1,K]$: let $l=K+1$ sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$
-% \item Sample $\phi_{lrp}^{split} \sim N(\phi_{krp}^{merge},\sigma^2)$ and $\phi_{rlp}^{split} \sim N(\phi_{rkp}^{merge},\sigma^2)$ and $\phi_{llp}^{split} \sim N(\phi_{kkp}^{merge}, \sigma^2)$.
-% %\item Sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$.
-% \item Let $S$ be all nodes assigned to $k$.  Randomly assign $z_a^{split}$ and perform restricted Gibbs scan for $\mathbf{z}^{split}$: $$p(z_{a}^{split}=k|\cdot)  \propto m_k p(A|\mathbf{z}^{split}_{-a},\phi^{split})$$
-% where $m_k=\sum_{i \in S}I(z_i=k)$ and compute $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})$ to be the product of the probabilities for the sampled assignments.
-% \item Accept  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ as the new state with probability $\alpha^*$, defined below.
-% \end{itemize}
-
-%   If $i$ and $j$ belong to different blocks $k$ and $l$ (i.e. $z_i = k \ne z_j=l$), we define the current state to be the ``split'' state  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as follows:
-% \begin{itemize}
-% \item For each $p \in [1,P]$ and for all blocks $r \in [1,K], r\ne l$ draw $\phi_{krp}^{merge}$ uniformly from $\{\phi_{krp}^{split}, \phi_{lrp}^{split}\}$,  $\phi_{rkp}^{merge}$ uniformly from $\{\phi_{rkp}^{split}, \phi_{rlp}^{split}\}$, and sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$.
-% %\item Sample $\phi_{lrp}^{split},\phi_{rlp}^{split}$, and $\phi_{llp}^{split}$ independently from the prior $N(\mu_p,\sigma^2_p)$
-% \item Let $S$ be the set of nodes assigned to $k$ or $l$. Let $\mathbf{z}$ be a random assignment for nodes a and compute the probability of sampling $\mathbf{z}^{split}$ during a restricted Gibbs scan as $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split}) = \prod_{s \in S} p(z_{s}=z_s^{split} |\{ z_a^{split},z_{b}: a  < s, s < b\}, \boldsymbol{\phi}^{split})$
-% \item Accept $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as the new state with probability $1/\alpha^*$, defined below.
-% \end{itemize}
-
-% The Metropolis-Hastings acceptance probability for the split move is: $$\alpha^* =\frac{p(A|\boldsymbol{\phi}^{split},\mathbf{z}^{split})}{p(A|\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})}  \frac{p(\boldsymbol{\phi}^{split})}{p(\boldsymbol{\phi}^{merge})} \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} \frac{q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})}{q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})} \frac{q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge})}{q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})}$$
-
-% For the proposed merge step,
-% $$q(\boldsymbol{\phi}^{split} \rightarrow
-% \boldsymbol{\phi}^{merge}) = \prod_{q,r \ne l}\frac{1}{2} \prod_r p(\phi_{r,l,p}|\mu_p,\sigma_p^2)p(\phi_{l,r,p}|\mu_p,\sigma_p^2) p(\phi_{l,l,p}|\mu_p,\sigma_p^2)$$ though the latter product cancels with a corresponding term in $p(\boldsymbol{\phi}^{merge})$.  We can compute the transition $q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})$ directly as a product of Normal densities.  For the block assignments, $q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})=1$ since  there is only one way of combining two clusters.  $ \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} = \frac{(n_{z_i}^{split} - 1)!(n_{z_j}^{split} - 1)!}{(n_{z_i}^{merge}-1)!}$.   
-
-% Motivation: simply Gibbs sampling does not seem to mix well.  \footnote{This section is planned future work. In the experiments we evaluate the performance of the model when restricting the number of clusters $K$.  For these chains we do not propose split moves when the number of non-empty clusters is already $K$.}
-
-% IDEA: References are Dahl 2003, Wang, Blei 2012, Neal 2000 (alg 8).  A proposed split has REM parameters that are only slightly different than those for the original block.  Merges of two sets of REM parameters are performed by using the parameter for one blocks, and doing so for each dimension independently.  By keeping track of the probability of each of these transitions we can correctly compute the Metropolis-Hastings acceptance probability needed to guarantee we have an MCMC transition that leaves the posterior distribution invariant.
-
-% This is a two-stage MH procedure, first picking two nodes at random then creating a new set of parameters.  We also use an auxilary variable to avoid changing dimensionality (similar to Neal 2000, alg. 8).
-
-% %$\boldsymbol{\phi}_{l,r}^{split} \sim G_0$, $\boldsymbol{\phi}_{r,l}^{split} \sim G_0$, and $\boldsymbol{\phi}_{l,l}^{split} \sim G_0$ (or actually $N(\mu_{\phi},\Sigma_{\phi})$
-
-% Next pick two nodes $i,j$ uniformly.  If they belong to the same block $k$ (i.e. $z_i=z_j=k$), then we call the current state the ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``split'' state $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ by letting $l=K+1$ and for $p \in [1,P], r \in [1,K]$
-% \begin{itemize}
-% %\item For $p \in [1,P], r \in [1,K]$: let $l=K+1$ sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$
-% \item Sample $\phi_{lrp}^{split} \sim N(\phi_{krp}^{merge},\sigma^2)$ and $\phi_{rlp}^{split} \sim N(\phi_{rkp}^{merge},\sigma^2)$ and $\phi_{llp}^{split} \sim N(\phi_{kkp}^{merge}, \sigma^2)$.
-% \item Sample $\phi_{lrp}^{merge},\phi_{rlp}^{merge}$, and $\phi_{llp}^{merge}$ independently from the prior $N(\mu_p,\sigma^2_p)$.
-% \item Let $S$ be all nodes assigned to $k$.  Randomly assign $z_a^{split}$ and perform restricted Gibbs scan for $\mathbf{z}^{split}$: $$p(z_{a}^{split}=k|\cdot)  \propto m_k p(A|\mathbf{z}^{split}_{-a},\phi^{split})$$
-% where $m_k=\sum_{i \in S}I(z_i=k)$ and compute $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})$ to be the product of the probabilities for the sampled assignments.
-% \item Accept  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split})$ as the new state with probability $\alpha^*$, defined below.
-% \end{itemize}
-
-%   If $i$ and $j$ belong to different blocks $k$ and $l$ (i.e. $z_i = k \ne z_j=l$), we define the current state to be the ``split'' state  $(\boldsymbol{\phi}^{split},\mathbf{z}^{split}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``merge'' state $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as follows:
-% \begin{itemize}
-% \item For each $p \in [1,P]$ and for all blocks $r \in [1,K], r\ne l$ draw $\phi_{krp}^{merge}$ uniformly from $\{\phi_{krp}^{split}, \phi_{lrp}^{split}\}$,  $\phi_{rkp}^{merge}$ uniformly from $\{\phi_{rkp}^{split}, \phi_{rlp}^{split}\}$
-% %\item Sample $\phi_{lrp}^{split},\phi_{rlp}^{split}$, and $\phi_{llp}^{split}$ independently from the prior $N(\mu_p,\sigma^2_p)$
-% \item Let $S$ be the set of nodes assigned to $k$ or $l$. Let $\mathbf{z}$ be a random assignment for nodes a and compute the probability of sampling $\mathbf{z}^{split}$ during a restricted Gibbs scan as $q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split}) = \prod_{s \in S} p(z_{s}=z_s^{split} |\{ z_a^{split},z_{b}: a  < s, s < b\}, \boldsymbol{\phi}^{split})$
-% \item Accept $(\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})$ as the new state with probability $1/\alpha^*$, defined below.
-% \end{itemize}
-
-% The Metropolis-Hastings acceptance probability for the split move is: $$\alpha^* =\frac{p(\boldsymbol{\phi}^{split})}{p(\boldsymbol{\phi}^{merge})} \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})}\frac{p(A|\boldsymbol{\phi}^{split},\mathbf{z}^{split})}{p(A|\boldsymbol{\phi}^{merge},\mathbf{z}^{merge})}\frac{q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})}{q( \mathbf{z}^{merge} \rightarrow \mathbf{z}^{split})} \frac{q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge})}{q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})}$$
-
-% The first two terms represent the prior. For the proposed merge step, note $q(\boldsymbol{\phi}^{split} \rightarrow \boldsymbol{\phi}^{merge}) = .5^{P(2K-3)}$ where $K$ is the number of blocks before the move.  We can compute $q(\boldsymbol{\phi}^{merge} \rightarrow \boldsymbol{\phi}^{split})$ directly as a product of Normal densities.  For the block assignments, $q(\mathbf{z}^{split} \rightarrow \mathbf{z}^{merge})=1$ since  there is only one way of combining two clusters.  $ \frac{p(\mathbf{z}^{split})}{p(\mathbf{z}^{merge})} = \frac{(n_{z_i}^{split} - 1)!(n_{z_j}^{split} - 1)!}{(n_{z_i}^{merge}-1)!}$.  We have avoided the dimensionality of the model during the MH move by creating an empty cluster when merging and filling a (newly created) empty cluster when splitting.  One can return to the previous state with positive probability.
-
+\spewnotes
 
 \end{document}
