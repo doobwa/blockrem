@@ -1,8 +1,4 @@
-## lpz <- function(count,priors) {
-##   log(count + priors$alpha)
-## }
 lpz <- function(count,priors) {
-#  log(count + priors$alpha)
   if (!is.null(priors$nb)) {
     dnbinom(count,priors$nb$shape,mu=priors$nb$mu,log=TRUE)
   } else {
@@ -34,7 +30,6 @@ lposterior <- function(params,priors,collapse.sigma=TRUE) {
 
   # Prior on z
   tb <- table(factor(params$z,1:K))
-  #z <- sum(log(sapply(tb - 1,factorial)))
   z <- sapply(tb,function(count) count * lpz(count,priors))
 
   # Prior on sigma
@@ -91,7 +86,23 @@ sample_beta <- function(beta,z,mu,sigma,priors,kx=NULL,collapse.sigma=TRUE) {
   return(list(beta=beta,z=z))
 }
 
-
+##' .. content for \description{} (no empty lines) ..
+##'
+##' .. content for \details{} ..
+##' @title 
+##' @param train edgelist
+##' @param N maximum id of actors
+##' @param priors alpha, sigma.proposal, phi=list(mu=0,sigma=1), mu=list(mu=0,sigma=1), sigma=list(alpha=2,beta=2))
+##' @param K initial number of clusters
+##' @param effects character vector that is a subset of "intercept","abba","abby","abxa","abxb","abay","abab","sen_outdeg","rec_outdeg","sen_indeg","rec_indeg","dyad_count","changepoint_count"
+##' @param ego 
+##' @param do.sm perform split merge moves
+##' @param num.extra number of extra clusters to propose from the prior each iteration
+##' @param niter number of iterations
+##' @param verbose 
+##' @param outfile save progress to this file
+##' @return 
+##' @author chris
 brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,do.sm=FALSE,num.extra=2,niter=20,verbose=TRUE,outfile=NULL) {
   M <- nrow(train)
   P <- 13
@@ -120,7 +131,7 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
   beta  <- sample_beta(beta,z,mu,sigma,priors)$beta
 
   samples <- list()
-  lps <- acc <- rep(0,niter)
+  lps <- llks <- acc <- rep(0,niter)
   for (iter in 1:niter) {
 
     ## Add clusters from prior (Neal 2000)
@@ -167,16 +178,18 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
     pr <- list(theta=theta,mu=mu,sigma=sigma)
     mu <- gibbs.mu.hier.gaussian(pr,priors)$mu
     sigma <- gibbs.sigma.hier.gaussian(pr,priors)$sigma
-    mu[-priors$px] <- sigma[-priors$px] <- 0  # not included in likelihood, so set to 0 for display purposes
 
     ## Save progress
+    # not included in likelihood, so set to 0 for display purposes
+    mu[-priors$px] <- sigma[-priors$px] <- 0
     params <- list(beta=beta,z=z,mu=mu,sigma=sigma)
     lp <- lposterior(params,priors)
     lps[iter] <- lp$all
-    cat("\n",iter,":",lps[iter],"\n")
+    llks[iter] <- lp$y
+    cat("\n",iter,": llk",llks[iter]," lp",lps[iter],"\n")
     if (verbose) cat(z,"\n")
     samples[[iter]] <- params
-    fit <- list(params=params,samples=samples,ego=ego,priors=priors,lps=lps,effects=effects,lp=lp,niter=niter)
+    fit <- list(params=params,samples=samples,ego=ego,priors=priors,lps=lps,llks=llks,effects=effects,lp=lp,niter=niter)
     class(fit) <- "brem"
     if (!is.null(outfile)) save(fit,file=outfile)
   }
