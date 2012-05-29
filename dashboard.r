@@ -68,15 +68,39 @@ if (opts$dataset == "synthetic") {
   q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
 }
 
+cat("Get final stat vectors\n")
+dataset <- "classroom-16"
+load(paste("data/",dataset,".rdata",sep=""))
+P <- dim(fit$params$beta)[1]
+strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P,as.integer(fit$ego))
+strain$precompute()
+strain$transform()
+
+x <- strain$get_all_s()
+for (i in 1:N) {
+  for (j in 1:N) {
+    x[[i]][[j]] <- as.matrix(x[[i]][[j]][[length(x[[i]][[j]])]])
+  }
+}
+x <- melt(x)
+
+tmp <- acast(subset(x,Var1==12),L1~L2)
+image(tmp)
+
 cat("Trace plot of beta.\n")
 library(coda)
-load(paste("results/",opts$dataset,"/fits/",chosen.model,".rdata",sep=""))
-table(fit$params$z)
+dataset <- "classroom-16"
+load(paste("data/",dataset,".rdata",sep=""))
+chosen.model <- "kinit10.sm0.nb1.deg1.rdata"
+load(paste("results/",dataset,"/fits/",chosen.model,sep=""))
+z <- fit$params$z
+table(z)
+table(z[train[,2]],z[train[,3]])
 betas <- lapply(fit$samples,function(s) s$beta)
 r <- melt(betas)
 
 # Trace plot of intercept and pshifts
-r <- subset(r, Var2 < 6 & Var3 < 6)
+r <- subset(r, Var2 < 10 & Var3 < 10)
 q1a <- qplot(L1,value,data=subset(r, L1 > 10 & Var1 %in% c(1,2,3,6)), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3)#,scales="free")
 q1a
 

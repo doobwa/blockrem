@@ -49,6 +49,7 @@ models <- filenames(results.dir)
 for (model in models) {
   cat(model,"\n")
   load(paste(results.dir,"/",model,".rdata",sep=""))
+  fit$transform <- TRUE
   pred <- evaluate(A,N,train.ix,test.ix,fit,niters=NULL,ties.method="random")
   save.pred(pred,dataset,model)
 }
@@ -92,41 +93,6 @@ if (dataset == "synthetic-1") {
   mllks.test <- melt(mllks.test)
   mllks.test$event <- 1:nrow(test)
   
-  # Make results table
-library(plyr)
-  df <- rbind(
-        cbind(likelihood="rem",type="train",
-              ddply(llks.train,.(L1),summarise,value=mean(value))),
-        cbind(likelihood="rem",type="test",
-              ddply(llks.test,.(L1),summarise,value=mean(value))),
-        cbind(likelihood="mult",type="train",
-              ddply(mllks.train,.(L1),summarise,value=mean(value))),
-        cbind(likelihood="mult",type="test",
-              ddply(mllks.test,.(L1),summarise,value=mean(value)))
-              )
- # TODO: Fix this up 
-#  df$L1 <- factor(df$L1,c("uniform","marg","online","full.1","full.2","full.3","dp","truth"))
-  df$dataset <- dataset
-
-# Get mean and sd of K over each fit
-folder <- paste("results/",dataset,"/fits/",sep="")
-models <- filenames(folder)
-ks <- lapply(models,function(model) {
-  load(paste(folder,model,".rdata",sep=""))
-  K <- sapply(fit$samples,function(s) max(s$z))
-  data.frame(model=model,mean.K=mean(K),sd.K=sd(K))
-})
-names(ks) <- models
-
-for (m in c("uniform","marg","online")) {
-  ks[[m]] <- data.frame(model=m,mean.K=NA,sd.K=NA)
-}
-
-df$mean.k <- sapply(as.character(df$L1),function(m) ks[[m]]$mean.K)
-df$sd.k <- sapply(as.character(df$L1),function(m) ks[[m]]$sd.K)
-
-  save(df,file=paste("results/",dataset,"/final/results.rdata",sep=""))
-
 ## Recall plots
 load(paste("data/",dataset,".rdata",sep=""))
 folder <- paste("results/",dataset,"/ranks/",sep="")
@@ -150,17 +116,73 @@ ds <- lapply(rks,function(r) {
 for (i in 1:length(ds)) ds[[i]]$model <- models[i]
 ds <- do.call(rbind,ds)
 rownames(ds) <- c()
+
 save(ds,file=paste("results/",dataset,"/final/recall.rdata",sep=""))
 
-load(paste("results/",dataset,"/final/recall.rdata",sep=""))
 
-# Recall at k
-q3 <- qplot(k,value,data=subset(ds,L2=="recall.30"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
-print(q3)
+  # Make results table
+library(plyr)
+  df <- rbind(
+        cbind(likelihood="rem",type="train",
+              ddply(llks.train,.(L1),summarise,value=mean(value))),
+        cbind(likelihood="rem",type="test",
+              ddply(llks.test,.(L1),summarise,value=mean(value))),
+        cbind(likelihood="mult",type="train",
+              ddply(mllks.train,.(L1),summarise,value=mean(value))),
+        cbind(likelihood="mult",type="test",
+              ddply(mllks.test,.(L1),summarise,value=mean(value))))
+colnames(df)[1] <- "metric"
 
-q4 <- qplot(k,value,data=subset(ds,L2=="recall.200"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
-print(q4)
-#ggsave(paste("figs/",opts$dataset,"/recall.200.pdf",sep=""),width=10,height=8)
+rk <- rks
+k <- 0
+for (i in 1:length(rks)) {
+  rk[[k <- k+1]] <- data.frame(metric="rank5",type="train",
+                             L1=names(rks)[i],
+                               value=recall(rks[[i]]$train,top=5)$recall)
+  rk[[k <- k+1]] <- data.frame(metric="rank5",type="test",
+                               L1=names(rks)[i],
+                               value=recall(rks[[i]]$test,top=5)$recall)
+  rk[[k <- k+1]] <- data.frame(metric="rank20",type="train",
+                               L1=names(rks)[i],
+                               value=recall(rks[[i]]$train,top=20)$recall)
+  rk[[k <- k+1]] <- data.frame(metric="rank20",type="test",
+                               L1=names(rks)[i],
+                               value=recall(rks[[i]]$test,top=20)$recall)
+}
+rk <- do.call(rbind,rk)
 
-q5 <- qplot(k,value,data=subset(ds,L2=="recall.all"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
-print(q5)
+df <- rbind(df,rk)
+df$dataset <- dataset
+
+# Get mean and sd of K over each fit
+folder <- paste("results/",dataset,"/fits/",sep="")
+models <- filenames(folder)
+ks <- lapply(models,function(model) {
+  load(paste(folder,model,".rdata",sep=""))
+  K <- sapply(fit$samples,function(s) max(s$z))
+  data.frame(model=model,mean.K=mean(K),sd.K=sd(K))
+})
+names(ks) <- models
+
+for (m in c("uniform","marg","online")) {
+  ks[[m]] <- data.frame(model=m,mean.K=NA,sd.K=NA)
+}
+
+df$mean.k <- sapply(as.character(df$L1),function(m) ks[[m]]$mean.K)
+df$sd.k <- sapply(as.character(df$L1),function(m) ks[[m]]$sd.K)
+
+save(df,file=paste("results/",dataset,"/final/results.rdata",sep=""))
+
+
+## load(paste("results/",dataset,"/final/recall.rdata",sep=""))
+
+## # Recall at k
+## q3 <- qplot(k,value,data=subset(ds,L2=="recall.30"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+## print(q3)
+
+## q4 <- qplot(k,value,data=subset(ds,L2=="recall.200"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+## print(q4)
+## #ggsave(paste("figs/",opts$dataset,"/recall.200.pdf",sep=""),width=10,height=8)
+
+## q5 <- qplot(k,value,data=subset(ds,L2=="recall.all"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+## print(q5)
