@@ -28,7 +28,7 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 # N should be loaded by dataset
 P <- 13
 K <- opts$numclusters
-opts$model.type <- paste(opts$numclusters,opts$splitmerge,K,sep=".")
+opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$nb*1,sep="")
 
 outfile <- paste("results/",opts$dataset,"/",opts$model.type,".rdata",sep="")
 effects <- c("intercept","abba","abby","abay")#,"sen_outdeg","sen_indeg","dyad_count")

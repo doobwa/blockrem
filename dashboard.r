@@ -389,67 +389,11 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 load(paste("results/",opts$dataset,"/3.FALSE.3.rdata",sep=""))
 plot(fit$lps[-1])
 
-iters <- 20:45#5:20#40:80#f1fit$niter
-mats <- vector("list",length=P)
-for (p in 1:P) {
-  mats[[p]] <- 0
-}
-for (i in iters) {
-  s <- fit$samples[[i]]
-  for (p in 1:P) {
-    mats[[p]] <- mats[[p]] + s$beta[p,s$z,s$z]
-  }
-}
-for (p in 1:P) {
-  mats[[p]] <- mats[[p]]/length(iters)
-}
-beta.pm <- mats
-
-## Get upper level mean and variance for each effect p
-mus <- do.call(rbind,lapply(fit$samples[iters],function(s) s$mu))
-mu.hat <- colMeans(mus)
-sigmas <- do.call(rbind,lapply(fit$samples[iters],function(s) s$sigma))
-sigma.hat <- colMeans(sigmas)
-
-## Order rows according to z from last sample
-z <- fit$params$z
-o <- order(z)
 
 dir.create(paste("figs/",opts$dataset,sep=""),showWarn=FALSE)
 dir.create(paste("figs/",opts$dataset,"/parmat/",sep=""),showWarn=FALSE)
 px <- which(sigma.hat!=0)
 pdf(paste("figs/",opts$dataset,"/parmat/all.pdf",sep=""),height=20,width=20)
-
-par(mfrow=c(3,3),mar=c(3,1,1,1))
-
-# Plot observed data with cols nad rows sorted
-tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
-image(log(tb[o,o]+1),xaxt="n",yaxt="n",col=grey.colors(100))
-#image(mats[[1]][o,o],xaxt="n",yaxt="n",col=grey.colors(100))
-#par(mar=c(0,0,0,0))
-px <- fit$priors$px
-
-# Plot blocks
-plot(1,xlim=c(1,N),ylim=c(1,N))
-zs <- sort(z)
-for (i in 2:N) {
-  if (zs[i] != zs[i-1]) {
-    print(i)
-    text(i,i,label=paste(zs[i],zs[i]))
-    abline(v=i,h=i)
-  }
-}
-
-# Plot matrix of each effect
-for (p in px) {
-  mat <- (mats[[p]] - mu.hat[p]) / sigma.hat[p]
-  mat <- mat[o,o]
-  #pdf(paste("figs/",opts$dataset,"/parmat/",p,".pdf",sep=""),height=4,width=4)
-  image(mat,xaxt="n",yaxt="n",col=grey.colors(100),main=pnames[p])
-  #dev.off()
-}
-
-dev.off()
 
 # Plot pshifts
 tb <- table(z[train[,2]],z[train[,3]])
