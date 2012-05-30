@@ -1,0 +1,68 @@
+\section{Model fitting and experiments}
+
+\subsection{Data}
+
+Each of the following data sets are sequences of dyadic events, where each event has a sender, recipient, and timestamp.
+
+\begin{itemize}
+%\item Kiel email: \cite{Ebel2002}
+\item Classrooms: TODO describe datasets. Each have about 20 people and 400 events.  \cite{McFarland2003}
+\item Eckmann email: dyadic emails.  2000 training events among 88 people and 1300 test events.  \cite{Eckmann}
+\item Enron email: dyadic emails between months [TODO], 3000 training and 1000 test events among 141 actors \cite{Enron}
+\item Irvine: dyadic interactions among 401 actors each having more than 30 events,  \cite{Opsahl}
+\item Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.\footnote{Will be made publicly available.}  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.
+Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.
+We use the subset of 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
+\item MIT Reality Mining: phone calls among the 89 recipients between the dates , using of 2000 training events followed by 1000 test events. \cite{MITreality}
+\end{itemize}
+
+\subsection{Model-based exploratory analysis}
+
+Figure \ref{fig:posteriorparams} uses a fitted model to provide an example of the differences in the dynamics that can exist between two groups of dyads with similar rate of occurrence.
+We focus on the interactions between members of block 1 to members of block 3; 179 events occurred originating from a member of group 3 and 178 originated from group 1.
+For this example we fit a model with an intercept $s_0$, $\texttt{ab-ba}$ effects $s_1$, and $\texttt{ab-by}$ effects $s_3$.
+The two panels on the left show the variation in $s_0(t_M,i,j)$, $s_1(t_M,i,j)$ and $s_3(t_M,i,j)$ across the dyads $(i,j)$ in blocks $(1,3)$ and $(3,1)$, respectively.
+The boxplots on the right describe the posterior samples of the corresponding parameters $\beta_{p,1,3}$ and $\beta_{p,3,1}$.
+Under the model, events from group 3 to group 1 occur roughly $e^1$ times as often.
+Similarly, block (3,1) has a higher propensity for \texttt{ab-by} transitions under the model.
+The model has learned that this structure exists in the data and our inferences from the parameter estimates are sensible given the observed statistics.
+
+\subsection{Prediction experiments}
+
+We evaluate the predictive ability of the fitted models by comparing models based on the loglikelihood of held-out data and recall on held out data.
+Each data set is first split into a training set and a test set, and the loglikelihood of the test set is computed sequentially using Equation \ref{eqn:llk} where $\beta$ is set to be the mean from posterior samples given the training data.\footnote{This approach makes sense when the latent class assignments are not changing.  I will change this so that we averaging across predictions made from single draws from the posterior $\beta^{(i)}, z^{(i)}$.}
+We compute both the relational event model likelihood  (\texttt{rem}) as given in Equation \ref{eqn:llk}  and the multinomial likelihood (\texttt{mult}) given in Equation \ref{eqn:multllk}.
+The latter only measures a model's predictive performance for \emph{what} occurs next, while the former also measures the ability to predict \emph{when} it occurs.
+
+In addition, we compute recall to evaluate whether the next observed event is among the most likely according to the model.
+At each event $m$ we sort the predicted intensities of all possible events in decreasing order, find the rank of the observed event in the list of predicted intensities, and compute the mean rank across the $M$ events.
+
+\input{../figs/results-llk.tex}
+
+\subsection{Baselines}
+
+Several baselines are included for comparison: \texttt{uniform} places uniform probability on all possible dyads, \texttt{online} ranks events at time $t$ by the number of times the dyad has occurred previously $r_{online}(m,i,j) = \sum_{m:t_m < t} I(i_m=i,j_m=j)$, and \texttt{marginal} uses the product of the observed marginal frequencies $r_{marg}(m,i,j) = \sum_{m:t_m < t} I(i_m=i) \sum_{m:t_m < t} I(j_m=j)$.
+Note for processes that are homogeneous over time, \texttt{online} should do well with large amounts of data while \texttt{marginal} should roughly model heterogeneity in activity among individuals.
+
+Our method jointly models \emph{which} dyads occur and \emph{when} they occur.
+To compare the above baselines to our model using the likelihood of observed data, we assume each dyad is a Poisson process with estimated  rate $\hat{\lambda}_{i,j}(t_m) = \frac{M}{t_M} \frac{r_{b}(i,j) + \xi}{\sum_{ij} r_{b}(i,j) + \xi}$, where $r_b(i,j)$ is the statistic a baseline (described above) and $\xi=1$ is a smoothing parameter.
+
+
+\input{../figs/results-recall.tex}
+
+% \begin{figure}[t]
+% \center
+% \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+% \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+% \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+% \caption{Recall plots showing predictive performance on a ranking task.  Left: Eckmann.  Right: Another dataset.  (TODO)}
+% \label{fig:recall}
+% \end{figure}
+
+\subsection{Results}
+
+TODO: Quickly describe main take-aways from the results tables.
+
+% Table \ref{tab:results} compares the train and test likelihood for each method and data set combination.  For the synthetic data generated with $K=2$ clusters, the model with $K=2$ is best as expected.  Fitting the model with a single cluster also outperforms the simple baselines with respect to both likelihoods.
+
+%For the Eckmann subset the fitted model with $K=2$ performs best except for the test data using the conditional logit likelihood.  This may be because the model has overfit the training set, or the sampler has not properly converged (as is the case with $K=3$).  \footnote{Will need to discuss results for other datasets once they are complete.}
