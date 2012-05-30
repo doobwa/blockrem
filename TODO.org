@@ -227,11 +227,21 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
   - [X] return ego in BREM fit object
   - [X] Role of priors?  Hierarchical portion?
   - [X] Learn mu and sigma?
-  - [ ] Make sure new clusters from upper level mu and sigma
   - [X] Bug in llk_node maybe keeps z's from being sampled? Give warning
   - [X] transform degree effects?
   - [ ] Fixed K vs DP option
-  - [ ] K=1 option
+  - [ ] K=1 experiments.  (Bug in K=1 setup?)
+  - [ ] Int only, pshift, pshift and degree options
+  - [ ] Int only experiments
+  - [ ] Sample without integrating out sigma.  Improve deg models?
+  - [ ] Make sure new clusters from upper level mu and sigma
+  - [ ] Take out mention of K=2 accuracy
+  - [ ] Move all hyperparameter discussions to the end of Section 3
+  - [ ] Simulation (as in stochastic simulation of ...)
+  - [ ] Average over predictions
+  - [ ] Results section
+  - [ ] Posterior predictive instead of Figure 5
+  - [ ] Fix title
   - [X] Allow different priors on different effects p?
 - [X] Double check pshift implementation; is it global? 
 - [X] Set up reality mining
@@ -261,20 +271,25 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
     last changepoint for a given dyad.   Or should we use that
     notation throughout?  
 - [X] Fix Gibbs sampling equation, e.g. z_{i_m} instead of i_m ?
-- [ ] Incorporate SNRG note
+- [X] remove old effects from table
+- [X] mention CRP at the end of Section 2
+- [X] Describe sampling of mu and sigma 
+- [X] Fix description of intensities to have new ego setup
+  events... shrinkage towards upper level mu
+- [X] Move split merge entirely to appendix
 - [X] fix  description in paper for pshift ('ego' issue)
+- [ ] Incorporate SNRG note
 - [ ] cite reality mining paper and mcfarland and other data sets
 - [ ] mention why we can't use EM
 - [ ] rotate plots for synthetic example
 - [ ] more convincing motivation in Section 1
 - [ ] ditch handcock/schweinberger reference?
-- [X] remove old effects from table
-- [X] mention CRP at the end of Section 2
-- [X] Describe sampling of mu and sigma 
-- [X] Fix description of intensities to have new ego setup
+- [ ] change title
+- [ ] Add mention of the supplemental material.
+- [ ] Add NIPSy references: Xing, Meek, Teh.
+- [ ] Add little bits of information/details.  e.g. Interestingly...
+- [ ] Fix description of model specification with rich-get-richer bit
 - [ ] Mention what happens with cluster pairs that have no
-  events... shrinkage towards upper level mu
-- [X] Move split merge entirely to appendix
 * Bugs
 ** TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
 ** TODO Huge hit in loglikelihood as soon as a new cluster appears?
