@@ -1,19 +1,12 @@
 \section{Model}
 
-%Each interaction then has a set of periods $d \in D_{ij}$ each with a start time $a_d$, an end time $b_d$, and a rate $\lambda_d$.
-%Consider a nonhomogeneous Poisson process with  intensity $\lambda(t)$ that is piecewise constant with respect to a set of knots $\tau$.  We can then write the likelihood of $M$ events $\mathcal{A} = (t_1, \ldots, t_M)$ with $t_m > 0$ as
 Consider a sequence of events $\mathcal{A} = (0,t_1, \ldots, t_M)$ arising from a nonhomogeneous Poisson process with  intensity $\lambda(t)$.
 If the intensity is left continuous and piecewise constant with respect to a set of knots $\tau$ then the likelihood can be written
 \begin{align}
 \mathcal{L}(\mathcal{A}|\theta) &= \prod_{m=1}^M \lambda(t_m) \exp\left\{ - \int_{0}^{t_M} \lambda(s)ds \right\} \notag  \\
 &= \prod_{m=1}^M \lambda(t_m) \prod_{k=1}^{|\tau|} \exp\left\{ - (\tau_{k} - \tau_{k-1}) \lambda(\tau_k) \right\}%  \exp\left\{ - (t - \tau_{M}) \lambda(t) \right\}
 \end{align}
-%\noindent where the $m$th event occurs at time $t_m$, the intensity function $\lambda(t)$ is left continuous, and each $\tau_k \in [0,t_M]$.
 
-% \begin{align}
-% \mathcal{L}(A|\theta) &= \prod_{m=1}^M \lambda_{i_m}(t_m|\cdot) \prod_{i \in \mathcal{R}}  \exp\left\{ - \int_{0}^{t_M} \lambda_{i}(\tau | \cdot)d\tau \right\} \\
-% &= \prod_{m=1}^M \lambda_{i_m}(t_m|\cdot) \prod_{i \in \mathcal{R}} \prod_{v \in D_{i}} \exp\left\{ - (b_v - a_v) \lambda_{i}(b_v | \cdot ) \right\}
-% \end{align}
 
 One can extend the above to marked point processes where each event contains additional information.
 In the context of relational events occurring among $N$ nodes, each event in the process contains both a sender $i$ and a recipient $j$ such that  $(i,j) \in \mathcal{R}$, where $\mathcal{R}$ is the \emph{risk set} comprised of all allowed dyads.
@@ -23,7 +16,6 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (also denoted $\
 \mathcal{L}(\mathcal{A}|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}}\exp\{ - (t_m - t_{m-1}) \lambda_{ij}(t_m | \cdot) \}
 \label{eqn:llk}
 \end{align}
-%\prod_{(i,j) \in \mathcal{R}}\exp\{ - (t - t_{M}) \lambda_{ij}(t | \cdot) \}.
 
 \begin{figure}
 \centering
@@ -73,19 +65,6 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (also denoted $\
 \label{fig:example}
 \end{figure}
 
-\footnotetext{TODO? Illustration of the block model, where events in cluster 1 (circles) are governed by the vector $\beta_{1,1}$, events in cluster 2 (squares) are governed by $\beta_{2,2}$, and an circle-to-square event governed by $\beta_{1,2}$.}
-
-
-% \begin{figure}
-%  \def\svgwidth{6in}
-%   \input{example1.pdf_tex}
-% \caption{Illustration of event data and the assumptions of the model.  Left: An sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Center: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  Note $\lambda_{34}$ can only change when events occur involving either node 3 or node 4.  Right: Illustration of the block model, where events in cluster 1 (circles) are governed by the vector $\beta_{1,1}$, events in cluster 2 (squares) are governed by $\beta_{2,2}$, and an circle-to-square event governed by $\beta_{1,2}$.}
-% \label{fig:example}
-% %\includegraphics[width=6in]{example}
-% \end{figure}
-
-%This implies that  $\mathcal{R}_{i,j}$ is the set of dyads involving either $i$ or $j$ and that we will only use  statistics $\mathbf{s}(t,i,j)$ that do not change until an event involving either $i$ or $j$ occurs.
-
 We aim to learn about the dynamics between subsets of nodes.   To facilitate this, we assume each node $i$ is assigned a latent cluster $z_i$ and use a log linear model for the intensity functions
 \begin{align*}
 \log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{\beta},\mathbf{z}) &= \boldsymbol{\beta}'_{z_i,z_j} \mathbf{s}(t,i,j,\mathcal{A}_t)
@@ -133,16 +112,13 @@ Dyad count& $s_{6}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
 
 
 In Table \ref{tab:stats} we list the statistics we use in our experiments for  $\mathbf{s}(t,i,j)$.
-Several statistics use $v_{mij} \in [0,M]$, the index of the last event where $(i,j)$ occurred.  % (n.b. $t_{v_{mij}} = \tau_{mij}$).
-If $(i,j)$ has never occurred, we set $v_{mij}=0$.  We include degree effects to model possible rich-get-richer phenomenon.
 For example, a particular node sending often may indicate they will continue to be a sender in the future.
-We normalize these counts by the number of events up until a dyad's prior changepoint.\footnote{This seems to avoid ``explosion'' when simulating from the model.  TODO: Explore the theory about these sorts of statistics.  Aalen has a few suggestions.}
+We normalize these counts by the number of events up until a dyad's prior changepoint.%\footnote{This seems to avoid ``explosion'' when simulating from the model.  TODO: Explore the theory about these sorts of statistics.  Aalen has a few suggestions.}
 Other statistics could be of interest for particular substantive questions \cite{Butts2008,Vu2011}.  \footnote{Describe the form of $f()$.  Right now it is $f(x) = \log \frac{x+1}{m + N(N-1)}$.}
 
 The next set of statistics are \emph{participation shift} effects inspired by research in conversational norms \cite{Gibson2003}.
-For example, an AB-BA effect indicates an increased propensity for reciprocity.
-The final set of effects allow one to model phenomenon such as triadic closure.
-Though we use only the above statistics in our experiments, one may use any quantity or set of covariates about a given dyad that is computed using the previous history of events.
+For example, an \texttt{ab-ba} effect indicates an increased propensity for reciprocity where the event $(a,b)$ is followed by $(b,a)$.
+Though we use only the above statistics in our experiments, one may use any quantity that is computed using the previous history of events or known covariates about nodes or dyads.
 The only restriction is that the statistic may not change in value between each observed event.\footnote{This prevents one from using the number of events occurring in some previous time window, as in \cite{Gunawardana2011}.}
 
 \subsection{Relation to other models}
