@@ -29,7 +29,8 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-opts <- list(dataset="classroom-16",predictions=TRUE)
+opts <- list(dataset="realitymining-small",predictions=TRUE)
+dataset <- opts$dataset
 
 # Pull data from each saved file and grab the name of the fit
 folder <- paste("results/",opts$dataset,"/fits",sep="")
@@ -66,8 +67,8 @@ llks <- do.call(rbind,llks)
 llks <- merge(llks,atts,by="model")
 names(llks)[10] <- "coll"
 
-llks <- subset(llks,iter > 2 & iter < 100 & kinit == 10)
-q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(pshift + deg ~ coll)#,scales="free")
+llks <- subset(llks,iter > 3 & iter < 30 & kinit == 10)
+q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(pshift + deg ~ coll,scales="free")
 q1
 
 tmp <- subset(llks,kinit==10 & pshift==1)
@@ -92,7 +93,7 @@ image(tmp)
 
 cat("Trace plot of beta.\n")
 library(coda)
-fit <- fits[[5]]
+fit <- fits[[4]]
 z <- fit$params$z
 table(z)
 table(z[train[,2]],z[train[,3]])

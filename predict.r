@@ -7,16 +7,21 @@ suppressPackageStartupMessages(library(reshape2))
 option_list <- list(
   make_option(c("-d", "--dataset"), 
               help="Name of dataset with data at /data/[dataset].rdata 
-                    and results at /results/[dataset]/."))
+                    and results at /results/[dataset]/."),
+  make_option("--force", default=FALSE,
+              help=""))
 parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 
-#library(brem);opts <- list(dataset="enron-small")
+#library(brem);opts <- list(dataset="eckmann-small")
 
 options(verbose=FALSE)
 
 dataset <- opts$dataset
 load(paste("data/",dataset,".rdata",sep=""))
+
+train.ix <- 1:nrow(train)
+test.ix <- (1:nrow(A))[-train.ix]
 
 ## Temporary: to fit in with rest of pipeline
 save.pred <- function(pred,dataset,model) {
@@ -39,7 +44,7 @@ filenames <- function(folder) {
 
 for (model in c("online","uniform","marg")) {
   cat(model,"\n")
-  pred <- evaluate.baseline(A,N,train.ix,test.ix,model,ties.method="random")
+  pred <- evaluate.baseline(A,N,train.ix,test.ix,model,niter=10)
   save.pred(pred,dataset,model)
 }
 
@@ -50,7 +55,7 @@ for (model in models) {
   f <- paste(folder,"/",model,".rdata",sep="")
   if ((!file.exists(f)) | opts$force) {
     load(f)
-    pred <- evaluate(A,N,train.ix,test.ix,fit,niters=NULL,ties.method="random")
+    pred <- evaluate(A,N,train.ix,test.ix,fit,niters=10)
     save.pred(pred,dataset,model)
   }
 }
@@ -62,37 +67,37 @@ if (dataset == "synthetic-1") {
   save.pred(pred,dataset,"truth")
 }
 
-# Load all loglikelihoods
-  load(paste("data/",opts$dataset,".rdata",sep=""))
-  folder <- paste("results/",opts$dataset,"/llks",sep="")
-  fs <- dir(folder,full.names=TRUE)
-  llks.test <- lapply(fs,function(f) {
-    load(f)
-    return(llk.test)
-  })
-  llks.train <- lapply(fs,function(f) {
-    load(f)
-    return(llk.train)
-  })
-  mllks.test <- lapply(fs,function(f) {
-    load(f)
-    return(llkm.test)
-  })
-  mllks.train <- lapply(fs,function(f) {
-    load(f)
-    return(llkm.train)
-  })
-  models <- filenames(folder)
-  names(llks.test) <- names(llks.train) <- names(mllks.test) <- names(mllks.train) <- models
-  
-  llks.train <- melt(llks.train)
-  llks.train$event <- 1:nrow(train)
-  llks.test <- melt(llks.test)
-  llks.test$event <- 1:nrow(test)
-  mllks.train <- melt(mllks.train)
-  mllks.train$event <- 1:nrow(train)
-  mllks.test <- melt(mllks.test)
-  mllks.test$event <- 1:nrow(test)
+## Load all loglikelihoods into a data.frame
+load(paste("data/",opts$dataset,".rdata",sep=""))
+folder <- paste("results/",opts$dataset,"/llks",sep="")
+fs <- dir(folder,full.names=TRUE)
+llks.test <- lapply(fs,function(f) {
+  load(f)
+  return(llk.test)
+})
+llks.train <- lapply(fs,function(f) {
+  load(f)
+  return(llk.train)
+})
+mllks.test <- lapply(fs,function(f) {
+  load(f)
+  return(llkm.test)
+})
+mllks.train <- lapply(fs,function(f) {
+  load(f)
+  return(llkm.train)
+})
+models <- filenames(folder)
+names(llks.test) <- names(llks.train) <- names(mllks.test) <- names(mllks.train) <- models
+
+llks.train <- melt(llks.train)
+llks.train$event <- 1:nrow(train)
+llks.test <- melt(llks.test)
+llks.test$event <- 1:nrow(test)
+mllks.train <- melt(mllks.train)
+mllks.train$event <- 1:nrow(train)
+mllks.test <- melt(mllks.test)
+mllks.test$event <- 1:nrow(test)
   
 ## Recall plots
 load(paste("data/",dataset,".rdata",sep=""))
