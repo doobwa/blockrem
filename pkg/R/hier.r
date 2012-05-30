@@ -96,14 +96,16 @@ sample_beta <- function(beta,z,mu,sigma,priors,kx=NULL,collapse.sigma=TRUE) {
 ##' @param K initial number of clusters
 ##' @param effects character vector that is a subset of "intercept","abba","abby","abxa","abxb","abay","abab","sen_outdeg","rec_outdeg","sen_indeg","rec_indeg","dyad_count","changepoint_count"
 ##' @param ego 
+##' @param transform 
 ##' @param do.sm perform split merge moves
 ##' @param num.extra number of extra clusters to propose from the prior each iteration
 ##' @param niter number of iterations
+##' @param collapse.sigma 
 ##' @param verbose 
 ##' @param outfile save progress to this file
 ##' @return 
 ##' @author chris
-brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,transform=FALSE,do.sm=FALSE,num.extra=2,niter=20,verbose=TRUE,outfile=NULL) {
+brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,transform=FALSE,do.sm=FALSE,num.extra=2,niter=20,collapse.sigma=TRUE,verbose=TRUE,outfile=NULL) {
   M <- nrow(train)
   P <- 13
   ego <- ego*1  # RemStat doesn't want boolean
@@ -128,7 +130,7 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
   z     <- sample(1:K,N,rep=T)
   mu    <- rep(0,P)
   sigma <- rgamma(P,priors$sigma$alpha,priors$sigma$beta)
-  beta  <- sample_beta(beta,z,mu,sigma,priors)$beta
+  beta  <- sample_beta(beta,z,mu,sigma,priors,collapse.sigma=collapse.sigma)$beta
 
   samples <- list()
   lps <- llks <- acc <- rep(0,niter)
