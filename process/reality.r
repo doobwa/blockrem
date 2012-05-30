@@ -20,7 +20,7 @@ train.ix <- 1:1500
 test.ix <- 1501:nrow(A)
 train <- A[train.ix,]
 test  <- A[test.ix,]
-save(A,N,train,test,test.ix,file="data/realitymining-sm.rdata")
+save(A,N,train,test,test.ix,file="data/realitymining-small.rdata")
 
 
 # Exploratory

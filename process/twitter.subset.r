@@ -17,15 +17,17 @@ M <- nrow(A)
 
 
 # Only chose events involving people with 2 or more evnets
-users <- c(as.character(A[,2]),as.character(A[,3]))
+users <- c(as.character(A$s),as.character(A$r))
 users <- factor(users,unique(users))
 tb <- table(users)
 table(tb)
 ix <- which(tb > 1)
 chosen <- names(tb)[ix]
-ix <- which(A[,2] %in% chosen & A[,3] %in% chosen)
+ix <- which(A$s %in% chosen & A$r %in% chosen)
 A <- A[ix,]
 N <- length(chosen)
+bad <- which(as.character(A$s) == as.character(A$r))
+A <- A[-bad,]
 M <- nrow(A)
 
 # Rescale time to be in (0,1)
@@ -36,9 +38,11 @@ times <- A[,1]/A[nrow(A),1]
 nmap <- sort(chosen)
 sen <- match(A[,2],nmap)
 rec <- match(A[,3],nmap)
-
 A <- cbind(times,sen,rec)
-train <- A[1:2000,]
-test  <- A[2001:nrow(A),]
+N <- length(nmap)
+train.ix <- 1:2000
+test.ix <- 2001:nrow(A)
+train <- A[train.ix,]
+test  <- A[test.ix,]
 
-save(A,train,test,N,M,nmap,file="data/twitter.subset.rdata")
+save(A,train.ix,test.ix,train,test,N,M,nmap,file="data/twitter-small.rdata")
