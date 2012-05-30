@@ -1,15 +1,37 @@
 #opts=list(dataset="synthetic",numclusters=2,model.type="full",gibbs=TRUE,numiterations=100,slice=TRUE,mh=FALSE,initialize=FALSE,fixz=FALSE,skip.intercept=FALSE)
 #opts=list(dataset="synthetic",numclusters=2,numiterations=20,splitmerge=FALSE,numextra=2,model.type="full")
 
-# Fit models
-./parallel --sshlogin 4/d6 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s FALSE' ::: "synthetic-1" ::: 10
+"synthetic-1" "eckmann-small" "classroom-16" "classrom-17" "classroom-27" "classroom-29" "classroom-31" "twitter-small" "enron-small" "irvine"
 
-./parallel --sshlogin 8/d7,8/d8 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "synthetic-1" "eckmann-small" "twitter-small" "realitymining-small" ::: 10 ::: FALSE ::: FALSE TRUE ::: FALSE TRUE
+# All
+./parallel --sshlogin 8/d7,7/d11,8/d12 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5' ::: "synthetic-1" ::: 1 10 ::: FALSE ::: FALSE TRUE ::: FALSE TRUE ::: FALSE TRUE ::: FALSE TRUE
 
-./parallel --sshlogin 8/d11,8/d12 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "classroom-16" "classroom-17" "classroom-27" "classroom-29" "classroom-31" "enron-small" "irvine" ::: 10 ::: FALSE ::: FALSE TRUE ::: FALSE TRUE
+# Intercept only models with K=10
+./parallel --sshlogin 8/d7,8/d12 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' :::  "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "twitter-small" "irvine" ::: 10 ::: FALSE ::: FALSE ::: FALSE ::: FALSE ::: FALSE TRUE ::: FALSE
 
-./parallel --sshlogin  4/d11,6/d12 'cd /extra/duboisc0/blockrem;./predict.r -d {1}' ::: "synthetic-1" "realitymining-small" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "classroom-29" "classroom-31" "enron-small"
+# Intercept and pshift with K=10
+./parallel --sshlogin 4/d5,4/d6 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' :::  "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "twitter-small" "irvine" ::: 10 ::: FALSE ::: TRUE ::: FALSE ::: FALSE ::: FALSE ::: FALSE
 
+# Intercept and pshift and degree with K=1 and K=10
+./parallel --sshlogin 4/d8,4/d10,8/d12 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' ::: "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "twitter-small" "irvine" ::: 1 10 ::: FALSE ::: TRUE ::: TRUE ::: FALSE ::: FALSE ::: FALSE
+
+
+
+
+./parallel --sshlogin 8/d8 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge FALSE --pshifts TRUE --degrees {3} --negbinom {4} --collapse {5} --numextra 5' ::: "eckmann-small" ::: 1 10 ::: FALSE TRUE ::: FALSE ::: FALSE TRUE
+
+./parallel --sshlogin 4/d4,4/d6,4/d7,4/d11,8/d12 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "classroom-16" "classrom-17" "classroom-27" "classroom-29" "classroom-31" "enron-small" "irvine" ::: 10 ::: FALSE ::: FALSE ::: FALSE TRUE
+
+./parallel --sshlogin 4/d4,4/d6,4/d7,4/d11,8/d12 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "synthetic-1" "eckmann-small" "twitter-small" "realitymining-small" "classroom-16" "classroom-17" "classroom-27" "classroom-29" "classroom-31" "enron-small" "irvine" ::: 1 ::: FALSE ::: FALSE ::: FALSE TRUE
+
+./parallel --sshlogin 8/d11,8/d12 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "realitymining-small" "enron-small" ::: 10 ::: FALSE ::: FALSE TRUE ::: FALSE TRUE
+
+./parallel --sshlogin 4/d11 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "synthetic-1" ::: 10 ::: FALSE ::: FALSE ::: FALSE TRUE
+./parallel --sshlogin  4/d11 'cd /extra/duboisc0/blockrem;./predict.r -d {1}' ::: "synthetic-1"
+
+ "realitymining-small" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "classroom-29" "classroom-31" "enron-small"
+
+./parallel --sshlogin  4/d7 'cd /extra/duboisc0/blockrem;./predict.r -d {1}' ::: "realitymining-small" "enron-small" "twitter-small" "irvine"
 
 ./parallel --sshlogin 4/d7 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 300 -s TRUE' ::: "eckmann-small" "twitter-small" "realitymining-small" ::: 20
 
@@ -56,15 +78,20 @@ rsync -auvz pkg/R/splitmerge.r duboisc@d1:/extra/duboisc0/blockrem/pkg/R/
 rsync -auvz brem.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz predict.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz getcounts.r duboisc@d1:/extra/duboisc0/blockrem/
-rsync -auvz data/synthetic.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
+rsync -auvz data/synthetic-1.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz data/twitter-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz data/eckmann-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
+rsync -auvz data/realitymining-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz data/enron-small.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz data/irvine.rdata duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz data/classroom-* duboisc@d1:/extra/duboisc0/blockrem/data/
 rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz tmp.rdata duboisc@d1:/extra/duboisc0/blockrem/
-rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results .
+rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results . --exclude 'llks' --exclude 'ranks'
+rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results/synthetic-1/final results/synethic-1/
+rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results/twitter-small/final results/twitter-small/
+rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results/synthetic-1/final results/synethic-1/
+rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/results/synthetic-1/final results/synethic-1/
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/figs .
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/data .
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/tmp.rdata .
