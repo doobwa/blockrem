@@ -56,6 +56,25 @@ test_that("Check ActorPc agrees with using entire dataset", {
   }
 })
 
+test_that("Check ActorPc agrees: ego restriction", {
+  A <- cbind(times,sen,rec)
+  ego <- 1
+  s <- new(RemStat,A[,1],A[,2]-1,A[,3]-1,N,nrow(A),length(px),ego)
+  s$precompute()
+
+  for (a in 1:N) {
+    z[a] <- 1
+    o1 <- RemLogLikelihoodActorPc(a-1,beta,z-1,s$ptr(),K)
+    o2 <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+    z[a] <- 2
+    c1 <- RemLogLikelihoodActorPc(a-1,beta,z-1,s$ptr(),K)
+    c2 <- RemLogLikelihoodPc(beta,z-1,s$ptr(),K)
+    o1-c1
+    o2-c2
+    expect_that(o1-c1, equals(o2-c2))
+  }
+})
+
 test_that("Functions run",{
   m <- 3
   k <- 1

@@ -153,7 +153,7 @@ eval.mrank <- function(edgelist,lrm,i,nranks=10) {
 ##' @param ... options to pass to rank()
 ##' @return list of mllk, rks
 ##' @export
-evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,nranks=10) {
+evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,nranks=10,ties.method="random") {
   train <- edgelist[train.ix,]
   test  <- edgelist[test.ix,]
   P <- dim(fit$params$beta)[1]
@@ -182,7 +182,7 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,nranks=10) {
     lrm <- lrm[1,,]    
     llk$train[m]  <- eval.brem(train,lrm,m)
     mllk$train[m] <- eval.mult(train,lrm,m)
-    rks$train[m]  <- eval.rank(train,lrm,m,ties.method="random")    
+    rks$train[m]  <- eval.rank(train,lrm,m,ties.method=ties.method)    
 #    rks$train[m]  <- eval.mrank(train,lrm,m,nranks)
   }
   for (m in 1:length(test.ix)) {
@@ -191,7 +191,7 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,nranks=10) {
     lrm <- lrm[1,,]
     llk$test[m]  <- eval.brem(edgelist,lrm,test.ix[m])
     mllk$test[m] <- eval.mult(edgelist,lrm,test.ix[m])
-    rks$test[m] <- eval.rank(edgelist,lrm,test.ix[m],ties.method="random")    
+    rks$test[m] <- eval.rank(edgelist,lrm,test.ix[m],ties.method=ties.method)    
 #    rks$test[m]  <- eval.mrank(edgelist,lrm,test.ix[m],nranks)
   }
   return(list(llk=llk,mllk=mllk,rks=rks))
@@ -208,6 +208,7 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,nranks=10) {
 ##' @return 
 ##' @author chris
 posterior.mean.lrm <- function(strain,samples,ix,iters) {
+  if (is.null(iters)) iters <- 1
   lrms <- lapply(samples[iters],function(s) {
     brem.lrm.fast.subset(strain, s$z, s$beta, ix)
   })
@@ -235,7 +236,7 @@ posterior.mean.lrm.s <- function(strain,samples,ix,iters) {
 ##' @param ... 
 ##' @return 
 ##' @author chris
-evaluate.baseline <- function(edgelist,N,train.ix,test.ix,model="online",nranks=10) {
+evaluate.baseline <- function(edgelist,N,train.ix,test.ix,model="online",nranks=10,ties.method="random") {
   if (! model %in% c("online","marg","uniform")) stop("unrecognized baseline")
 
   train <- edgelist[train.ix,]
@@ -267,7 +268,7 @@ evaluate.baseline <- function(edgelist,N,train.ix,test.ix,model="online",nranks=
     diag(lrm) <- -Inf
     llk$train[m]  <- eval.brem(train,lrm,m)
     mllk$train[m] <- eval.mult(train,lrm,m)
-    rks$train[m]  <- eval.rank(train,lrm,m,ties.method="random")
+    rks$train[m]  <- eval.rank(train,lrm,m,ties.method=ties.method)
     #rks$train[m]  <- eval.mrank(train,lrm,m,nranks=nranks)
   }
   for (m in 1:length(test.ix)) {
@@ -281,7 +282,7 @@ evaluate.baseline <- function(edgelist,N,train.ix,test.ix,model="online",nranks=
     diag(lrm) <- -Inf
     llk$test[m]  <- eval.brem(edgelist,lrm,test.ix[m])
     mllk$test[m] <- eval.mult(edgelist,lrm,test.ix[m])
-    rks$test[m]  <- eval.rank(edgelist,lrm,test.ix[m],ties.method="random")
+    rks$test[m]  <- eval.rank(edgelist,lrm,test.ix[m],ties.method=ties.method)
     #rks$test[m]  <- eval.mrank(edgelist,lrm,test.ix[m],nranks=nranks)
   }
 

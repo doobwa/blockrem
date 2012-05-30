@@ -484,10 +484,10 @@ Rcpp::NumericVector RemLogLikelihoodActorPc(int a, Rcpp::NumericVector beta, Rcp
     if (i != a) {
       lam  = LogLambdaPc(i,a,zi,za,s->get_s(m,i,a),beta,N,K,P);
       llk -= (s->times[m] - s->get_tau(m,i,a)) * exp(lam);
-      if (ego == 0) {
+      //      if (ego == 0) {
         lam  = LogLambdaPc(a,i,za,zi,s->get_s(m,a,i),beta,N,K,P);
         llk -= (s->times[m] - s->get_tau(m,a,i)) * exp(lam);
-      }
+        //      }
     }
   }
   llks[M-1] = llk;

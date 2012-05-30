@@ -37,7 +37,8 @@ strain$precompute()
 stest <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P,ego)
 stest$precompute()
 
-fit <- list(params=list(beta=beta,z=z),ego=ego,beta=beta,z=z)
+fit <- list(params=list(beta=beta,z=z),ego=ego,beta=beta,z=z,transform=FALSE)
+fit$samples <- list(fit$params)
 
 ## Precompute rate arrays
 lrm <- list()
