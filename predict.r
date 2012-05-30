@@ -8,8 +8,8 @@ option_list <- list(
   make_option(c("-d", "--dataset"), 
               help="Name of dataset with data at /data/[dataset].rdata 
                     and results at /results/[dataset]/."),
-  make_option("--force", default=FALSE,
-              help=""))
+  make_option("--force", default=FALSE),
+  make_option("--baselines", default=FALSE))
 parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 
@@ -42,28 +42,30 @@ filenames <- function(folder) {
   as.vector(sapply(dir(folder),function(x) strsplit(x,".rdata")[[1]][1]))
 }
 
-for (model in c("online","uniform","marg")) {
-  cat(model,"\n")
-  pred <- evaluate.baseline(A,N,train.ix,test.ix,model,niter=10)
-  save.pred(pred,dataset,model)
-}
-
-folder <- paste("results/",opts$dataset,"/fits",sep="")
-models <- filenames(folder)
-for (model in models) {
-  cat(model,"\n")
-  f <- paste(folder,"/",model,".rdata",sep="")
-  if ((!file.exists(f)) | opts$force) {
-    load(f)
-    pred <- evaluate(A,N,train.ix,test.ix,fit,niters=10)
+if (opts$baselines) {              
+  for (model in c("online","uniform","marg")) {
+    cat(model,"\n")
+    pred <- evaluate.baseline(A,N,train.ix,test.ix,model)
     save.pred(pred,dataset,model)
+  }
+} else  {
+  folder <- paste("results/",opts$dataset,"/fits",sep="")
+  models <- filenames(folder)
+  for (model in models) {
+    cat(model,"\n")
+    f <- paste(folder,"/",model,".rdata",sep="")
+    if ((!file.exists(f)) | opts$force) {
+      load(f)
+      pred <- evaluate(A,N,train.ix,test.ix,fit,niters=10)
+      save.pred(pred,dataset,model)
+    }
   }
 }
 
-if (dataset == "synthetic-1") {
+if (opts$dataset == "synthetic-1") {
   niter <- 500
-  fit <- list(params=list(beta=beta,z=z),llks=rep(true.lpost,niter),niter=niter,zs=rep(list(z),niter),param=beta,ego=1,transform=TRUE)  # true values
-  pred <- evaluate(A,N,train.ix,test.ix,fit,ties.method="random")
+  fit <- list(samples=list(list(beta=beta,z=z)),llks=rep(true.lpost,niter),niter=niter,zs=rep(list(z),iter=1),param=beta,ego=1,transform=TRUE)  # true values
+  pred <- evaluate(A,N,train.ix,test.ix,fit,niters=NULL)
   save.pred(pred,dataset,"truth")
 }
 
@@ -100,8 +102,8 @@ mllks.test <- melt(mllks.test)
 mllks.test$event <- 1:nrow(test)
   
 ## Recall plots
-load(paste("data/",dataset,".rdata",sep=""))
-folder <- paste("results/",dataset,"/ranks/",sep="")
+load(paste("data/",opts$dataset,".rdata",sep=""))
+folder <- paste("results/",opts$dataset,"/ranks/",sep="")
 rks <- lapply(dir(folder,full.names=TRUE),function(f) {
   load(f)
   return(list(train=rk.train,test=rk.test))
@@ -159,17 +161,19 @@ for (i in 1:length(rks)) {
 rk <- do.call(rbind,rk)
 
 df <- rbind(df,rk)
-df$dataset <- dataset
+df$dataset <- opts$dataset
 
 # Get mean and sd of K over each fit
-folder <- paste("results/",dataset,"/fits/",sep="")
+folder <- paste("results/",opts$dataset,"/fits/",sep="")
 models <- filenames(folder)
 ks <- lapply(models,function(model) {
   load(paste(folder,model,".rdata",sep=""))
   K <- sapply(fit$samples,function(s) max(s$z))
-  data.frame(model=model,mean.K=mean(K),sd.K=sd(K))
+  data.frame(model=model,mean.K=mean(K),sd.K=sd(K),iter=fit$iter,niter=fit$niter)
 })
 names(ks) <- models
+ks <- do.call(rbind,ks)
+rownames(ks) <- NULL
 
 ## for (m in c("uniform","marg","online")) {
 ##   ks[[m]] <- data.frame(model=m,mean.K=NA,sd.K=NA)
@@ -177,5 +181,5 @@ names(ks) <- models
 ## mean.k <- sapply(as.character(df$L1),function(m) ks[[m]]$mean.K)
 ## sd.k <- sapply(as.character(df$L1),function(m) ks[[m]]$sd.K)
 
-save(df,ks,file=paste("results/",dataset,"/final/results.rdata",sep=""))
+save(df,ks,file=paste("results/",opts$dataset,"/final/results.rdata",sep=""))
 

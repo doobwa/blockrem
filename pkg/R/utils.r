@@ -165,7 +165,7 @@ evaluate <- function(edgelist,N,train.ix,test.ix,fit,niters=NULL,nranks=10) {
   if (fit$transform) stest$transform()
 
   # If not averaging across samples, use latest sample
-  last <- length(fit$samples)
+  last <- fit$iter #length(fit$samples)
   if (is.null(niters)) {
     iters <- last
   } else {
