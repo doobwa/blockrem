@@ -564,3 +564,34 @@ if (opts$save.figs) {
   ggsave(paste("figs/",opts$dataset,"/traceplots.pdf",sep=""),width=5,height=4)
 }
 
+
+### Temp figs
+## load(paste("results/",dataset,"/final/recall.rdata",sep=""))
+
+# Recall at k
+ggplot(ds) + geom_line(aes(x=k,y=value)) + facet_grid(L1 ~ model,scales="free")
+table(y$model)
+
+x <- subset(y,model=="uniform" &  L1 == "test")
+
+y <- subset(ds,as.character(L2)=="recall.30" & model!="full")
+q3 <- qplot(k,value,data=y,geom="line",colour=factor(model),groupby=factor(model)) + facet_grid(model ~ L1+L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+print(q3)
+
+q3 <- qplot(k,value,data=subset(ds,L2=="recall.30"),geom="line",colour=factor(model),groupby=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+print(q3)
+
+q4 <- qplot(k,value,data=subset(ds,L2=="recall.all"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+print(q4)
+
+## #ggsave(paste("figs/",opts$dataset,"/recall.200.pdf",sep=""),width=10,height=8)
+
+## q5 <- qplot(k,value,data=subset(ds,L2=="recall.all"),geom="line",colour=factor(model),group=factor(model)) + facet_grid(L1 ~ L2,scales="free") + theme_bw() + labs(x="cutpoint k",y="recall",colour="model")
+## print(q5)
+
+x <- rks$truth$train
+y <- rks$kinit10.sm0.nb0.deg0$train
+plot(x,y)
+x <- rks$truth$test
+y <- rks$kinit10.sm0.nb0.deg0$test
+plot(x,y)

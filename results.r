@@ -15,14 +15,16 @@ res$dataset <- factor(res$dataset,datasets)
 library(reshape2)
 res <- res[,c(1:3,5,4)]
 
-r <- subset(res,type=="test" & L1 %in% c("kinit10.sm0.nb1.deg0","marg","online","uniform"))
+r <- subset(res,type=="test")
+chosen.model <- "kinit10.sm0.nb1.deg1"
+r <- subset(r,L1 == chosen.model | L1 == "kinit10.sm0.nb0.deg0.trans1" | L1 %in% c("marg","online","uniform"))
 r <- dcast(r,dataset + metric ~ L1,fun.aggregate=sum)
 
-r <- subset(r, !dataset %in% c("enron-small","realitymining-small"))
+r <- subset(r, !dataset %in% c("realitymining-small"))
 colnames(r)[3] <- c("brem")
 r$dataset    <- as.character(r$dataset)
 r$metric <- as.character(r$metric)
-r <- r[,c(1,2,6,4,5,3)]
+r <- r[c("dataset","metric","uniform","marg","online",chosen.model)]
 r$dataset[-seq(1,nrow(r),by=2)] <- ""
 
 # Add truth for synthetic data
