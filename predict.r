@@ -43,15 +43,16 @@ for (model in c("online","uniform","marg")) {
   save.pred(pred,dataset,model)
 }
 
-results.dir <- paste("results/",opts$dataset,"/fits",sep="")
-models <- filenames(results.dir)
-skip   <- filenames(paste("results/",opts$dataset,"/ranks",sep=""))
-models <- setdiff(models,skip)
+folder <- paste("results/",opts$dataset,"/fits",sep="")
+models <- filenames(folder)
 for (model in models) {
   cat(model,"\n")
-  load(paste(results.dir,"/",model,".rdata",sep=""))
-  pred <- evaluate(A,N,train.ix,test.ix,fit,niters=NULL,ties.method="random")
-  save.pred(pred,dataset,model)
+  f <- paste(folder,"/",model,".rdata",sep="")
+  if ((!file.exists(f)) | opts$force) {
+    load(f)
+    pred <- evaluate(A,N,train.ix,test.ix,fit,niters=NULL,ties.method="random")
+    save.pred(pred,dataset,model)
+  }
 }
 
 if (dataset == "synthetic-1") {

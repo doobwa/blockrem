@@ -21,6 +21,8 @@ option_list <- list(
               help="Use negative binomial prior instead of CRP"),
   make_option("--collapse", default=FALSE,
               help="Integrate out sigma when sampling from beta"),
+  make_option("--force", default=FALSE,
+              help="Fit model even if rdata exists"),
   make_option("--numextra", type="integer", default=2,
               help="Number of extra clusters to sample from the prior")
   )
@@ -41,6 +43,11 @@ dir.create(paste("results/",opts$dataset,sep=""),showWarn=FALSE)
 dir.create(paste("results/",opts$dataset,"/fits/",sep=""),showWarn=FALSE)
 outfile <- paste("results/",opts$dataset,"/fits/",opts$model.type,".rdata",sep="")
 
+if (file.exists(outfile) & !opts$force) {
+  load(outfile)
+  if (fit$iter == fit$niter) stop(paste("Already fit this:",outfile))
+}
+
 effects <- c("intercept")
 if (opts$pshifts) {
   effects <- c(effects,"abba","abby","abay")
@@ -49,7 +56,7 @@ if (opts$degrees) {
   effects <- c(effects,"sen_outdeg","sen_indeg","dyad_count")
 }
 
-priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=2,beta=2))
+priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=2,beta=.5))
 
 K <- opts$numclusters
 if (opts$negbinom) priors$negbinom <- list(shape = 3, mu=N/K)

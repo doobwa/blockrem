@@ -20,6 +20,7 @@ rstats*
 example*
 tmp*
 /tmp/*
+/results/
 /data/eckmann-small.rdata
 /data/eckmann.rdata
 /data/eckmann/dyadic-small-sorted.rdata

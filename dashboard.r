@@ -29,7 +29,7 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-opts <- list(dataset="eckmann-small",predictions=TRUE)
+opts <- list(dataset="classroom-16",predictions=TRUE)
 
 # Pull data from each saved file and grab the name of the fit
 folder <- paste("results/",opts$dataset,"/fits",sep="")
@@ -66,8 +66,8 @@ llks <- do.call(rbind,llks)
 llks <- merge(llks,atts,by="model")
 names(llks)[10] <- "coll"
 
-llks <- subset(llks,iter > 2 & iter < 30 & kinit == 10)
-q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(pshift + deg ~ coll,scales="free")
+llks <- subset(llks,iter > 2 & iter < 100 & kinit == 10)
+q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(pshift + deg ~ coll)#,scales="free")
 q1
 
 tmp <- subset(llks,kinit==10 & pshift==1)
@@ -92,7 +92,7 @@ image(tmp)
 
 cat("Trace plot of beta.\n")
 library(coda)
-fit <- fits[[4]]
+fit <- fits[[5]]
 z <- fit$params$z
 table(z)
 table(z[train[,2]],z[train[,3]])
@@ -127,6 +127,10 @@ sigmas <- lapply(fit$samples,function(s) {
 r <- melt(sigmas)
 q1d <- qplot(L1,value,data=subset(r, Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw()# + facet_grid(Var2~Var3,scales="free")
 q1d
+
+# Trace plot of K
+Ks <- sapply(fit$samples,function(s) max(s$z))
+hist(Ks)
 
 cat("Plot of posterior probabilities at each level of the hierarchy")
 plot.posterior(train,N,fit)
