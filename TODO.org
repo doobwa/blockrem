@@ -285,6 +285,7 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [ ] more convincing motivation in Section 1
 - [ ] ditch handcock/schweinberger reference?
 - [ ] change title
+- [ ] mention continuous-time Markov jump process in Model section
 - [ ] Add mention of the supplemental material.
 - [ ] Add NIPSy references: Xing, Meek, Teh.
 - [ ] Add little bits of information/details.  e.g. Interestingly...

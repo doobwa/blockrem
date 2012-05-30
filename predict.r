@@ -50,7 +50,6 @@ models <- setdiff(models,skip)
 for (model in models) {
   cat(model,"\n")
   load(paste(results.dir,"/",model,".rdata",sep=""))
-  if (is.null(fit$transform)) fit$transform <- TRUE   # TODO: Temporary 
   pred <- evaluate(A,N,train.ix,test.ix,fit,niters=NULL,ties.method="random")
   save.pred(pred,dataset,model)
 }

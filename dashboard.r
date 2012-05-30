@@ -29,48 +29,52 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-chosen.model <- "kinit10.sm0.nb1.deg0.rdata"
-opts <- list(dataset="synthetic-1",predictions=TRUE)
 opts <- list(dataset="eckmann-small",predictions=TRUE)
 
 # Pull data from each saved file and grab the name of the fit
-results.dir <- paste("results/",opts$dataset,sep="")
+folder <- paste("results/",opts$dataset,"/fits",sep="")
 load(paste("data/",opts$dataset,".rdata",sep=""))
-dir.create(paste("results/",opts$dataset,"/ranks",sep=""),showWarn=FALSE)
-dir.create(paste("results/",opts$dataset,"/llks",sep=""),showWarn=FALSE)
-dir.create(paste("results/",opts$dataset,"/final",sep=""),showWarn=FALSE)
+modelnames <- function(folder) {
+  as.vector(sapply(dir(folder),function(x) strsplit(x,".rdata")[[1]][1]))
+}
+modelatts <- function(model) {
+  atts <- strsplit(model,"\\.")[[1]]
+  g <- function(x,y) as.numeric(strsplit(x,y)[[1]][2])
+  xs <- c("kinit","sm","nb","pshift","deg","trans","collapse")
+  a <- lapply(1:length(xs),function(i) g(atts[i],xs[i]))
+  names(a) <- xs
+  return(a)
+}
 
-fs <- list.files(results.dir,full.names=TRUE)
-fs <- fs[-grep("ranks",fs)]  # TODO: Bug if one of these not present
-fs <- fs[-grep("final",fs)]
-fs <- fs[-grep("llks",fs)]
-ix <- grep("counts",fs)
-if (length(ix) > 0) fs <- fs[-grep("counts",fs)]
-fnames <- unlist(strsplit(fs,".rdata"))
-fitnames <- sapply(fnames,function(f) strsplit(f,paste(results.dir,"/",sep=""))[[1]][2])
+fs <- list.files(folder,full.names=TRUE)
+models <- modelnames(folder)
+atts <- lapply(models,function(m) as.data.frame(modelatts(m)))
+atts <- do.call(rbind,atts)
+atts$model <- models
+
 fits <- lapply(fs,function(f) {
   load(f)
   return(fit)
 })
-names(fits) <- fitnames
+names(fits) <- models
 
 cat("Plotting log posterior during MCMC.\n")
 llks <- lapply(1:length(fits),function(i) {
-  data.frame(model=names(fits)[i],llk=fits[[i]]$lps,iter=1:fits[[i]]$niter)
+  data.frame(model=names(fits)[i],llk=fits[[i]]$llks,iter=1:fits[[i]]$niter)
 })
 llks <- do.call(rbind,llks)
+llks <- merge(llks,atts,by="model")
+names(llks)[10] <- "coll"
 
-llks <- subset(llks,iter>50)
-if (opts$dataset == "synthetic") {
-  load("data/synthetic.rdata")
-  q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model))+ geom_abline(intercept=true.lpost,slope=0) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() #+ limits(c(min(llks$llk),0),"y")
-} else {
-  q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw()
-}
+llks <- subset(llks,iter > 2 & iter < 30 & kinit == 10)
+q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(pshift + deg ~ coll,scales="free")
+q1
+
+tmp <- subset(llks,kinit==10 & pshift==1)
+q1 <- qplot(iter,llk,data=tmp,geom="line",colour=factor(nb),linetype=factor(coll)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(~deg)
+q1
 
 cat("Get final stat vectors\n")
-dataset <- "classroom-16"
-load(paste("data/",dataset,".rdata",sep=""))
 P <- dim(fit$params$beta)[1]
 strain <- new(RemStat,train[,1],as.integer(train[,2])-1,as.integer(train[,3])-1,N,nrow(train),P,as.integer(fit$ego))
 strain$precompute()
@@ -83,16 +87,12 @@ for (i in 1:N) {
   }
 }
 x <- melt(x)
-
 tmp <- acast(subset(x,Var1==12),L1~L2)
 image(tmp)
 
 cat("Trace plot of beta.\n")
 library(coda)
-dataset <- "classroom-16"
-load(paste("data/",dataset,".rdata",sep=""))
-chosen.model <- "kinit10.sm0.nb1.deg1.rdata"
-load(paste("results/",dataset,"/fits/",chosen.model,sep=""))
+fit <- fits[[4]]
 z <- fit$params$z
 table(z)
 table(z[train[,2]],z[train[,3]])

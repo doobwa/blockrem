@@ -35,7 +35,7 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 # Precompute data structures
 # N should be loaded by dataset
 P <- 13
-opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".deg",opts$degrees*1,".trans",opts$transform*1,".collapse",opts$collapse*1,sep="")
+opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".pshift",opts$pshifts*1,".deg",opts$degrees*1,".trans",opts$transform*1,".collapse",opts$collapse*1,sep="")
 
 dir.create(paste("results/",opts$dataset,sep=""),showWarn=FALSE)
 dir.create(paste("results/",opts$dataset,"/fits/",sep=""),showWarn=FALSE)
