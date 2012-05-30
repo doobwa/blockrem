@@ -132,7 +132,7 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
   sigma <- rgamma(P,priors$sigma$alpha,priors$sigma$beta)
   beta  <- sample_beta(beta,z,mu,sigma,priors,collapse.sigma=collapse.sigma)$beta
 
-  samples <- list()
+  samples <- vector('list',length=niter)
   lps <- llks <- acc <- rep(0,niter)
   for (iter in 1:niter) {
 

@@ -1,12 +1,19 @@
 
-datasets <- c("eckmann-small")#,"realitymining-small", "classroom-16", "classroom-17", "classroom-27", "classroom-29", "classroom-31", "enron-small")
+datasets <- c("synthetic-1","eckmann-small","realitymining-small", "classroom-16", "classroom-17", "classroom-27", "enron-small")
 res <- lapply(datasets,function(x) {
   f <-paste("results/",x,"/final/results.rdata",sep="")
-  if (file.exists(f)) load(f)
-  return(df[,1:5])
+  if (file.exists(f)) {
+    load(f)
+    return(df[,1:5])
+  } else {
+    return(data.frame())
+  }
 })
 names(res) <- datasets
-lapply(res,dim)
+
+bad <- which(sapply(res,dim)[1,] == 0)
+if (length(bad) > 0) res <- res[-bad]
+t(sapply(res,dim))
 
 res <- do.call(rbind,res)
 
@@ -16,18 +23,22 @@ library(reshape2)
 res <- res[,c(1:3,5,4)]
 
 r <- subset(res,type=="test")
-chosen.models <- c("kinit1.sm0.nb0.pshift1.deg1.trans1.collapse1",
-                   "kinit10.sm0.nb0.pshift0.deg0.trans1.collapse1",
-                   "kinit10.sm0.nb0.pshift1.deg1.trans1.collapse1")
+#chosen.models <- c("kinit1.sm0.nb0.pshift1.deg1.trans1.collapse1",
+#                   "kinit10.sm0.nb0.pshift0.deg0.trans1.collapse1",
+#                   "kinit10.sm0.nb0.pshift1.deg1.trans1.collapse1")
+chosen.models <- c("kinit1.sm0.nb0.pshift1.deg1.trans1.collapse0",
+                   "kinit10.sm0.nb0.pshift0.deg0.trans1.collapse0",
+                   "kinit10.sm0.nb0.pshift1.deg0.trans1.collapse0",
+                   "kinit10.sm0.nb0.pshift1.deg1.trans1.collapse0")
 r1 <- subset(res,L1 %in% chosen.models & type=="test")
 r2 <- subset(res,L1 %in% c("marg","online","uniform") & type=="test")
 r <- dcast(rbind(r1,r2),dataset + metric ~ L1,fun.aggregate=sum)
-colnames(r)[3:5] <- c("Blockmodel","BREM","K=1")
+colnames(r)[3:6] <- c("BREM.0","BREM.01","BREM.012","K=1")
 
 #r <- subset(r, !dataset %in% c("realitymining-small"))
 r$dataset    <- as.character(r$dataset)
 r$metric <- as.character(r$metric)
-r <- r[c("dataset","metric","uniform","marg","online","K=1","Blockmodel","BREM")]
+r <- r[c("dataset","metric","uniform","marg","online","K=1","BREM.0","BREM.01","BREM.012")]
 r$dataset[-seq(1,nrow(r),by=2)] <- ""
 
 # Add truth for synthetic data
