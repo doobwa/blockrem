@@ -1,5 +1,5 @@
 
-datasets <- c("synthetic-1","eckmann-small", "realitymining-small", "classroom-16", "classroom-17", "classroom-27", "classroom-29", "classroom-31", "enron-small")
+datasets <- c("synthetic-1","eckmann-small","realitymining-small", "classroom-16", "classroom-17", "classroom-27", "classroom-29", "classroom-31", "enron-small")
 res <- lapply(datasets,function(x) {
   f <-paste("results/",x,"/final/results.rdata",sep="")
   if (file.exists(f)) load(f)
@@ -17,7 +17,7 @@ res <- res[,c(1:3,5,4)]
 
 r <- subset(res,type=="test")
 chosen.model <- "kinit10.sm0.nb1.deg1"
-r <- subset(r,L1 == chosen.model | L1 == "kinit10.sm0.nb0.deg0.trans1" | L1 %in% c("marg","online","uniform"))
+r <- subset(r,L1 == chosen.model | L1 == "kinit10.sm0.nb1.deg0.trans1" | L1 %in% c("marg","online","uniform"))
 r <- dcast(r,dataset + metric ~ L1,fun.aggregate=sum)
 
 r <- subset(r, !dataset %in% c("realitymining-small"))
@@ -32,13 +32,14 @@ r$truth <- NA
 r$truth[1:4] <- subset(res,L1 == "truth" & type=="test")$value
 
 a <- subset(r, metric %in% c("rem","mult"))
+b <- subset(r, metric %in% c("rank5","rank20"))
+b$metric <- c("@  5", "@ 20")
+
 #r$likelihood[-seq(1,nrow(r),by=2)] <- ""
 library(xtable)
 xr <- xtable(a,caption="Comparing mean loglikelihood for each event across methods for each dataset.  Larger values are better.  See text for details.",label="tab:results",digits=3)
 print(xr,include.rownames=FALSE,file=paste("figs/results-llk.tex",sep=""),NA.string="",table.placement="t",size="footnotesize")
 
-b <- subset(r, metric %in% c("rank5","rank20"))
-b$metric <- c("@  5", "@ 20")
 xr <- xtable(b,caption="Predictive accuracy on a recall task.  Larger values are better.  See text for details.",label="tab:results",digits=3)
 print(xr,include.rownames=FALSE,file=paste("figs/results-recall.tex",sep=""),NA.string="",table.placement="t",size="footnotesize")
 

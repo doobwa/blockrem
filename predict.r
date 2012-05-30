@@ -18,9 +18,6 @@ options(verbose=FALSE)
 dataset <- opts$dataset
 load(paste("data/",dataset,".rdata",sep=""))
 
-train.ix <- 1:nrow(train)
-test.ix <- (1:nrow(A))[-(1:nrow(train))]
-
 ## Temporary: to fit in with rest of pipeline
 save.pred <- function(pred,dataset,model) {
   llkm.train <- pred$mllk$train
@@ -48,10 +45,12 @@ for (model in c("online","uniform","marg")) {
 
 results.dir <- paste("results/",opts$dataset,"/fits",sep="")
 models <- filenames(results.dir)
+skip   <- filenames(paste("results/",opts$dataset,"/ranks",sep=""))
+models <- setdiff(models,skip)
 for (model in models) {
   cat(model,"\n")
   load(paste(results.dir,"/",model,".rdata",sep=""))
-  fit$transform <- TRUE
+  if (is.null(fit$transform)) fit$transform <- TRUE   # TODO: Temporary 
   pred <- evaluate(A,N,train.ix,test.ix,fit,niters=NULL,ties.method="random")
   save.pred(pred,dataset,model)
 }

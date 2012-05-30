@@ -41,13 +41,15 @@ dir.create(paste("results/",opts$dataset,sep=""),showWarn=FALSE)
 dir.create(paste("results/",opts$dataset,"/fits/",sep=""),showWarn=FALSE)
 outfile <- paste("results/",opts$dataset,"/fits/",opts$model.type,".rdata",sep="")
 
+effects <- c("intercept")
+if (opts$pshifts) {
+  effects <- c(effects,"abba","abby","abay")
+}
 if (opts$degrees) {
-  effects <- c("intercept","abba","abby","abay","sen_outdeg","sen_indeg","dyad_count")
-} else {
-  effects <- c("intercept","abba","abby","abay")
+  effects <- c(effects,"sen_outdeg","sen_indeg","dyad_count")
 }
 
-priors <- list(alpha=.1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=2,beta=2))
+priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=2,beta=2))
 
 K <- opts$numclusters
 if (opts$negbinom) priors$negbinom <- list(shape = 3, mu=N/K)
