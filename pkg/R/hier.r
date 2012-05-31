@@ -129,7 +129,7 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
   
   z     <- sample(1:K,N,rep=T)
   mu    <- rep(0,P)
-  sigma <- rgamma(P,priors$sigma$alpha,priors$sigma$beta)
+  sigma <- rinvgamma(P,priors$sigma$alpha,priors$sigma$beta)
   beta  <- sample_beta(beta,z,mu,sigma,priors,collapse.sigma=collapse.sigma)$beta
 
   samples <- vector('list',length=niter)

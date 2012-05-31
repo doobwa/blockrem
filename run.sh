@@ -1,20 +1,26 @@
 #opts=list(dataset="synthetic",numclusters=2,model.type="full",gibbs=TRUE,numiterations=100,slice=TRUE,mh=FALSE,initialize=FALSE,fixz=FALSE,skip.intercept=FALSE)
 #opts=list(dataset="synthetic",numclusters=2,numiterations=20,splitmerge=FALSE,numextra=2,model.type="full")
 
-"synthetic-1" "eckmann-small" "classroom-16" "classrom-17" "classroom-27" "classroom-29" "classroom-31" "twitter-small" "enron-small" "irvine"
+"synthetic-1" "eckmann-small" "classroom-16" "classrom-17" "classroom-27" "classroom-29" "classroom-31" "realitymining-small" "twitter-small" "enron-small" "irvine"
+
+./parallel --sshlogin  2/d7,2/d8,3/d11,5/d12 'cd /extra/duboisc0/blockrem;./predict.r -d {1} --force {2}' ::: "synthetic-1" ::: TRUE
+
+./parallel --sshlogin  4/d10,6/d11 'cd /extra/duboisc0/blockrem;./predict.r -d {1} --force {2} --baselines {3}' ::: "synthetic-1" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" ::: TRUE ::: FALSE TRUE
+./parallel --sshlogin  4/d10,6/d11 'cd /extra/duboisc0/blockrem;./predict.r -d {1} --force {2} --baselines {3}' ::: "classroom-16" "classroom-17" "classroom-27" ::: TRUE ::: FALSE TRUE
+"realitymining-small" "twitter-small" "enron-small" "irvine" 
 
 # All
-./parallel --sshlogin 8/d7,7/d11,8/d12 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5' ::: "synthetic-1" ::: 1 10 ::: FALSE ::: FALSE TRUE ::: FALSE TRUE ::: FALSE TRUE ::: FALSE TRUE
+./parallel --sshlogin 8/d11 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' ::: "realitymining-small" ::: 10 ::: FALSE ::: FALSE  ::: FALSE  ::: FALSE ::: FALSE  ::: FALSE
+./parallel --sshlogin 8/d11 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' ::: "realitymining-small" ::: 1 10 ::: FALSE ::: TRUE ::: FALSE TRUE ::: FALSE ::: FALSE  ::: FALSE
 
 # Intercept only models with K=10
-./parallel --sshlogin 8/d7,8/d12 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' :::  "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "twitter-small" "irvine" ::: 10 ::: FALSE ::: FALSE ::: FALSE ::: FALSE ::: FALSE TRUE ::: FALSE
+./parallel --sshlogin 6/d5,4/d6 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' :::  "synthetic-1" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "twitter-small" "irvine" ::: 10 ::: FALSE ::: FALSE ::: FALSE ::: FALSE ::: FALSE ::: TRUE
 
 # Intercept and pshift with K=10
-./parallel --sshlogin 4/d5,4/d6 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' :::  "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "twitter-small" "irvine" ::: 10 ::: FALSE ::: TRUE ::: FALSE ::: FALSE ::: FALSE ::: FALSE
+./parallel --sshlogin 6/d8,4/d10,6/d11 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' :::  "synthetic-1" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "twitter-small" ::: 1 10 ::: FALSE ::: TRUE ::: FALSE ::: FALSE ::: FALSE ::: TRUE
 
 # Intercept and pshift and degree with K=1 and K=10
-./parallel --sshlogin 4/d8,4/d10,8/d12 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8}' ::: "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "twitter-small" "irvine" ::: 1 10 ::: FALSE ::: TRUE ::: TRUE ::: FALSE ::: FALSE ::: FALSE
-
+./parallel --sshlogin  6/d8,4/d10,6/d11 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --numclusters {2} --numiterations 500 --splitmerge {3} --pshifts {4} --degrees {5} --negbinom {6} --collapse {7} --numextra 5 --force {8} --sigmahyper {9}' ::: "synthetic-1" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" ::: 1 10 ::: FALSE ::: TRUE ::: TRUE ::: FALSE ::: FALSE ::: TRUE ::: .1 .01
 
 
 
@@ -27,7 +33,6 @@
 ./parallel --sshlogin 8/d11,8/d12 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "realitymining-small" "enron-small" ::: 10 ::: FALSE ::: FALSE TRUE ::: FALSE TRUE
 
 ./parallel --sshlogin 4/d11 'cd /extra/duboisc0/blockrem;./brem.r -d {1} -k {2} -n 500 -s {3} -g {4} -b {5} -e 5' ::: "synthetic-1" ::: 10 ::: FALSE ::: FALSE ::: FALSE TRUE
-./parallel --sshlogin  4/d11 'cd /extra/duboisc0/blockrem;./predict.r -d {1}' ::: "synthetic-1"
 
  "realitymining-small" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "classroom-29" "classroom-31" "enron-small"
 
@@ -74,7 +79,7 @@ rsync -auvz dashboard.r duboisc@d1:/extra/duboisc0/blockrem/
 # Helper commands
 cd ~/Documents/blockrem/
 rsync -auvz pkg duboisc@d1:/extra/duboisc0/blockrem/ --exclude '*.so' --exclude '*.o'
-rsync -auvz pkg/R/splitmerge.r duboisc@d1:/extra/duboisc0/blockrem/pkg/R/
+rsync -auvz pkg/R/utils.r duboisc@d1:/extra/duboisc0/blockrem/pkg/R/
 rsync -auvz brem.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz predict.r duboisc@d1:/extra/duboisc0/blockrem/
 rsync -auvz getcounts.r duboisc@d1:/extra/duboisc0/blockrem/
@@ -98,3 +103,19 @@ rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/tmp.rdata .
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/tmp.slice.rdata .
 rsync -auvz duboisc@d1:/extra/duboisc0/blockrem/tmp.slice.m5.rdata .
 
+rm -rf results/synthetic-1/llks
+rm -rf results/synthetic-1/ranks
+rm -rf results/eckmann-small/llks
+rm -rf results/eckmann-small/ranks
+rm -rf results/enron-small/llks
+rm -rf results/enron-small/ranks
+rm -rf results/classroom-16/llks
+rm -rf results/classroom-16/ranks
+rm -rf results/classroom-17/llks
+rm -rf results/classroom-17/ranks
+rm -rf results/classroom-27/llks
+rm -rf results/classroom-27/ranks
+rm -rf results/reality-mining/llks
+rm -rf results/reality-mining/ranks
+rm -rf results/twitter-small/llks
+rm -rf results/twitter-small/ranks

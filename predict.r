@@ -13,12 +13,13 @@ option_list <- list(
 parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 
-#library(brem);opts <- list(dataset="eckmann-small")
+#library(brem);opts <- list(dataset="eckmann-small",baselines=FALSE,force=TRUE)
 
 options(verbose=FALSE)
 
 dataset <- opts$dataset
 load(paste("data/",dataset,".rdata",sep=""))
+cat(dataset)
 
 train.ix <- 1:nrow(train)
 test.ix <- (1:nrow(A))[-train.ix]
@@ -33,6 +34,8 @@ save.pred <- function(pred,dataset,model) {
   rk.test <- pred$rks$test
   dir.create(paste("results/",dataset,"/final/",sep=""),showWarnings=FALSE)
   dir.create(paste("results/",dataset,"/llks/",sep=""),showWarnings=FALSE)
+  dir.create(paste("results/",dataset,"/preds/",sep=""),showWarnings=FALSE)
+  save(pred,opts,file=paste("results/",dataset,"/preds/",model,".rdata",sep=""))
   save(llkm.train,llkm.test,llk.train,llk.test,opts,file=paste("results/",dataset,"/llks/",model,".rdata",sep=""))
   dir.create(paste("results/",dataset,"/ranks/",sep=""),showWarnings=FALSE)
   save(rk.train,rk.test,opts,file=paste("results/",dataset,"/ranks/",model,".rdata",sep=""))
@@ -64,7 +67,7 @@ if (opts$baselines) {
 
 if (opts$dataset == "synthetic-1") {
   niter <- 500
-  fit <- list(samples=list(list(beta=beta,z=z)),llks=rep(true.lpost,niter),niter=niter,zs=rep(list(z),iter=1),param=beta,ego=1,transform=TRUE)  # true values
+  fit <- list(samples=list(list(beta=beta,z=z)),llks=rep(true.lpost,niter),niter=niter,zs=rep(list(z),iter=1),params=list(beta=beta,z=z),ego=1,transform=TRUE)  # true values
   pred <- evaluate(A,N,train.ix,test.ix,fit,niters=NULL)
   save.pred(pred,dataset,"truth")
 }

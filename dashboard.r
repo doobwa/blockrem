@@ -29,7 +29,7 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-opts <- list(dataset="realitymining-small",predictions=TRUE)
+opts <- list(dataset="classroom-16",predictions=TRUE)
 dataset <- opts$dataset
 
 # Pull data from each saved file and grab the name of the fit
@@ -67,13 +67,71 @@ llks <- do.call(rbind,llks)
 llks <- merge(llks,atts,by="model")
 names(llks)[10] <- "coll"
 
-llks <- subset(llks,iter > 3 & iter < 30 & kinit == 10)
-q1 <- qplot(iter,llk,data=llks,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(pshift + deg ~ coll,scales="free")
+tmp <- subset(llks,iter > 3 & iter < 200 & kinit == 10)
+q1 <- qplot(iter,llk,data=tmp,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(pshift + deg ~ coll,scales="free")
 q1
 
-tmp <- subset(llks,kinit==10 & pshift==1)
-q1 <- qplot(iter,llk,data=tmp,geom="line",colour=factor(nb),linetype=factor(coll)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(~deg)
+tmp <- subset(llks,iter > 5 & iter < 100)# & coll == 1 & nb==0)
+q1 <- qplot(iter,llk,data=tmp,geom="line",colour=factor(nb),linetype=factor(coll)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(kinit~deg+pshift)
 q1
+
+
+cat("Trace plot of beta.\n")
+library(coda)
+t(t(names(fits)))
+fit <- fits[[5]]
+z <- fit$params$z
+table(z)
+table(z[train[,2]],z[train[,3]])
+
+# Trace plot of upper level means
+mus <- lapply(fit$samples[1:fit$iter],function(s) {
+  as.matrix(s$mu)
+})
+r <- melt(mus)
+q1c <- qplot(L1,value,data=subset(r, Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw()# + facet_grid(Var2~Var3,scales="free")
+q1c
+
+# Trace plot of upper level sigmas
+sigmas <- lapply(fit$samples[1:fit$iter],function(s) {
+  as.matrix(s$sigma)
+})
+r <- melt(sigmas)
+q1d <- qplot(L1,value,data=subset(r, Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw()# + facet_grid(Var2~Var3,scales="free")
+q1d
+
+# Trace plot of K
+Ks <- sapply(fit$samples[1:fit$iter],function(s) max(s$z))
+hist(Ks)
+
+cat("Plot of posterior probabilities at each level of the hierarchy\n")
+plot.posterior(train,N,fit)
+
+betas <- melt(fit$params$beta)
+betas <- subset(betas,Var1 %in% fit$priors$px)
+qplot(value,Var1,data=betas) + facet_grid(Var2 ~ Var3)
+
+betas <- lapply(fit$samples,function(s) s$beta)
+r <- melt(betas)
+r <- subset(r,Var1 %in% fit$priors$px & L1 > 100 & Var2 < 4 & Var3 < 4)
+qplot(factor(Var1), value, data=r, geom="boxplot") + facet_grid(Var2~Var3,scales="free")
+
+# Trace plot of intercept and pshifts
+r <- subset(r, Var2 < 10 & Var3 < 10)
+q1a <- qplot(L1,value,data=subset(r, L1 > 10 & Var1 %in% c(1,2,3,6)), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3)#,scales="free")
+q1a
+
+# Trace plot of degree effects
+q1b <- qplot(L1,value,data=subset(r, L1 > 10 & Var1 %in% c(8,10,12)), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3,scales="free")
+q1b
+
+# Trace plot of all effects
+q1b <- qplot(L1,value,data=subset(r, L1 > 40 & Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3,scales="free")
+q1b
+
+
+if (FALSE) {
+
 
 cat("Get final stat vectors\n")
 P <- dim(fit$params$beta)[1]
@@ -90,54 +148,7 @@ for (i in 1:N) {
 x <- melt(x)
 tmp <- acast(subset(x,Var1==12),L1~L2)
 image(tmp)
-
-cat("Trace plot of beta.\n")
-library(coda)
-fit <- fits[[4]]
-z <- fit$params$z
-table(z)
-table(z[train[,2]],z[train[,3]])
-betas <- lapply(fit$samples,function(s) s$beta)
-r <- melt(betas)
-
-# Trace plot of intercept and pshifts
-r <- subset(r, Var2 < 10 & Var3 < 10)
-q1a <- qplot(L1,value,data=subset(r, L1 > 10 & Var1 %in% c(1,2,3,6)), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3)#,scales="free")
-q1a
-
-# Trace plot of degree effects
-q1b <- qplot(L1,value,data=subset(r, L1 > 10 & Var1 %in% c(8,10,12)), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3,scales="free")
-q1b
-
-# Trace plot of all effects
-q1b <- qplot(L1,value,data=subset(r, L1 > 40 & Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw() + facet_grid(Var2~Var3,scales="free")
-q1b
-
-# Trace plot of upper level means
-mus <- lapply(fit$samples,function(s) {
-  as.matrix(s$mu)
-})
-r <- melt(mus)
-q1c <- qplot(L1,value,data=subset(r, Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw()# + facet_grid(Var2~Var3,scales="free")
-q1c
-
-# Trace plot of upper level sigmas
-sigmas <- lapply(fit$samples,function(s) {
-  as.matrix(s$sigma)
-})
-r <- melt(sigmas)
-q1d <- qplot(L1,value,data=subset(r, Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw()# + facet_grid(Var2~Var3,scales="free")
-q1d
-
-# Trace plot of K
-Ks <- sapply(fit$samples,function(s) max(s$z))
-hist(Ks)
-
-cat("Plot of posterior probabilities at each level of the hierarchy")
-plot.posterior(train,N,fit)
-
-cat("Plot overall rate\n")
-if (FALSE) {
+  
   s <- new(RemStat,A[,1],as.integer(A[,2])-1,as.integer(A[,3])-1,N,nrow(A),P)
   s$precompute()
   lrm <- LogIntensityArrayPc(fit$beta,fit$z-1,s$ptr(),K)

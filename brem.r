@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("brem"))
+suppressPackageStartupMessages(library("MCMCpack"))
 
 option_list <- list(
   make_option("--dataset", 
@@ -21,6 +22,8 @@ option_list <- list(
               help="Use negative binomial prior instead of CRP"),
   make_option("--collapse", default=FALSE,
               help="Integrate out sigma when sampling from beta"),
+  make_option("--sigmahyper", default=.1,
+              help="Sigma hyperparameter"),
   make_option("--force", default=FALSE,
               help="Fit model even if rdata exists"),
   make_option("--numextra", type="integer", default=2,
@@ -30,14 +33,14 @@ parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 #library(brem); opts <- list(dataset="twitter-small",numclusters=20,numiterations=100,splitmerge=FALSE,numextra=5,model.type="full")
 #library(brem); opts <- list(dataset="realitymining-small",numclusters=20,numiterations=500,splitmerge=FALSE,numextra=5,model.type="full")
-#library(brem); opts <- list(dataset="eckmann-small",numclusters=10,numiterations=500,splitmerge=FALSE,numextra=5,negbinom=FALSE,degrees=FALSE)
+#library(brem); opts <- list(dataset="classroom-16",numclusters=10,numiterations=500,splitmerge=FALSE,numextra=5,negbinom=FALSE,degrees=FALSE,transform=TRUE,collapse=TRUE,sigmahyper=".01",numextra="5",force=TRUE,pshifts=TRUE,degrees=TRUE)
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
 
 # Precompute data structures
 # N should be loaded by dataset
 P <- 13
-opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".pshift",opts$pshifts*1,".deg",opts$degrees*1,".trans",opts$transform*1,".collapse",opts$collapse*1,sep="")
+opts$model.type <- paste("kinit",opts$numclusters,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".pshift",opts$pshifts*1,".deg",opts$degrees*1,".trans",opts$transform*1,".collapse",opts$collapse*1,".sigmahyper",opts$sigmahyper,sep="")
 
 dir.create(paste("results/",opts$dataset,sep=""),showWarn=FALSE)
 dir.create(paste("results/",opts$dataset,"/fits/",sep=""),showWarn=FALSE)
@@ -56,7 +59,8 @@ if (opts$degrees) {
   effects <- c(effects,"sen_outdeg","sen_indeg","dyad_count")
 }
 
-priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=2,beta=.5))
+sigma.hyper <- as.numeric(opts$sigmahyper)
+priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=sigma.hyper,beta=sigma.hyper))
 
 K <- opts$numclusters
 if (opts$negbinom) priors$negbinom <- list(shape = 3, mu=N/K)
