@@ -39,7 +39,6 @@ res <- mclapply(datasets,function(dataset) {
   })
   names(llks) <- models
   return(llks)
-  #res[[i]] <- llks
 })
 names(res) <- datasets
 
