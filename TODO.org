@@ -290,10 +290,13 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [ ] Add NIPSy references: Xing, Meek, Teh.
 - [ ] Add little bits of information/details.  e.g. Interestingly...
 - [ ] Fix description of model specification with rich-get-richer bit
-- [ ] Mention what happens with cluster pairs that have no
+- [ ] Mention what happens with cluster pairs that have no data
+- [ ] Mention sensitivity of hyperparameters to overfitting
 * Bugs
 ** TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
 ** TODO Huge hit in loglikelihood as soon as a new cluster appears?
 - [X] add statistic transformation as an option in brem()
 * Smyth meting
-Look at predictions from *last* sample
+- Look at predictions from *last* sample
+- Add option for hard upper limit on number of clusters
+- Consider other hyperparameter settings

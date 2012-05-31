@@ -9,7 +9,8 @@ option_list <- list(
               help="Name of dataset with data at /data/[dataset].rdata 
                     and results at /results/[dataset]/."),
   make_option("--force", default=FALSE),
-  make_option("--baselines", default=FALSE))
+  make_option("--baselines", default=FALSE),
+  make_option("--niters", default=10)  )
 parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 
@@ -59,7 +60,7 @@ if (opts$baselines) {
     f <- paste(folder,"/",model,".rdata",sep="")
     if ((!file.exists(f)) | opts$force) {
       load(f)
-      pred <- evaluate(A,N,train.ix,test.ix,fit,niters=10)
+      pred <- evaluate(A,N,train.ix,test.ix,fit,niters=as.numeric(opts$niters))
       save.pred(pred,dataset,model)
     }
   }
