@@ -9,6 +9,8 @@ priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sig
 # Fit and save model
 source("pkg/R/hier.r")
 source("pkg/R/splitmerge.r")
+fit <- brem(train,N,priors,kinit=kinit,kmax=kmax,effects=effects,transform=opts$transform,do.sm=opts$splitmerge,num.extra=opts$numextra,niter=opts$numiterations,collapse.sigma=opts$collapse,outfile=outfile)
+
 fit <- brem(train,N,priors,K,effects,niter=500,do.sm=FALSE)
 save(fit,file=outfile)
 

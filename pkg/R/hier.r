@@ -1,9 +1,8 @@
 lpz <- function(count,priors) {
-  if (!is.null(priors$nb)) {
-    dnbinom(count,priors$nb$shape,mu=priors$nb$mu,log=TRUE)
-  } else {
-    log(count + priors$alpha)
-  }
+  lp <- switch(priors$type,
+               "crp" = log(count + priors$alpha),
+               "nb"  = dnbinom(count,priors$nb$shape,mu=priors$nb$mu,log=TRUE),
+               "bcrp"= 3 * log(count + priors$alpha))
 }
 
 ##' RemStat object s required in environment

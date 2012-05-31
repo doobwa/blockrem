@@ -10,11 +10,11 @@ option_list <- list(
                     and results at /results/[dataset]/."),
   make_option("--force", default=FALSE),
   make_option("--baselines", default=FALSE),
-  make_option("--niters", default=10)  )
+  make_option("--niters", type="integer", default=10)  )
 parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 
-#library(brem);opts <- list(dataset="eckmann-small",baselines=FALSE,force=TRUE)
+#library(brem);library(reshape2);opts <- list(dataset="eckmann-small",baselines=FALSE,force=TRUE,niters=1)
 
 options(verbose=FALSE)
 
@@ -46,13 +46,13 @@ filenames <- function(folder) {
   as.vector(sapply(dir(folder),function(x) strsplit(x,".rdata")[[1]][1]))
 }
 
-if (opts$baselines) {              
+#if (opts$baselines) {              
   for (model in c("online","uniform","marg")) {
     cat(model,"\n")
     pred <- evaluate.baseline(A,N,train.ix,test.ix,model)
     save.pred(pred,dataset,model)
   }
-} else  {
+#} else  {
   folder <- paste("results/",opts$dataset,"/fits",sep="")
   models <- filenames(folder)
   for (model in models) {
@@ -64,7 +64,7 @@ if (opts$baselines) {
       save.pred(pred,dataset,model)
     }
   }
-}
+#}
 
 if (opts$dataset == "synthetic-1") {
   niter <- 500
@@ -128,7 +128,6 @@ ds <- lapply(rks,function(r) {
 for (i in 1:length(ds)) ds[[i]]$model <- models[i]
 ds <- do.call(rbind,ds)
 rownames(ds) <- c()
-t(t(table(ds$model)))
 
 save(ds,file=paste("results/",dataset,"/final/recall.rdata",sep=""))
 
@@ -166,6 +165,7 @@ rk <- do.call(rbind,rk)
 
 df <- rbind(df,rk)
 df$dataset <- opts$dataset
+t(t(table(df$model)))
 
 # Get mean and sd of K over each fit
 folder <- paste("results/",opts$dataset,"/fits/",sep="")
