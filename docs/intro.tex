@@ -27,8 +27,6 @@ Figure \ref{fig:introexample} shows how an analysis using a blockmodels will be 
 %
 %comprised of several teams, each team may uncover different patterns for collaborating via email---individuals in one group may respond more quickly, while another group may preferentially send to highly active individuals.
 
-% TODO: Mention dynamic stochastic equivalence
-
 Borrowing from the intuition of stochastic blockmodels, we propose a continuous-time model of network-based event sequences where latent clusters of nodes share similar patterns of interaction.
 Our approach employs a flexible framework for  specifing how the process depends on the previous history of events \cite{AalenOddO.2008, Butts2008}.
 %extend continuous-time models from event history analysis to model sequences of network-based event data \cite{Butts2008,Brandes2009,Perry2011,Stadtfeld2010,Stadtfeld2011,Opsahl2011,Vu2011,Vu2011a}. % \cite{AalenOddO.2008} 
@@ -43,6 +41,6 @@ Finally we show that the parameter estimates exhibit an interpretable structure 
 \begin{figure}
 \centering
 \includegraphics[scale=.8]{../figs/introexample/all}
-\caption{}
+\caption{Illustration of differentiation by rate of interaction versus by dynamics.  The left column shows an example where within-block communication is large, and there is a higher tendency for reciprocity within a block.  In the situation where the two groups are not differentiated by rate, as in the right column, a standard blockmodel is unable to distinguish between groups A and B.  The proposed method can, however, learn such groups by employing more flexible definitions of shared dynamics.}
 \label{fig:example}
 \end{figure}

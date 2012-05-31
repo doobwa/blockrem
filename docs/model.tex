@@ -80,7 +80,7 @@ This is sensible in distributed settings where $i$ has limited knowledge about i
 In the Supplementary Material we show how this assumption also reduces the computational complexity of computing the above likelihood.
 %\footnote{TODO: This is analogous to a Markov condition for this class of models.}
 
-We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \sim N(0,1)$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(3,1)$.
+We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \propto 1$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(\alpha_{\sigma},\beta{\sigma})$.
 The cluster assignments are given a non-parameteric priors $z_i \sim \mbox{CRP}(\alpha)$.
 
 \subsection{Model specification}

@@ -283,20 +283,22 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [ ] mention why we can't use EM
 - [ ] rotate plots for synthetic example
 - [ ] more convincing motivation in Section 1
-- [ ] ditch handcock/schweinberger reference?
-- [ ] change title
-- [ ] mention continuous-time Markov jump process in Model section
-- [ ] Add mention of the supplemental material.
-- [ ] Add NIPSy references: Xing, Meek, Teh.
+- [X] ditch handcock/schweinberger reference?
+- [X] change title
+- [X] mention continuous-time Markov jump process in Model section
+- [X] Add mention of the supplemental material.
+- [ ] Add NIPSy references: Xing, Teh.
 - [ ] Add little bits of information/details.  e.g. Interestingly...
-- [ ] Fix description of model specification with rich-get-richer bit
-- [ ] Mention what happens with cluster pairs that have no data
-- [ ] Mention sensitivity of hyperparameters to overfitting
+- [X] Remove description of model specification with rich-get-richer bit
+- [X] Mention what happens with cluster pairs that have no data
+- [X] Mention sensitivity of hyperparameters to overfitting
 * Bugs
-** TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
-** TODO Huge hit in loglikelihood as soon as a new cluster appears?
+- [X] TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
+- [X] TODO Huge hit in loglikelihood as soon as a new cluster appears?
 - [X] add statistic transformation as an option in brem()
-* Smyth meting
-- Look at predictions from *last* sample
-- Add option for hard upper limit on number of clusters
-- Consider other hyperparameter settings
+- [X] Small sigma hyperparameters crashing things. (From extreme
+  normals that get generated after large sigma is generated.)
+* Smyth meeting
+- [X] Look at predictions from *last* sample
+- [X] Add option for hard upper limit on number of clusters
+- [ ] Consider other hyperparameter settings
