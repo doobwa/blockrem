@@ -1,13 +1,13 @@
 \section{Introduction}
 
-Statistical methods for analyzing network data are becoming increasingly useful for studying phenomena ranging from online social behavior to protein interactions \cite{Goldenberg2009}.
-- observe network data over time
-- interested how nodes differ in the rate of activity with other parts of the network
-  - why?
-  - based on some other covariate
-- methods for static networks can be applied to the marginal rate
-  - model this heterogeneity by assuming subgroups of nodes have similar tendencies in their group-wise interactions.
+Statistical methods for analyzing network data are becoming increasingly useful for studying phenomena ranging from online social behavior to protein  interactions \cite{Goldenberg2009}.
+We often  observe events occurring between nodes over time, and a common goal is to understand the differences in the total number of interactions --- perhaps with respect to information known about the nodes.
+%In this case, we have a count for the total activity of each dyad, and one may analyze it has a static network. 
+%Methods for static networks such as a 
+Stochastic blockmodels \cite{} are a class of techniques which can model this heterogeneity by assuming latent subgroups of nodes have similar tendencies in their group-wise rate of interaction.
 
+Network-based event data is powerful, however, because we may study processes occurring at 
+However, other questions of int
 - Some of the questions of interest for dynamic data may not be answerable from the marginal rate
 - Example of what we'll call a type of dynamics
 - Example where the question cannot be answered (referring to Figure1 )
