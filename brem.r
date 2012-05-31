@@ -28,7 +28,9 @@ option_list <- list(
               help="Integrate out sigma when sampling from beta"),
   make_option("--crp.hyper", type="numeric",default=.1,
               help="Sigma hyperparameter"),
-  make_option("--sigma.hyper", type="numeric",default=.1,
+  make_option("--sigma.hyper.alpha", type="numeric",default=1,
+              help="Sigma hyperparameter"),
+  make_option("--sigma.hyper.beta", type="numeric",default=1,
               help="Sigma hyperparameter"),
   make_option("--force", default=FALSE,
               help="Fit model even if rdata exists"),
@@ -37,18 +39,19 @@ option_list <- list(
   )
 parser <- OptionParser(usage = "%prog [options] file", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
-#library(MCMCpack);library(brem); opts <- list(dataset="enron-small",numiterations=500,splitmerge=FALSE,numextra=5,negbinom=FALSE,degrees=FALSE,transform=TRUE,collapse=TRUE,numextra="5",force=TRUE,pshifts=TRUE,degrees=TRUE,kinit=2,kmax=3,crp.hyper=1,sigma.hyper=1)
+
+#library(MCMCpack);library(brem); opts <- list(dataset="classroom-16",numiterations=500,splitmerge=FALSE,numextra=5,negbinom=FALSE,degrees=FALSE,transform=TRUE,collapse=TRUE,numextra="5",force=TRUE,pshifts=TRUE,degrees=TRUE,kinit=2,kmax=3,crp.hyper=1,sigma.hyper=.1,type="crp");outfile=NULL
 
 load(paste("data/",opts$dataset,".rdata",sep=""))
 
 # Precompute data structures
 # N should be loaded by dataset
 P <- 13
-opts$model.type <- paste("kinit",opts$kinit,".kmax",opts$kmax,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".pshift",opts$pshifts*1,".deg",opts$degrees*1,".trans",opts$transform*1,".collapse",opts$collapse*1,sep="")#".crphyper",opts$crp.hyper,".sigmahyper",opts$sigma.hyper,sep="")
-
+opts$model.type <- paste("kinit",opts$kinit,".kmax",opts$kmax,".sm",opts$splitmerge*1,".nb",opts$negbinom*1,".pshift",opts$pshifts*1,".deg",opts$degrees*1,".trans",opts$transform*1,".collapse",opts$collapse*1,".xsigalpha",opts$sigma.hyper.alpha*1000,".xsigbeta",opts$sigma.hyper.beta*1000,sep="")#".crphyper",opts$crp.hyper,".sigmahyper",opts$sigma.hyper,sep="")
 dir.create(paste("results/",opts$dataset,sep=""),showWarn=FALSE)
 dir.create(paste("results/",opts$dataset,"/fits/",sep=""),showWarn=FALSE)
 outfile <- paste("results/",opts$dataset,"/fits/",opts$model.type,".rdata",sep="")
+
 
 if (file.exists(outfile) & !opts$force) {
   load(outfile)
@@ -64,12 +67,13 @@ if (opts$degrees) {
 }
 
 opts$sigma.hyper <- as.numeric(opts$sigma.hyper)
-priors <- list(alpha=as.numeric(opts$crp.hyper),
-               sigma=list(alpha=opts$sigma.hyper,beta=opts$sigma.hyper),
+priors <- list(alpha=as.numeric(opts$crp.hyper),type=opts$type,
+               sigma=list(alpha=opts$sigma.hyper.alpha,beta=opts$sigma.hyper.beta),
                sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1))
 
 kinit <- as.numeric(opts$kinit)
 kmax  <- as.numeric(opts$kmax)
+if (kmax < kinit) kinit <- kmax
 if (opts$negbinom) priors$negbinom <- list(shape = 3, mu=N/kinit)
 
 # Fit and save model
