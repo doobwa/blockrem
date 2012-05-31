@@ -1,12 +1,11 @@
 \begin{abstract}
-Observing network data as a stream of relational events provides an opportunity to understand differences in how nodes interact given the past.
-For continuous-time network data, a number of approaches have recently been proposed for modeling the rate of dyadic events conditioned on the observed history of events and covariates about the nodes.
-For static networks, methods such as stochastic blockmodels have traditionally been used for node-level heterogeneity by assuming latent groups of individuals have similar tendencies in their group-wise interactions.
-We propose to combine these two approaches by modeling the event dynamics within and between clusters of nodes.
-The method is illustrated using dyadic interaction data such as email communication and Twitter direct messages.
-Parameter estimates from the model clearly reveal heterogeneity in the dynamics among groups of individuals.
-The fitted models have better predictive accuracy than baselines and
-relational event models without the latent structure and a standard
-stochastic blockmodel approach.
+Observing network data as a stream of relational events provides an opportunity to understand differences in how individuals interact over time.
+For continuous-time network data, several approaches have recently been proposed for modeling dyadic event rates, conditioned on the observed history of events and nodal or dyadic covariates.  In many cases, however, interaction propensities -- and even the underlying mechanisms of interaction -- vary systematically across subgroups whose identities are unobserved.
+For static networks, such heterogeneity has been treated via methods such as stochastic blockmodeling, which operate by assuming latent groups of individuals with similar tendencies in their group-wise interactions.
+Here, we combine these two approaches by positing a latent partition on the vertex set, such that event dynamics within and between node sets evolve in potentially distinct ways.
+We illustrate the use of our model family by application to several forms of dyadic interaction data, including email communication and Twitter direct messages.
+Parameter estimates from the fitted models clearly reveal heterogeneity in the dynamics among groups of individuals.
+We also find that the fitted models have better predictive accuracy than either baseline models or relational event models without latent structure.
+Our approach illustrates the utility of latent structure methods based on detailed dynamics, which can succeed even in the absence of differences in marginal interaction rates across groups. 
 %Our approach illustrates the efficacy of combining a detailed model for local dependencies and a latent variable model for meso-scale dependencies.
 \end{abstract}
