@@ -167,39 +167,6 @@ set.seed(1)
 sim <- generate.brem(M,N,beta,z,ego=TRUE)
 y2 <- sim$edgelist
 
-s <- 2.5
-stext <- 1.5
-cols <- rev(grey.colors(100,start=0,end=.95,gamma=1))
-tb <- table(factor(y1[,2],1:N),factor(y1[,3],1:N))
-pdf("figs/introexample/mat1.pdf",width=s,height=s)
-par(mar=c(2,2,2,2),mgp=c(1.1,0,0))# oma=c(0,0,0,0),
-tb <- as.matrix(tb)
-image(1:N,1:N,tb,xaxt="n",yaxt="n",col=cols,xlab="",ylab="Observed counts",axes=FALSE,cex=stext,main="Rate Differentiated Case")
-axis(1,at=c(3,8),labels=c("A","B"),tick=FALSE)
-axis(2,at=c(3,8),labels=c("A","B"),tick=FALSE)
-dev.off()
-
-tb <- table(factor(y2[,2],1:N),factor(y2[,3],1:N))
-pdf("figs/introexample/mat2.pdf",width=s,height=s)
-par(mar=c(2,2,2,2),mgp=c(1.15,0,0))
-image(1:N,1:N,tb,xaxt="n",yaxt="n",xlab="",ylab="",col=cols,axes=FALSE,cex=stext)
-axis(1,at=c(3,8),labels=c("A","B"),tick=FALSE)
-axis(2,at=c(3,8),labels=c("A","B"),tick=FALSE)
-dev.off()
-
-pdf("figs/introexample/dynamics1.pdf",width=s,height=s)
-par(mar=c(3,3,0,0),mgp=c(2,1.15,0))
-x1 <- c(2,0,.5,2)
-plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="",xaxt="n",ylab="Propensity for reciprocal events",pch=19,col="red",cex=stext)
-axis(1,at=1:4,labels=c("(A,A)","(A,B)","(B,A)","(B,B)"),tick=TRUE)
-dev.off()
-
-pdf("figs/introexample/dynamics2.pdf",width=s,height=s)
-par(mar=c(3,3,0,0),mgp=c(2,1.15,0))
-plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="Block",xaxt="n",ylab="",pch=19,col="red",cex=stext)
-axis(1,at=1:4,labels=c("(A,A)","(A,B)","(B,A)","(B,B)"),tick=TRUE)
-dev.off()
-
 pdf("figs/introexample/all.pdf",width=5.2,height=5)
 
 stext <- 1.3
@@ -220,7 +187,7 @@ axis(2,at=c(3,8),labels=c("A","B"),tick=FALSE)
 
 par(mar=c(3,3,1,1),mgp=c(2,1.15,0))
 x1 <- c(2,0,.5,2)
-plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="",xaxt="n",ylab="Dynamics",pch=19,col="red",cex=stext)
+plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="",xaxt="n",ylab="Dynamics parameters",pch=19,col="red",cex=stext)
 axis(1,at=1:4,labels=c("(A,A)","(A,B)","(B,A)","(B,B)"),tick=TRUE,cex.axis=1)
 
 par(mar=c(3,2,1,2),mgp=c(2,1.15,0))

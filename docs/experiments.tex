@@ -39,7 +39,7 @@ At each event $m$ we sort the predicted intensities of all possible events in de
 
 \input{../figs/results-llk.tex}
 
-\subsection{Baselines}
+%\subsection{Baselines}
 
 Several baselines are included for comparison: \texttt{uniform} places uniform probability on all possible dyads, \texttt{online} ranks events at time $t$ by the number of times the dyad has occurred previously $r_{online}(m,i,j) = \sum_{m:t_m < t} I(i_m=i,j_m=j)$, and \texttt{marginal} uses the product of the observed marginal frequencies $r_{marg}(m,i,j) = \sum_{m:t_m < t} I(i_m=i) \sum_{m:t_m < t} I(j_m=j)$.
 Note for processes that are homogeneous over time, \texttt{online} should do well with large amounts of data while \texttt{marginal} should roughly model heterogeneity in activity among individuals.
@@ -59,9 +59,6 @@ To compare the above baselines to our model using the likelihood of observed dat
 % \label{fig:recall}
 % \end{figure}
 
-\subsection{Results}
-
-TODO: Quickly describe main take-aways from the results tables.
 
 % Table \ref{tab:results} compares the train and test likelihood for each method and data set combination.  For the synthetic data generated with $K=2$ clusters, the model with $K=2$ is best as expected.  Fitting the model with a single cluster also outperforms the simple baselines with respect to both likelihoods.
 

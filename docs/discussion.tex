@@ -65,9 +65,10 @@ In Section \ref{sec:experiments} we show the model has improved predictive accur
 In particular, we show that our proposed approach leads to improved predictive accuracy when compared to both (a) relational event models that lack latent clusters, and (b) stochastic blockmodels for count data, both of which are both special cases of our model.
 Other theories could be explored by including relevant statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, and similarly one can use our method to study how the roles of these statistics vary across nodes.
 
+Though prediction is not the main focus of the model, the results provide some evidence that having latent structure (i.e. K>1) can lead to improvements in predictive power. Our prediction results show that it is easy to overfit with this model. If we restrict to K=2 on these small data sets, we systematically outperform the K=1 model (TODO: confirm this). However, as K increases beyond 2 (e.g., for the unrestrained CRP prior), the model is prone to overfit. This is not surprising, given that the number of fitted parameters scales as the square of the number of components K in the model. A natural future direction worth exploring for this model is a class of priors that are more resistant to overfitting.%^ (e.g., somehow have the priors  be sensitive to K^2 rather than K, as you mentioned yesterday).
+
+
 %PS: not sure where this fits…seems out of place here…and needs to be rewritten to be clearer - its not clear why we are comparing to this model other than the fact that it appeared at NIPS last year and also talks about relational event data. One way to make its inclusion here more natural would to set this up by first stating that there are other modeling approaches for relational events (such as the Guna… work), and comment on whether our "block approach" could be applied there too (not sure this makes sense since the models are so different…). 
-Relational event models \cite{Butts2008} require a knot at each observed event, while other approaches such as \cite{Gunawardana2011} learn the regions where an intensity is constant.
-By using decision trees,  \cite{Gunawardana2011} also allow for a nonlinear relationship between statistics and intensity functions, while here we use latent variables to allow for heterogeneity in intensities across possible events.
 
 %PS: these last two paragraphs need to be finished….
 Trivially extended to co-clustering applications and for directed data.
