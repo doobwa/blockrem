@@ -1,8 +1,23 @@
 \section{Introduction}
 
 Statistical methods for analyzing network data are becoming increasingly useful for studying phenomena ranging from online social behavior to protein interactions \cite{Goldenberg2009}.
-One unifying idea is that the nodes of these networks are differentiated by rates of interacting with other parts of the network [TODO], where this variation in rates may be associated with some unobserved quantity, e.g. a covariate such as age or sex, or perhaps shared [TODO].
-Stochastic blockmodels \cite{Nowicki2001, Kemp, Ishiguro2010, Rodriguez} are a class of statistical models for static network data that employ latent variables to model this heterogeneity by 1) assuming each node in the network belongs to some block (or cluster) and 2) parameterizing the probability of edges between nodes of each block. 
+- observe network data over time
+- interested how nodes differ in the rate of activity with other parts of the network
+  - why?
+  - based on some other covariate
+- methods for static networks can be applied to the marginal rate
+  - model this heterogeneity by assuming subgroups of nodes have similar tendencies in their group-wise interactions.
+
+- Some of the questions of interest for dynamic data may not be answerable from the marginal rate
+- Example of what we'll call a type of dynamics
+- Example where the question cannot be answered (referring to Figure1 )
+- Drawing parallels with the blockmodels above, for these questions what we need is a dynamic version of stochastic equivalence
+
+When such .  One unifying idea is that the nodes of these networks are differentiated by rates of interacting with other parts of the network [TODO], where this variation in rates may be associated with some unobserved quantity, e.g. a covariate such as age or sex, or perhaps shared [TODO].
+Stochastic blockmodels \cite{Nowicki2001, Kemp, Ishiguro2010, Rodriguez} are a class of statistical models for static network data that employ latent variables to model this heterogeneity by .  Such techniques are readily applied to count data, [TODO: These let us study how shared behavior is associated with other covariates.]
+
+%1) assuming each node in the network belongs to some block (or cluster) and 2) parameterizing the probability of a tie between members
+
 %PS: much of this past work is for static network data. Do we want to make the observation here that we are thinking about blockmodels for *rate* data here in our discussion and in our example in figure 1 - if we don't some readers/reviewers might get a little confused. For example we could say that instead of a binomial model on edges we can think of a Poisson process yielding counts over time, where we can still think about blockmodels. 
 %PS: also, we introduce the term "rates" above without really defining it, and then go on to talk about "mean rate" below. So I think we definitely need a sentence somewhere above that makes it clear we are talking about edges that instantaneously appear and disappear over time at some rate, rather than static edges.
 
