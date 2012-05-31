@@ -1,17 +1,17 @@
 \section{Introduction}
 
 Statistical methods for analyzing network data are becoming increasingly useful for studying phenomena ranging from online social behavior to protein  interactions \cite{Goldenberg2009}.
-We often  observe events occurring between nodes over time, and a common goal is to understand the differences in the total number of interactions --- perhaps with respect to information known about the nodes.
+In such settings we often observe events occurring between nodes over time, and a common goal is to understand the differences in the total number of interactions --- perhaps with respect to known information about the nodes.
 %In this case, we have a count for the total activity of each dyad, and one may analyze it has a static network. 
 %Methods for static networks such as a 
 Stochastic blockmodels \cite{Nowicki2001, Kemp, Ishiguro2010, Rodriguez} are a class of techniques which can model this heterogeneity by assuming latent subgroups of nodes have similar tendencies in their group-wise rate of interaction.
 
-Network-based event data are powerful, however, because we enable the study of the processes governing these events.
-Theories about the dynamics among nodes will be often be difficult to study when only using the marginal rate of events as illustrated in Figure \ref{fig:introexample}
-For example, a common aspect of human communication is \emph{reciprocity} --- after person A speaks to person B, B subsequently has a higher propensity to speak to A.  
-These sorts of dynamics may be studied with event data, but again, our focus may be on the differences in these dynamics among the nodes in the network.  
-In the context of studying interactions among students, one might be interested particular conversational tendencies are associated with covariates about the student or the classroom.  
-A standard blockmodel only provides a means for studying the structure of marginal rates of communication, but not the shared tendencies in the dynamics of the sequence of events.
+Network-based event data are powerful, however, because they enable the study of the processes governing these events.
+Theories about the dynamics among nodes will often be difficult to study when only using the marginal rate of events, as illustrated in Figure \ref{fig:introexample}.  
+For example, a common aspect of human communication is \emph{reciprocity}: person A speaks to person B, then B has a higher propensity to speak to A.  
+Through an event-based analysis we can study the similarity --- and differences --- in the dynamics of nodes in the network. 
+When studying interactions among students, for example, one might be interested in conversational tendencies are associated with covariates about the student or classroom, or based on unobserved groupings.  
+In this context, a standard blockmodel only provides a means for studying the structure of marginal rates of communication, but not the shared tendencies in the dynamics of the sequence of events.
 
 %When such .  One unifying idea is that the nodes of these networks are differentiated by rates of interacting with other parts of the network [TODO], where this variation in rates may be associated with some unobserved quantity, e.g. a covariate such as age or sex, or perhaps shared [TODO].
 %Stochastic blockmodels \cite{Nowicki2001, Kemp, Ishiguro2010, Rodriguez} are a class of statistical models for static network data that employ latent variables to model this heterogeneity by .  Such techniques are readily applied to count data, [TODO: These let us study how shared behavior is associated with other covariates.]
