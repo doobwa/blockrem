@@ -124,3 +124,103 @@ ds <- sapply(1:niter,function(i) {
 ds <- melt(t(ds))
 qplot(X1,value,data=ds,geom="line",colour=factor(X2)) + theme_bw() + labs(x="iteration",colour="block",y="Euclidean distance to truth")
 ggsave("figs/syn/bias.pdf",width=5,height=4)
+
+
+## Alternative example
+N <- 10
+K <- 2
+beta <- list("intercept"=matrix(c(1.5,0,0,2),K,K),
+             "abba" = matrix(c(2,0,.5,2),K,K),
+             "abby"=matrix(0,K,K),
+             "abxa"=matrix(0,K,K),
+             "abxb"=matrix(0,K,K),
+             "abay"=matrix(0,K,K),
+             "abab"=matrix(0,K,K),
+             "sod"=matrix(0,K,K),
+             "rod"=matrix(0,K,K),
+             "sid"=matrix(0,K,K),
+             "rid"=matrix(0,K,K),
+             "dc" =matrix(0,K,K),
+             "cc" =matrix(0,K,K))
+P <- length(beta)
+beta <- abind(beta,rev.along=3)
+M <- 1000
+set.seed(1)
+z <- c(rep(1,5),rep(2,5))
+sim <- generate.brem(M,N,beta,z,ego=TRUE)
+y1 <- sim$edgelist
+
+beta <- list("intercept"=matrix(0,K,K),
+             "abba" = matrix(c(2,0,.5,2),K,K),
+             "abby"=matrix(0,K,K),
+             "abxa"=matrix(0,K,K),
+             "abxb"=matrix(0,K,K),
+             "abay"=matrix(0,K,K),
+             "abab"=matrix(0,K,K),
+             "sod"=matrix(0,K,K),
+             "rod"=matrix(0,K,K),
+             "sid"=matrix(0,K,K),
+             "rid"=matrix(0,K,K),
+             "dc" =matrix(0,K,K),
+             "cc" =matrix(0,K,K))
+beta <- abind(beta,rev.along=3)
+set.seed(1)
+sim <- generate.brem(M,N,beta,z,ego=TRUE)
+y2 <- sim$edgelist
+
+cols <- rev(grey.colors(100,start=0,end=.95,gamma=1))
+tb <- table(factor(y1[,2],1:N),factor(y1[,3],1:N))
+pdf("figs/introexample/mat1.pdf",width=3,height=3)
+par(mar=c(2,2,2,2),mgp=c(1.15,0,0))# oma=c(0,0,0,0),
+tb <- as.matrix(tb)
+image(1:N,1:N,tb,xaxt="n",yaxt="n",col=cols,xlab="",ylab="Observed counts",axes=FALSE,cex=1.25)
+axis(1,at=c(3,8),labels=c("A","B"),tick=FALSE)
+axis(2,at=c(3,8),labels=c("A","B"),tick=FALSE)
+dev.off()
+
+tb <- table(factor(y2[,2],1:N),factor(y2[,3],1:N))
+pdf("figs/introexample/mat2.pdf",width=3,height=3)
+par(mar=c(2,2,2,2),mgp=c(1.15,0,0))
+image(1:N,1:N,tb,xaxt="n",yaxt="n",xlab="",ylab="",col=cols,axes=FALSE,cex=1.25)
+axis(1,at=c(3,8),labels=c("A","B"),tick=FALSE)
+axis(2,at=c(3,8),labels=c("A","B"),tick=FALSE)
+dev.off()
+
+pdf("figs/introexample/dynamics1.pdf",width=3,height=3)
+par(mar=c(3,3,0,0),mgp=c(2,1.15,0))
+x1 <- c(2,0,.5,2)
+plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="",xaxt="n",ylab="Propensity for reciprocal events",pch=19,col="red",cex=1.25)
+axis(1,at=1:4,labels=c("(A,A)","(A,B)","(B,A)","(B,B)"),tick=TRUE)
+dev.off()
+
+pdf("figs/introexample/dynamics2.pdf",width=3,height=3)
+par(mar=c(3,3,0,0),mgp=c(2,1.15,0))
+plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="Block",xaxt="n",ylab="",pch=19,col="red",cex=1.25)
+axis(1,at=1:4,labels=c("(A,A)","(A,B)","(B,A)","(B,B)"),tick=TRUE)
+dev.off()
+
+pdf("figs/introexample/all.pdf",width=5,height=5)
+par(mfrow=c(2,2))
+cols <- rev(grey.colors(100,start=0,end=.95,gamma=1))
+tb <- table(factor(y1[,2],1:N),factor(y1[,3],1:N))
+par(mar=c(1,3,2,.5),mgp=c(1.15,0,0))# oma=c(0,0,0,0),
+tb <- as.matrix(tb)
+image(1:N,1:N,tb,xaxt="n",yaxt="n",col=cols,xlab="",ylab="Observed counts",axes=FALSE,cex=1.25)
+axis(1,at=c(3,8),labels=c("A","B"),tick=FALSE)
+axis(2,at=c(3,8),labels=c("A","B"),tick=FALSE)
+
+tb <- table(factor(y2[,2],1:N),factor(y2[,3],1:N))
+par(mar=c(1,3,2,.5),mgp=c(1.15,0,0))
+image(1:N,1:N,tb,xaxt="n",yaxt="n",xlab="",ylab="",col=cols,axes=FALSE,cex=1.25)
+axis(1,at=c(3,8),labels=c("A","B"),tick=FALSE)
+axis(2,at=c(3,8),labels=c("A","B"),tick=FALSE)
+
+par(mar=c(3,3,2,.5),mgp=c(2,1.15,0))
+x1 <- c(2,0,.5,2)
+plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="",xaxt="n",ylab="Propensity for reciprocal events",pch=19,col="red",cex=1.25)
+axis(1,at=1:4,labels=c("(A,A)","(A,B)","(B,A)","(B,B)"),tick=TRUE)
+
+plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="",xaxt="n",ylab="",pch=19,col="red",cex=1.25)
+axis(1,at=1:4,labels=c("(A,A)","(A,B)","(B,A)","(B,B)"),tick=TRUE)
+
+dev.off()
