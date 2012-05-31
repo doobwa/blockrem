@@ -1,5 +1,6 @@
 #opts=list(dataset="synthetic",numclusters=2,model.type="full",gibbs=TRUE,numiterations=100,slice=TRUE,mh=FALSE,initialize=FALSE,fixz=FALSE,skip.intercept=FALSE)
 #opts=list(dataset="synthetic",numclusters=2,numiterations=20,splitmerge=FALSE,numextra=2,model.type="full")
+./brem.r --dataset "classroom-16" --kinit 1 --kmax 5 --numiterations 500 --splitmerge FALSE --pshifts TRUE --degrees FALSE --negbinom FALSE --collapse TRUE --numextra 5 --force FALSE --sigmahyper 1
 
 "synthetic-1" "eckmann-small" "classroom-16" "classrom-17" "classroom-27" "classroom-29" "classroom-31" "realitymining-small" "twitter-small" "enron-small" "irvine"
 

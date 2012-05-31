@@ -6,8 +6,10 @@ suppressPackageStartupMessages(library("MCMCpack"))
 option_list <- list(
   make_option("--dataset", 
               help="Name of /data/[dataset].rdata file containing an event history matrix named train.  Saves results to /results/[dataset]/."),
-  make_option("--numclusters", type="integer",default=2,
-              help="Number of latent classes to use [default %default]."),
+  make_option("--kinit", type="integer",default=2,
+              help="Number of initial latent classes [default %default]."),
+  make_option("--kmax", type="integer",default=3,
+              help="Maximum number of latent classes [default %default]"),
   make_option("--numiterations", type="integer", default=100,
               help="Number of MCMC iterations [default %default]"),
   make_option("--splitmerge", default=FALSE,
@@ -60,11 +62,12 @@ if (opts$degrees) {
 }
 
 sigma.hyper <- as.numeric(opts$sigmahyper)
-priors <- list(alpha=1,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=sigma.hyper,beta=sigma.hyper))
+priors <- list(alpha=.01,sigma.proposal=.1,phi=list(mu=0,sigma=1),mu=list(mu=0,sigma=1),sigma=list(alpha=sigma.hyper,beta=sigma.hyper))
 
-K <- opts$numclusters
-if (opts$negbinom) priors$negbinom <- list(shape = 3, mu=N/K)
+kinit <- opts$kinit
+kmax  <- opts$kmax
+if (opts$negbinom) priors$negbinom <- list(shape = 3, mu=N/kinit)
 
 # Fit and save model
-fit <- brem(train,N,priors,K,effects,transform=opts$transform,do.sm=opts$splitmerge,num.extra=opts$numextra,niter=opts$numiterations,collapse.sigma=opts$collapse,outfile=outfile)
+fit <- brem(train,N,priors,kinit=kinit,kmax=kmax,effects=effects,transform=opts$transform,do.sm=opts$splitmerge,num.extra=opts$numextra,niter=opts$numiterations,collapse.sigma=opts$collapse,outfile=outfile)
 save(fit,file=outfile)

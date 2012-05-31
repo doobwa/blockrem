@@ -93,7 +93,8 @@ sample_beta <- function(beta,z,mu,sigma,priors,kx=NULL,collapse.sigma=TRUE) {
 ##' @param train edgelist
 ##' @param N maximum id of actors
 ##' @param priors alpha, sigma.proposal, phi=list(mu=0,sigma=1), mu=list(mu=0,sigma=1), sigma=list(alpha=2,beta=2))
-##' @param K initial number of clusters
+##' @param kinit 
+##' @param kmax 
 ##' @param effects character vector that is a subset of "intercept","abba","abby","abxa","abxb","abay","abab","sen_outdeg","rec_outdeg","sen_indeg","rec_indeg","dyad_count","changepoint_count"
 ##' @param ego 
 ##' @param transform 
@@ -103,9 +104,10 @@ sample_beta <- function(beta,z,mu,sigma,priors,kx=NULL,collapse.sigma=TRUE) {
 ##' @param collapse.sigma 
 ##' @param verbose 
 ##' @param outfile save progress to this file
+##' @param K initial number of clusters
 ##' @return 
 ##' @author chris
-brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),ego=TRUE,transform=FALSE,do.sm=FALSE,num.extra=2,niter=20,collapse.sigma=TRUE,verbose=TRUE,outfile=NULL) {
+brem <- function(train,N,priors,kinit=2,kmax=3,effects=c("intercept","abba","abby","abay"),ego=TRUE,transform=FALSE,do.sm=FALSE,num.extra=2,niter=20,collapse.sigma=TRUE,verbose=TRUE,outfile=NULL) {
   M <- nrow(train)
   P <- 13
   ego <- ego*1  # RemStat doesn't want boolean
@@ -116,7 +118,6 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
            N,M,P,ego)
   s$precompute()
   if (transform) s$transform()
-  # TODO: Transform
 
   enam <- c("intercept","abba","abby","abxa","abxb","abay","abab",
             "sen_outdeg","rec_outdeg","sen_indeg","rec_indeg",
@@ -124,6 +125,7 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
   priors$px <- match(effects,enam)
 
   # Initialize parameters
+  K <- kinit
   beta <- array(0,c(P,K,K))
   beta[1,,] <- rnorm(K^2)
   
@@ -137,7 +139,8 @@ brem <- function(train,N,priors,K=2,effects=c("intercept","abba","abby","abay"),
   for (iter in 1:niter) {
 
     ## Add clusters from prior (Neal 2000)
-    if (num.extra > 0 & K!=1) {
+    num.allowed <- min(kmax,K + num.extra) - K
+    if (num.allowed > 0) {
       prs <- priors
       prs$phi <- list(mu=mu,sigma=sigma)
       for (j in 1:num.extra) {
