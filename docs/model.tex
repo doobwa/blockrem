@@ -77,7 +77,8 @@ Thus, our model for the rate of $(i,j)$ events has the same parameters as for ot
  In practice we may believe an interaction between one dyad should not affect the rate of an entirely separate dyad.
 As shown in Figure \ref{fig:example}, we allow each intensity function $\lambda_{ij}(t)$ to only change following an event where $i$ was the sender or the recipient.
 This is sensible in distributed settings where $i$ has limited knowledge about interactions among other actors.
-In the Appendix we show how this assumption also reduces the computational complexity of computing the above likelihood.\footnote{This is analogous to a Markov condition for this class of models.}
+In the Supplementary Material we show how this assumption also reduces the computational complexity of computing the above likelihood.
+%\footnote{TODO: This is analogous to a Markov condition for this class of models.}
 
 We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \sim N(0,1)$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(3,1)$.
 The cluster assignments are given a non-parameteric priors $z_i \sim \mbox{CRP}(\alpha)$.
