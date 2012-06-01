@@ -3,7 +3,7 @@
 
 \subsection{Data}
 
-Each of the following data sets are sequences of dyadic events, where each event has a sender, recipient, and timestamp.
+A variety of real world datasets are used to explore the efficacy of the model.  Each of the following data sets are sequences of dyadic events, where each event has a sender, recipient, and timestamp.  
 
 \begin{itemize}
 %\item Kiel email: \cite{Ebel2002}
@@ -30,7 +30,7 @@ The model has learned that this structure exists in the data and our inferences 
 
 \subsection{Prediction experiments}
 
-We evaluate the predictive ability of the fitted models by comparing models based on the loglikelihood of held-out data and recall on held out data.
+We evaluate the predictive ability of the fitted models by comparing models based on the loglikelihood and recall for held-out data.
 Each data set is first split into a training set and a test set, and the loglikelihood of the test set is computed sequentially using Equation \ref{eqn:llk} where $\beta$ is set to be the mean from posterior samples given the training data.\footnote{This approach makes sense when the latent class assignments are not changing.  I will change this so that we averaging across predictions made from single draws from the posterior $\beta^{(i)}, z^{(i)}$.}
 We compute both the relational event model likelihood  (\texttt{rem}) as given in Equation \ref{eqn:llk}  and the multinomial likelihood (\texttt{mult}) given in Equation \ref{eqn:multllk}.
 The latter only measures a model's predictive performance for \emph{what} occurs next, while the former also measures the ability to predict \emph{when} it occurs.
