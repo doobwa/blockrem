@@ -47,16 +47,13 @@ There is, however, a difference to be detected.  The bottom panels of Figure~\re
 %
 %comprised of several teams, each team may uncover different patterns for collaborating via email---individuals in one group may respond more quickly, while another group may preferentially send to highly active individuals.
 
-Borrowing from the intuition of stochastic blockmodels, we propose a continuous-time model of network-based event sequences where latent clusters of nodes share similar patterns of interaction.
+Borrowing from the intuition of stochastic blockmodels, we propose a novel continuous-time model of network-based event sequences where latent clusters of nodes share similar patterns of interaction.
 Our approach employs a flexible framework for  specifying how the process depends on the previous history of events \cite{AalenOddO.2008, Butts2008}.
-%extend continuous-time models from event history analysis to model sequences of network-based event data \cite{Butts2008,Brandes2009,Perry2011,Stadtfeld2010,Stadtfeld2011,Opsahl2011,Vu2011,Vu2011a}. % \cite{AalenOddO.2008} 
-%These models allow one to specify how the process depends on the previous history of events. % TODO use 'flexible'?
-In this way one can investigate theories about the underlying processes and make predictions about future data conditioned on the past.
+In this way one can compare theories about the underlying processes and make predictions about future data conditioned on the past.
 
-We describe parameter estimation and learning of  latent cluster assignments via MCMC, and illustrate the behavior of the model with simulated data.
+We describe how we learn the latent cluster assignments and model parameters via MCMC, and illustrate the behavior of the model with simulated data.
 Using several real-world social network data sets involving dyadic communication, we compare the predictive performance of the fitted models to standard baselines.
-Finally we show that the parameter estimates exhibit an interpretable structure to the event dynamics, enabling the study of a dynamic extension to stochastic equivalence.
-%allowing identification of particular \emph{roles} in  that enable 
+We conclude by showing that the parameter estimates reveal interpretable structure in the event dynamics, enabling the study of a dynamic extension to stochastic equivalence.
 
 \begin{SCfigure}
 \centering
