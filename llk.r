@@ -74,8 +74,8 @@ tmp[,-c(1:4)] <- round(tmp[,-c(1:4)],3)
 chosen <- c(1:4,8,12,15,16,23)
 subset(tmp,alpha %in% c(1,5))[,chosen]
 
-res <- subset(tmp,alpha %in% c(5) & type=="test")[,c("dataset","2_1_1_1","2_10_0_0","2_2_1_1","2_3_1_1","2_10_1_1")]
-colnames(res) <- c("Dataset","K=1","SBM","K=2","K=3","K=10")
+res <- subset(tmp,alpha %in% c(5) & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
+colnames(res) <- c("Dataset","SBM","K=1","K=2","K=3","K=10")
 
 library(xtable)
 xr <- xtable(res,caption="Comparing mean loglikelihood under different methods for each event in a given test set.  Larger values are better.  See text for details.",label="tab:results",digits=3)

@@ -15,6 +15,7 @@
 *.zip
 /icml/*
 rstats*
+/data/*
 /data/MetaFilterUntilFeb2011/contactData.txt
 /data/MetaFilterUntilFeb2011/userData.txt
 example*

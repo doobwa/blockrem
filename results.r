@@ -26,6 +26,16 @@ for (i in 1:length(r)) {
   }
 }
 r <- melt(r)
+colnames(r)[2:5] <- c("type","metric","model","dataset")
+ma <- lapply(unique(r$model),function(m) data.frame(model=m,modelatts(m)))
+ma <- do.call(rbind,ma)
+x <- merge(r,ma,by="model")
+tmp <- dcast(x,xsigalpha +xsigbeta+metric+type+ dataset ~ kinit + kmax + pshift + deg, fun.aggregate=mean)
+tmp$xsigalpha <- tmp$xsigalpha/1000
+tmp$xsigbeta  <- tmp$xsigbeta/1000
+colnames(tmp)[1:2] <- c("alpha","beta")
+
+subset(tmp,metric=="llk" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
 
 #datasets <- c("synthetic-1","eckmann-small","realitymining-small",
  datasets <- c("synthetic-1","eckmann-small","classroom-16", "classroom-17", "classroom-27","realitymining-small","enron-small","twitter")
