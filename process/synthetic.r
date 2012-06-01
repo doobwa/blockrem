@@ -187,7 +187,7 @@ axis(2,at=c(3,8),labels=c("A","B"),tick=FALSE)
 
 par(mar=c(3,3,1,1),mgp=c(2,1.15,0))
 x1 <- c(2,0,.5,2)
-plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="",xaxt="n",ylab="Dynamics parameters",pch=19,col="red",cex=stext)
+plot(1:4,x1,xlim=c(0.5,4.5),ylim=c(-1,3),xlab="",xaxt="n",ylab="Behavioral parameters",pch=19,col="red",cex=stext)
 axis(1,at=1:4,labels=c("(A,A)","(A,B)","(B,A)","(B,B)"),tick=TRUE,cex.axis=1)
 
 par(mar=c(3,2,1,2),mgp=c(2,1.15,0))
