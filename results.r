@@ -1,6 +1,6 @@
 # Go through available pred objects.
 source("utils.r")
-datasets <- c("synthetic-1","classroom-16", "classroom-17", "classroom-27","eckmann-small","realitymining-small","enron-small","twitter")
+datasets <- c("synthetic-1","classroom-16", "classroom-17", "classroom-27","eckmann-small","realitymining-small","enron-small","twitter-small")
 
 res <- lapply(datasets,function(dataset) {
   folder <- paste("results/",dataset,"/preds/",sep="")

@@ -31,6 +31,12 @@ folder <- paste("results/",opts$dataset,"/fits",sep="")
 models <- modelnames(folder)
 options(cores=8)
 
+# TEMP
+models <- c("kinit2.kmax1.sm0.nb0.pshift1.deg1.trans1.collapse1.xsigalpha5000.xsigbeta1000",
+            "kinit2.kmax2.sm0.nb0.pshift1.deg1.trans1.collapse1.xsigalpha5000.xsigbeta1000",
+            "kinit2.kmax3.sm0.nb0.pshift1.deg1.trans1.collapse1.xsigalpha5000.xsigbeta1000",
+            "kinit2.kmax10.sm0.nb0.pshift1.deg1.trans1.collapse1.xsigalpha5000.xsigbeta1000",
+            "kinit2.kmax10.sm0.nb0.pshift0.deg0.trans1.collapse1.xsigalpha5000.xsigbeta1000")
 for (model in models) progress(pf,c(dataset,model,"started",""))
 
 x <- mclapply(models,function(model) {
@@ -49,6 +55,7 @@ x <- mclapply(models,function(model) {
       progress(pf,c(dataset,model,"complete",proc.time()[3] - st[3]))
     }
   }
+  return(NULL)
 })
 
 models <- c("online","uniform","marg")
@@ -59,6 +66,7 @@ x <- mclapply(models,function(model) {
   pred <- evaluate.baseline(A,N,train.ix,test.ix,model)
   save(pred,opts,file=paste("results/",dataset,"/preds/",model,".rdata",sep=""))
   progress(pf,c(dataset,model,"completed",proc.time()[3] - st[3]))
+  return(NULL)
 })
 
 
