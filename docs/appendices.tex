@@ -1,4 +1,4 @@
-\appendix{\textbf{Complexity}}
+\appendix{\textbf{Supplementary Material: Complexity}}
 
 We take advantage of our restriction on the types of statistics $s$ to reduce the computational complexity of computing our likelihood Equation \ref{eqn:likelihood} as
 \begin{align*}
@@ -8,39 +8,39 @@ We take advantage of our restriction on the types of statistics $s$ to reduce th
 
  By limiting the changepoints to times when either node is involved, computing the likelihood $p(A|z,\beta,\mbox{node} \ r \ \mbox{involved})$ is $O(|\mathcal{U}_r| \cdot P \cdot N)$.  We precompute $\tau_{m,i,j}$ and $\mathbf{s}(t_m,i,j)$ for all $m$, $i$, and $j$.
 
-\appendix{\textbf{Split-merge Metropolis-Hastings move for non-conjugate stochastic blockmodels}}
+% \appendix{\textbf{Split-merge Metropolis-Hastings move for non-conjugate stochastic blockmodels}}
 
-%Motivation: simply Gibbs sampling does not seem to mix well.  \footnote{This section is planned future work. In the experiments we evaluate the performance of the model when restricting the number of clusters $K$.  For these chains we do not propose split moves when the number of non-empty clusters is already $K$.}
+% %Motivation: simply Gibbs sampling does not seem to mix well.  \footnote{This section is planned future work. In the experiments we evaluate the performance of the model when restricting the number of clusters $K$.  For these chains we do not propose split moves when the number of non-empty clusters is already $K$.}
 
-Here we describe a novel split-merge move for non-conjugate blockmodels.\footnote{IRM (modeling Bernoulli data with a conjugate Beta prior) used a split-merge algorithm \cite{Kempe2006}.}  For illustration, we consider the model
-\begin{align*}
-  y_{ij} & \sim \mbox{Poisson}(\Lambda_{z_i,z_j}) & \Lambda_{ij} &\sim \mbox{Gamma}(\alpha_{\Lambda},\beta_{\Lambda})  & z_i &\sim \mbox{CRP}(\gamma)
-\end{align*}
+% Here we describe a novel split-merge move for non-conjugate blockmodels.\footnote{IRM (modeling Bernoulli data with a conjugate Beta prior) used a split-merge algorithm \cite{Kempe2006}.}  For illustration, we consider the model
+% \begin{align*}
+%   y_{ij} & \sim \mbox{Poisson}(\Lambda_{z_i,z_j}) & \Lambda_{ij} &\sim \mbox{Gamma}(\alpha_{\Lambda},\beta_{\Lambda})  & z_i &\sim \mbox{CRP}(\gamma)
+% \end{align*}
 
-IDEA: References are Dahl 2003, Wang, Blei 2012, Neal 2000 (alg 8).  A proposed split has REM parameters that are only slightly different than those for the original block.  Merges of two sets of REM parameters are performed by using the parameter for one blocks, and doing so for each dimension independently.  By keeping track of the probability of each of these transitions we can correctly compute the Metropolis-Hastings acceptance probability needed to guarantee we have an MCMC transition that leaves the posterior distribution invariant.
+% IDEA: References are Dahl 2003, Wang, Blei 2012, Neal 2000 (alg 8).  A proposed split has REM parameters that are only slightly different than those for the original block.  Merges of two sets of REM parameters are performed by using the parameter for one blocks, and doing so for each dimension independently.  By keeping track of the probability of each of these transitions we can correctly compute the Metropolis-Hastings acceptance probability needed to guarantee we have an MCMC transition that leaves the posterior distribution invariant.
 
 
-This is a two-stage MH procedure.  First, pick two nodes $i,j$ uniformly.  If they belong to the same block $k$ (i.e. $z_i=z_j=k$), then let the ``merge'' state $(\boldsymbol{\phi}^{m},\mathbf{z}^{m}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``split'' state $(\boldsymbol{\phi}^{s},\mathbf{z}^{s})$ with new cluster $l$:
-\begin{itemize}
-\item Sample $\phi_{kk}^{s} \sim N(\phi_{kk}^{m},\sigma^2)$ and $\phi_{ll}^{s} \sim N(\phi_{kk}^{m},\sigma^2)$ and for blocks $r \ne l$, sample $\phi_{lr}^{s} \sim N(\phi_{kr}^{m},\sigma^2)$ and $\phi_{rl}^{s} \sim N(\phi_{rk}^{m},\sigma^2)$
-\item For all $a$ such that $z_a^{m} = k$, randomly initialize $z_a^{s}$ to either $k$ or $l$, then perform a restricted Gibbs scan by sampling $p(z_{a}^{s}=k|\cdot)  \propto n_k p(A|\mathbf{z}^{s}_{-a},\boldsymbol{\phi}^{s})$
-where $n_k=\sum_{i}I(z_i^{s}=k)$.% and compute $q( \mathbf{z}^{m} \rightarrow \mathbf{z}^{s})$ to be the product of the probabilities for the sampled assignments.
-\item Accept  $(\boldsymbol{\phi}^{s},\mathbf{z}^{s})$ as the new state with probability $\alpha^*$, defined below.
-\end{itemize}
+% This is a two-stage MH procedure.  First, pick two nodes $i,j$ uniformly.  If they belong to the same block $k$ (i.e. $z_i=z_j=k$), then let the ``merge'' state $(\boldsymbol{\phi}^{m},\mathbf{z}^{m}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``split'' state $(\boldsymbol{\phi}^{s},\mathbf{z}^{s})$ with new cluster $l$:
+% \begin{itemize}
+% \item Sample $\phi_{kk}^{s} \sim N(\phi_{kk}^{m},\sigma^2)$ and $\phi_{ll}^{s} \sim N(\phi_{kk}^{m},\sigma^2)$ and for blocks $r \ne l$, sample $\phi_{lr}^{s} \sim N(\phi_{kr}^{m},\sigma^2)$ and $\phi_{rl}^{s} \sim N(\phi_{rk}^{m},\sigma^2)$
+% \item For all $a$ such that $z_a^{m} = k$, randomly initialize $z_a^{s}$ to either $k$ or $l$, then perform a restricted Gibbs scan by sampling $p(z_{a}^{s}=k|\cdot)  \propto n_k p(A|\mathbf{z}^{s}_{-a},\boldsymbol{\phi}^{s})$
+% where $n_k=\sum_{i}I(z_i^{s}=k)$.% and compute $q( \mathbf{z}^{m} \rightarrow \mathbf{z}^{s})$ to be the product of the probabilities for the sampled assignments.
+% \item Accept  $(\boldsymbol{\phi}^{s},\mathbf{z}^{s})$ as the new state with probability $\alpha^*$, defined below.
+% \end{itemize}
 
- If $i$ and $j$ belong to different blocks $k$ and $l$ (i.e. $z_i = k \ne z_j=l$), we set the ``split'' state  $(\boldsymbol{\phi}^{s},\mathbf{z}^{s}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``merge'' state $(\boldsymbol{\phi}^{m},\mathbf{z}^{m})$ as follows:
-\begin{itemize}
-\item Sample $\phi_{kk}^m \sim N((\phi_{kk}^s + \phi_{ll}^s)/2,
-  \sigma^2)$.  Sample $\phi_{ll}^m \sim N(0,\tau^2)$ and for all blocks $r \ne k,l$ sample $\phi_{kr}^{m} \sim N(0,\tau^2)$ (the prior)
-\item For all $a$ such that $z_a \in \{k,l\}$ set $z_a^m = k$.
-\item Accept $(\boldsymbol{\phi}^{m},\mathbf{z}^{m})$ as the new state with probability $1/\alpha^*$, defined below.
-\end{itemize}
+%  If $i$ and $j$ belong to different blocks $k$ and $l$ (i.e. $z_i = k \ne z_j=l$), we set the ``split'' state  $(\boldsymbol{\phi}^{s},\mathbf{z}^{s}) = (\boldsymbol{\phi},\mathbf{z})$ and propose a ``merge'' state $(\boldsymbol{\phi}^{m},\mathbf{z}^{m})$ as follows:
+% \begin{itemize}
+% \item Sample $\phi_{kk}^m \sim N((\phi_{kk}^s + \phi_{ll}^s)/2,
+%   \sigma^2)$.  Sample $\phi_{ll}^m \sim N(0,\tau^2)$ and for all blocks $r \ne k,l$ sample $\phi_{kr}^{m} \sim N(0,\tau^2)$ (the prior)
+% \item For all $a$ such that $z_a \in \{k,l\}$ set $z_a^m = k$.
+% \item Accept $(\boldsymbol{\phi}^{m},\mathbf{z}^{m})$ as the new state with probability $1/\alpha^*$, defined below.
+% \end{itemize}
 
- The Metropolis-Hastings acceptance probabilities require the quantity
-$$\alpha^* =\frac{p(Y|\boldsymbol{\phi}^{s},\mathbf{z}^{s})}{p(Y|\boldsymbol{\phi}^{m},\mathbf{z}^{m})}  \frac{p(\boldsymbol{\phi}^{s})}{p(\boldsymbol{\phi}^{m})} \frac{p(\mathbf{z}^{s})}{p(\mathbf{z}^{m})} \frac{q(\mathbf{z}^{s} \rightarrow \mathbf{z}^{m})}{q( \mathbf{z}^{m} \rightarrow \mathbf{z}^{s})} \frac{q(\boldsymbol{\phi}^{s} \rightarrow \boldsymbol{\phi}^{m})}{q(\boldsymbol{\phi}^{m} \rightarrow \boldsymbol{\phi}^{s})}$$
+%  The Metropolis-Hastings acceptance probabilities require the quantity
+% $$\alpha^* =\frac{p(Y|\boldsymbol{\phi}^{s},\mathbf{z}^{s})}{p(Y|\boldsymbol{\phi}^{m},\mathbf{z}^{m})}  \frac{p(\boldsymbol{\phi}^{s})}{p(\boldsymbol{\phi}^{m})} \frac{p(\mathbf{z}^{s})}{p(\mathbf{z}^{m})} \frac{q(\mathbf{z}^{s} \rightarrow \mathbf{z}^{m})}{q( \mathbf{z}^{m} \rightarrow \mathbf{z}^{s})} \frac{q(\boldsymbol{\phi}^{s} \rightarrow \boldsymbol{\phi}^{m})}{q(\boldsymbol{\phi}^{m} \rightarrow \boldsymbol{\phi}^{s})}$$
 
-The first term is the likelihood ratio of the two states.  Letting $S$ be the set of nodes assigned to $k$ or $l$ in $\mathbf{z}^{s}$, the probability of sampling $\mathbf{z}^{s}$ during a restricted Gibbs scan from  $\mathbf{z}^{m}$ is computed as $q( \mathbf{z}^{m} \rightarrow \mathbf{z}^{s}) = \prod_{s \in S} p(z_{s}=z_s^{s} |\{ z_a^{s},z_{b}^{m}: a  < s \ \mbox{and} \ s < b\}, \boldsymbol{\phi}^{s})$.  Since there is only one way of combining two clusters, we know $q(\mathbf{z}^{s} \rightarrow \mathbf{z}^{m})=1$.   The transition $q(\boldsymbol{\phi}^{m} \rightarrow \boldsymbol{\phi}^{s})$ and
-$q(\boldsymbol{\phi}^{s} \rightarrow
-\boldsymbol{\phi}^{m})$ are products of Normal densities. \footnote{To ensure both states have the same dimensionality, one can optionally sample the parameters empty cluster $l$, though the extra term  in $q(\boldsymbol{\phi}^{s} \rightarrow \boldsymbol{\phi}^{m})$ would cancel with a corresponding term in $p(\boldsymbol{\phi}^{m})$}  Finally, under this prior $ \frac{p(\mathbf{z}^{s})}{p(\mathbf{z}^{m})} = \frac{(n_{z_i}^{s} - 1)!(n_{z_j}^{s} - 1)!}{(n_{z_i}^{m}-1)!}$.
+% The first term is the likelihood ratio of the two states.  Letting $S$ be the set of nodes assigned to $k$ or $l$ in $\mathbf{z}^{s}$, the probability of sampling $\mathbf{z}^{s}$ during a restricted Gibbs scan from  $\mathbf{z}^{m}$ is computed as $q( \mathbf{z}^{m} \rightarrow \mathbf{z}^{s}) = \prod_{s \in S} p(z_{s}=z_s^{s} |\{ z_a^{s},z_{b}^{m}: a  < s \ \mbox{and} \ s < b\}, \boldsymbol{\phi}^{s})$.  Since there is only one way of combining two clusters, we know $q(\mathbf{z}^{s} \rightarrow \mathbf{z}^{m})=1$.   The transition $q(\boldsymbol{\phi}^{m} \rightarrow \boldsymbol{\phi}^{s})$ and
+% $q(\boldsymbol{\phi}^{s} \rightarrow
+% \boldsymbol{\phi}^{m})$ are products of Normal densities. \footnote{To ensure both states have the same dimensionality, one can optionally sample the parameters empty cluster $l$, though the extra term  in $q(\boldsymbol{\phi}^{s} \rightarrow \boldsymbol{\phi}^{m})$ would cancel with a corresponding term in $p(\boldsymbol{\phi}^{m})$}  Finally, under this prior $ \frac{p(\mathbf{z}^{s})}{p(\mathbf{z}^{m})} = \frac{(n_{z_i}^{s} - 1)!(n_{z_j}^{s} - 1)!}{(n_{z_i}^{m}-1)!}$.
 
-Since the proposed split vectors $\phi^s$ are close the $\phi^m$, this has a higher probability than the split states having arisen from the proposed merge state, which is closer to the midpoint between the two $\phi^s$ vectors.  This increases the acceptance probability for splits (and decreases the probability of merges).  However, the probability of getting assigned to each cluster (through the restricted Gibbs scan) might balance things out.
+% Since the proposed split vectors $\phi^s$ are close the $\phi^m$, this has a higher probability than the split states having arisen from the proposed merge state, which is closer to the midpoint between the two $\phi^s$ vectors.  This increases the acceptance probability for splits (and decreases the probability of merges).  However, the probability of getting assigned to each cluster (through the restricted Gibbs scan) might balance things out.

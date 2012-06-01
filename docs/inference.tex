@@ -39,6 +39,6 @@ Each parameter $\mu_p$ can be sampled from its conditional distribution given $\
 \end{align}
 
 \subsection{Hyperparameter settings}
-In our experiments we use $\alpha=0.1$ and use Algorithm 8 from \cite{Neal2000} with 5 extra clusters drawn from the prior.\footnote{I also tried out a prior for cluster sizes such that $n_k \sim \mbox{NegBinom}(3,N/K)$, where $K$ is chosen a priori.  This aims for similarly sized groups.}
-We set $\alpha_{\sigma}=3$ and $\beta_{\sigma}=1$ so that in the presence of little data we encourage shrinkage towards the upper level parameters $\mu$.  
+In our experiments we use $\alpha=0.1$ and use Algorithm 8 from \cite{Neal2000} with 5 extra clusters drawn from the prior.%\footnote{I also tried out a prior for cluster sizes such that $n_k \sim \mbox{NegBinom}(3,N/K)$, where $K$ is chosen a priori.  This aims for similarly sized groups.}
+We set $\alpha_{\sigma}=5$ and $\beta_{\sigma}=1$ so that in the presence of little data we encourage shrinkage towards the upper level parameters $\mu$.  
 As with other models, we note that the predictive accuracy of the model can depend on the hyperparameters.

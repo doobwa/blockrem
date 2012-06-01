@@ -103,15 +103,17 @@ The only restriction is that the statistic may not change in value between each 
 
 \subsection{Relation to other models}
 
-Our formulation is reminiscent of the stochastic blockmodel \cite{Nowicki2001,Kemp2006} for static networks which models the probability of a dyad as $p(y_{ij}) =\mbox{logit}^{-1}( \eta_{z_i,z_j})$ where $\eta_{z_i,z_j}$ is interpreted as a mixing rate between group $z_i$ and group $z_j$.
+Our formulation is reminiscent of the stochastic blockmodel \cite{Nowicki2001} for static networks which models the probability of a dyad as $p(y_{ij}) =\mbox{logit}^{-1}( \eta_{z_i,z_j})$ where $\eta_{z_i,z_j}$ is interpreted as a mixing rate between group $z_i$ and group $z_j$.
 In the proposed method, however, the blockmodel structure facilitates the study of intra-group and inter-group dynamics via a continuous-time network model.
 
 The proposed family of models generalizes several important special cases.
 For example,  using only the intercept statistic $s_0(t,i,j,\mathcal{A}_t) = 1$ is analogous to the stochastic block model for static networks.
 Under this model each dyad is a homogeneous Poisson process and all dyad intensities $\lambda_{i,j}$ within block $(z_i,z_j)$ have the same intensity, $\exp\{\boldsymbol{\beta}_{z_i,z_j}\}$.
 As these intensities do not change under this specification, the likelihood simplifies to
-$$\mathcal{L}(\mathcal{A}|\beta) = \prod_{m=1}^M \lambda_{i_m,j_m} \prod_{(i,j) \in \mathcal{R}} \exp\{-t_M \lambda_{i,j}\}$$
-
+\begin{align}
+\mathcal{L}(\mathcal{A}|\beta) = \prod_{m=1}^M \lambda_{i_m,j_m}
+\prod_{(i,j) \in \mathcal{R}} \exp\{-t_M \lambda_{i,j}\}
+\end{align}
 Alternatively, if one models only the order of the events (ignoring the times at which they occur), the likelihood can be written as
 \begin{align}
 \mathcal{L}_{\mbox{mult}}(\mathcal{A}|\beta) = \prod_{m=1}^M \frac{\lambda_{i_m,j_m}(t_m | \cdot)}{\sum_{(i,j) \in \mathcal{R}} \lambda_{i,j}(t_m | \cdot)}.
@@ -144,13 +146,12 @@ Dyad count& $s_{6}(t,i,j,\mathcal{A}_t) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
 \label{tab:stats}
 \end{table}
 
-
 \subsection{Related work}
 Stochastic blockmodels have been extended to longitudinal network data
 involving a sequence of networks occurring at discrete times
 \cite{Ishiguro2010, Rodriguez2011}, while we focus on methods for
 analyzing a stream of relational events. 
-The proposed model is an extension of recent work on modeling event-based social network data using an event history approach \cite{Butts2008,Brandes2009,Perry2011,Stadtfeld2011,Opsahl2011,Vu2011,Vu2011a}. % \cite{AalenOddO.2008} 
+The proposed model is an extension of recent work on modeling event-based social network data using an event history approach \cite{Butts2008,Brandes2009,Perry2011,Stadtfeld2011,Vu2011,Vu2011a}. % \cite{AalenOddO.2008} Opsahl2011,Stadtfeld2010
 Relational event models such as these require a knot at each observed event, while other approaches such as \cite{Gunawardana2011} learn the regions where an intensity is constant.
 By using decision trees,  \cite{Gunawardana2011} also allow for a nonlinear relationship between statistics and intensity functions.  
 We instead use latent variables to allow for heterogeneity in intensities across the set of possible events.
