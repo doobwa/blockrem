@@ -3,18 +3,21 @@
 
 \subsection{Data}
 
-A variety of real world datasets are used to explore the efficacy of the model.  Each of the following data sets are sequences of dyadic events, where each event has a sender, recipient, and timestamp.  
+A variety of real world data sets are used to explore the efficacy of the model.  The following data sets are sequences of dyadic events, where each event has a sender, recipient, and timestamp.  For each data set, we hold out the final $M_{test}$ events for evaluation of the model.
 
 \begin{itemize}
 %\item Kiel email: \cite{Ebel2002}
-\item Classrooms: TODO describe datasets. Each have about 20 people and 400 events.  \cite{McFarland2001}
-\item Eckmann email: dyadic emails.  2000 training events among 88 people and 1300 test events.  \cite{Eckmann2004}
-\item Enron email: dyadic emails between months [TODO], 3000 training and 1000 test events among 141 actors \cite{Klimt2004}
+\item Classroom \cite{McFarland2001}: 445 directed communication among 27 people a high
+  school classroom collected via participant observation ($M_{test}= 145$).
+\item University email \cite{Eckmann2004}: 3300 dyadic emails among 88 people with at least 30
+  emails each ($M_{test} = 1300$)
+\item Enron email \cite{Klimt2004}: 4000 dyadic emails among 141
+  individuals between TODO months ($M_{test} = 1000$)
 %\item Irvine: dyadic interactions among 401 actors each having more than 30 events,  \cite{Opsahl}
-\item Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.\footnote{Will be made publicly available.}  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.
+\item Twitter direct messages: Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.
 Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.
-We use the subset of 487 users who participated in more than one event, using a training set of 2000 events and a test set of 1330 events.
-\item MIT Reality Mining: phone calls among the 89 recipients between the dates , using of 2000 training events followed by 1000 test events. \cite{Eagle2009}
+We use a subset 4330 events among 487 users who participated in more than one event ($M_{test} = 1330$).\footnote{This dataset will be made publicly available.}
+\item MIT Reality Mining \cite{Eagle2009}: 2000 phone calls among the 89 recipients between the dates TODO ($M_{test}= 1000$).
 \end{itemize}
 
 \subsection{Model-based exploratory analysis}
@@ -31,17 +34,19 @@ The model has learned that this structure exists in the data and our inferences 
 \subsection{Prediction experiments}
 
 We evaluate the predictive ability of the fitted models by comparing models based on the loglikelihood and recall for held-out data.
-Each data set is first split into a training set and a test set, and the loglikelihood of the test set is computed sequentially using Equation \ref{eqn:llk} where $\hat{\lambda}_{i,j}(t_m) = \frac{1}{S}\sum_k \lambda_{i,j}(t_m | \boldsymbol{\beta}^{(k)}, \mathbf{z}^{(k)})$ is averaged using $K$ posterior samples given the training data.
+%Each data set is first split into a training set and a test set, and 
+The loglikelihood of the test set is computed sequentially using Equation \ref{eqn:llk} where $\hat{\lambda}_{i,j}(t_m) = \frac{1}{L}\sum_l \lambda_{i,j}(t_m | \boldsymbol{\beta}^{(l)}, \mathbf{z}^{(l)},\mathcal{A}_t)$ is averaged using $L$ posterior samples given the training data.
 % TODO: We compute both the relational event model likelihood  (\texttt{rem}) as given in Equation \ref{eqn:llk}  and the multinomial likelihood (\texttt{mult}) given in Equation \ref{eqn:multllk}.
 % TODO: The latter only measures a model's predictive performance for \emph{what} occurs next, while the former also measures the ability to predict \emph{when} it occurs.
 
 In addition, we compute recall to evaluate whether the next observed event is among the most likely according to the model.
 At each event $m$ we sort the predicted intensities of all possible events in decreasing order, find the rank of the observed event in the list of predicted intensities, and compute the mean rank across the $M$ events.
 
-\input{../figs/results-llk3.tex}
+{ \footnotesize
+\input{../figs/results-llk4.tex}
 \input{../figs/results-recall-5.tex}
 \input{../figs/results-recall-20.tex}
-
+}
 %\subsection{Baselines}
 
 Several baselines are included for comparison: \texttt{uniform} places uniform probability on all possible dyads, \texttt{online} ranks events at time $t$ by the number of times the dyad has occurred previously $r_{online}(m,i,j) = \sum_{m:t_m < t} I(i_m=i,j_m=j)$, and \texttt{marginal} uses the product of the observed marginal frequencies $r_{marg}(m,i,j) = \sum_{m:t_m < t} I(i_m=i) \sum_{m:t_m < t} I(j_m=j)$.
