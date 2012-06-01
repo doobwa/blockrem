@@ -21,7 +21,7 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
 
 \begin{figure}
 \centering
-\begin{minipage}[b]{0.45\linewidth}
+\begin{subfigure}[b]{0.45\linewidth}
   \begin{tikzpicture}[scale=.8,transform shape,thick]
     \node[vertex] (n1) at (0,0)  {1};
     \node[vertex] (n2) at (2,2)  {2};
@@ -33,8 +33,8 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
     \node at (3.3,1.1) {$t_2$};
   \end{tikzpicture}
   \caption{Dynamic network data}
-\end{minipage}
-\begin{minipage}[b]{0.45\linewidth}
+\end{subfigure}
+\begin{subfigure}[b]{0.45\linewidth}
 \begin{tikzpicture}[scale=1,transform shape,thick]
 \draw[-stealth] (0,0) -- (0,3);
 \draw[-stealth] (0,0) -- (5,0);
@@ -62,7 +62,7 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
 \node at (3,-.3) {$t_2$};
 \end{tikzpicture}
 \caption{Intensities for two dyads}
-\end{minipage}
+\end{subfigure}
 \caption[]{Illustration of event data and the assumptions of the model.  Left: A sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$.  Right: The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{34}(t)$ (dotted).  We assume $\lambda_{34}$ can only change after events sent or received by node 3.\footnotemark }
 \label{fig:example}
 \end{figure}
@@ -90,30 +90,6 @@ The cluster assignments are given a non-parameteric prior $z_i \sim \mbox{CRP}(\
 \subsection{Model specification}
 \label{sec:specification}
 
-\begin{table}[t]
-\footnotesize
-\center
-\begin{tabular}{|l|l|}
-\hline
-Statistic & Formula\\
-\hline
-\hline
-Intercept& $s_{0}(t,i,j) = 1$\\
-Reciprocity (AB-BA)& $s_{1}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$\\
-Turn-continuing (AB-AY)& $s_{2}(t,i,j) =  I(i_m=i,j_m=j,i_{v_{mij}}=i,j_{v_{mij}}\ne j)$\\
-Turn-taking (AB-BY)&$s_{3}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}\ne i)$\\
-%Turn-usurping (AB-XA)& $s_{7}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne j,j_{v_{mij}}=i)$\\
-%Turn-usurping (AB-XB)&$s_{8}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne i,j_{v_{mij}}=j)$\\
-Sender out-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i) )$\\
-Sender in-degree& $s_{5}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=i) )$\\
-Dyad count& $s_{6}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
-%Receiver out-degree& $s_{3}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=j))$\\
-%Receiver in-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=j))$\\
-\hline
-\end{tabular}
-\caption{Statistics used to specify intensity functions using the previous history $\mathcal{A}_t$, where $v_{mij}$ is the index of the changepoint for $\lambda_{ij}$ previous to event $m$.}
-\label{tab:stats}
-\end{table}
 
 In Table \ref{tab:stats} we list the statistics we use in our experiments for  $\mathbf{s}(t,i,j)$.
 For example, a particular node sending often may indicate they will continue to be a sender in the future.
@@ -144,6 +120,32 @@ Alternatively, if one models only the order of the events (ignoring the times at
 \label{eqn:multllk}
 \end{align}
 The functional form is similar to conditional logit models used for discrete choice data \cite{McFadden1984}, though here the possible choices are all the dyads in $\mathcal{R}$.
+
+\begin{table}[t]
+\footnotesize
+\center
+\begin{tabular}{|l|l|}
+\hline
+Statistic & Formula\\
+\hline
+\hline
+Intercept& $s_{0}(t,i,j) = 1$\\
+Reciprocity (AB-BA)& $s_{1}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$\\
+Turn-continuing (AB-AY)& $s_{2}(t,i,j) =  I(i_m=i,j_m=j,i_{v_{mij}}=i,j_{v_{mij}}\ne j)$\\
+Turn-taking (AB-BY)&$s_{3}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}\ne i)$\\
+%Turn-usurping (AB-XA)& $s_{7}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne j,j_{v_{mij}}=i)$\\
+%Turn-usurping (AB-XB)&$s_{8}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne i,j_{v_{mij}}=j)$\\
+Sender out-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i) )$\\
+Sender in-degree& $s_{5}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=i) )$\\
+Dyad count& $s_{6}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
+%Receiver out-degree& $s_{3}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=j))$\\
+%Receiver in-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=j))$\\
+\hline
+\end{tabular}
+\caption{Statistics used to specify intensity functions using the previous history $\mathcal{A}_t$, where $v_{mij}$ is the index of the changepoint for $\lambda_{ij}$ previous to event $m$.}
+\label{tab:stats}
+\end{table}
+
 
 \subsection{Related work}
 The proposed model is an extension of recent work on modeling event-based social network data using an event history approach \cite{Butts2008,Brandes2009,Perry2011,Stadtfeld2010,Stadtfeld2011,Opsahl2011,Vu2011,Vu2011a}. % \cite{AalenOddO.2008} 
