@@ -110,3 +110,18 @@ for (p in px) {
   image(mat,xaxt="n",yaxt="n",col=cols)
   dev.off()
 }
+
+# Zoom in plots
+ix <- o[which(z[o] %in% c(1,3))]  # members of 1 or 3
+tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
+pdf("figs/eckmann-small/parmat/observed-zoom.pdf",height=4,width=4)
+par(mar=c(0,0,0,0))
+image(log(tb[ix,ix]+1),xaxt="n",yaxt="n",col=cols)
+dev.off()
+for (p in px) {
+  mat <- (mats[[p]] - mu.hat[p]) / sigma.hat[p]
+  pdf(paste("figs/eckmann-small/parmat/",p,"-zoom.pdf",sep=""),height=4,width=4)
+  par(mar=c(0,0,0,0))
+  image(mat[ix,ix],xaxt="n",yaxt="n",col=cols)
+  dev.off()
+}

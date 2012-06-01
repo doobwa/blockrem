@@ -43,8 +43,32 @@
 \centering
 \includegraphics[scale=.25]{../figs/eckmann-small/parmat/3}
 \caption{\texttt{ab-by} estimates}
+\end{subfigure} \\
+\begin{subfigure}[b]{0.22\textwidth}
+\centering
+\includegraphics[scale=.25]{../figs/eckmann-small/parmat/observed-zoom}
+\caption{Observed counts}
 \end{subfigure}
-\caption{Comparing observed counts and parameter estimates.  Darker values are larger.  Estimates are rescaled posterior means $(\hat{\beta}_{p,z_i,z_j} - \hat{\mu}_p)/\hat{\sigma}_p$ for each dyad $(i,j)$.  Learned parameters suggest heterogeneity exists in both total activity (b) as well as dynamics, as seen in (c) and (d).}
+~
+\begin{subfigure}[b]{0.22\textwidth}
+\end{subfigure}
+\begin{subfigure}[b]{0.22\textwidth}
+\centering
+\includegraphics[scale=.25]{../figs/eckmann-small/parmat/1-zoom}
+\caption{Intercept estimates}
+\end{subfigure}
+~
+\begin{subfigure}[b]{0.22\textwidth}
+\centering
+\includegraphics[scale=.25]{../figs/eckmann-small/parmat/2-zoom}
+\caption{\texttt{ab-ba} estimates}
+\end{subfigure}
+\begin{subfigure}[b]{0.22\textwidth}
+\centering
+\includegraphics[scale=.25]{../figs/eckmann-small/parmat/3-zoom}
+\caption{\texttt{ab-by} estimates}
+\end{subfigure}
+\caption{Comparing observed counts and parameter estimates.  Darker values are larger.  Estimates are rescaled posterior means $(\hat{\beta}_{p,z_i,z_j} - \hat{\mu}_p)/\hat{\sigma}_p$ for each dyad $(i,j)$.  Learned parameters suggest heterogeneity exists in both total activity (b) as well as dynamics, as seen in (c) and (d).  Figures (e-h) give a zoomed-in view of groups 1 and 3, showing that while the overall rate of (1,3) and (3,1) events is similar, the tendency for \texttt{ab-by} differs.}
 \label{fig:parmats}
 \end{figure}
 
