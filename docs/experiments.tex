@@ -42,13 +42,10 @@ The loglikelihood of the test set is computed sequentially using Equation \ref{e
 % TODO: The latter only measures a model's predictive performance for \emph{what} occurs next, while the former also measures the ability to predict \emph{when} it occurs.
 
 In addition, we compute recall to evaluate whether the next observed event is among the most likely according to the model.
-At each event $m$ we sort the predicted intensities of all possible events in decreasing order, find the rank of the observed event in the list of predicted intensities, and compute the mean rank across the $M$ events.
+At each event $m$ we sort the predicted intensities of all possible events in decreasing order, find the rank of the observed event in the list of predicted intensities, and compute the mean number of events ranking above cutoffs $\kappa=5$ and $\kappa=20$. 
 
-{ \scriptsize
 \input{../figs/results-llk4.tex}
 \input{../figs/results-recall-all.tex}
-}
-%\subsection{Baselines}
 
 Several baselines are included for comparison: \texttt{uniform} places uniform probability on all possible dyads, \texttt{online} ranks events at time $t$ by the number of times the dyad has occurred previously $r_{online}(m,i,j) = \sum_{m:t_m < t} I(i_m=i,j_m=j)$, and \texttt{marginal} uses the product of the observed marginal frequencies $r_{marg}(m,i,j) = \sum_{m:t_m < t} I(i_m=i) \sum_{m:t_m < t} I(j_m=j)$.  
 Finally, \texttt{BM} is a stochastic blockmodel (i.e. our model with only an intercept term).

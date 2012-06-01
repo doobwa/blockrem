@@ -1,12 +1,12 @@
-\appendix{\textbf{Supplementary Material: Complexity}}
+%\appendix{\textbf{Supplementary Material: Complexity}}
 
-We take advantage of our restriction on the types of statistics $s$ to reduce the computational complexity of computing our likelihood Equation \ref{eqn:likelihood} as
+We take advantage of our restriction on the types of statistics $\mathbf{s}$ to reduce the computational complexity of computing our likelihood  as
 \begin{align*}
-\mathcal{L}(\mathcal{A}_{t_M}|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}_{i_m,j_m}}\exp\{ - (t_m - \tau_{mij}) \lambda_{ij}(t_m | \cdot) \}
+\mathcal{L}(\mathcal{A}_{t_M}|\theta) &= \prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot) \prod_{(i,j) \in \mathcal{R}_{i_m,j_m}}\exp\{ - (t_m - \tau_{m,i,j}) \lambda_{ij}(t_m | \cdot) \}
 \end{align*}
-\noindent where event $m$ is the dyad $(i_m,j_m)$, $\tau_{mij}$ is the time  of the changepoint for $\lambda_{i,j}$ prior to the $m$th event, and $\mathcal{R}_{i,j}$ is the set of dyads whose intensity changes if $(i,j)$ occurs  \cite{Butts2008}. \footnote{We further assume 1) all intensity functions change at times $t=0$ and $t=t_M$, and 2) the first event is drawn uniformly from the risk set.}
+\noindent where event $m$ is the dyad $(i_m,j_m)$, $\tau_{m,i,j}$ is the time  of the changepoint for $\lambda_{i,j}(t|\cdot)$ prior to the $m$th event, and $\mathcal{R}_{i,j}$ is the set of dyads whose intensity changes if $(i,j)$ occurs.%  \cite{Butts2008}. %\footnote{We further assume 1) all intensity functions change at times $t=0$ and $t=t_M$, and 2) the first event is drawn uniformly from the risk set.}
 
- By limiting the changepoints to times when either node is involved, computing the likelihood $p(A|z,\beta,\mbox{node} \ r \ \mbox{involved})$ is $O(|\mathcal{U}_r| \cdot P \cdot N)$.  We precompute $\tau_{m,i,j}$ and $\mathbf{s}(t_m,i,j)$ for all $m$, $i$, and $j$.
+ By limiting the changepoints, computing the likelihood  $p(\mathcal{A}|\mathbf{z},\boldsymbol{\beta})$ for Gibbs sampling $z_r$ is $O(|\mathcal{U}_r| \cdot P \cdot N)$, avoiding a factor of $N^2$.  In practice, we precompute $\tau_{m,i,j}$ and $\mathbf{s}(t_m,i,j,\mathcal{A}_t)$ for all $m$, $i$, and $j$.
 
 % \appendix{\textbf{Split-merge Metropolis-Hastings move for non-conjugate stochastic blockmodels}}
 

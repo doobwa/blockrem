@@ -20,8 +20,8 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
 \end{align}
 
 \begin{figure}
-\centering
 \begin{subfigure}[b]{0.45\linewidth}
+\centering
   \begin{tikzpicture}[scale=.65,transform shape,thick]
     \node[vertex] (n1) at (0,0)  {1};
     \node[vertex] (n2) at (2,2)  {2};
@@ -35,6 +35,7 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
   \caption{Dynamic network data}
 \end{subfigure}
 \begin{subfigure}[b]{0.45\linewidth}
+\centering
 \begin{tikzpicture}[scale=.8,transform shape,thick]
 \draw[-stealth] (0,0) -- (0,3);
 \draw[-stealth] (0,0) -- (5,0);
@@ -63,7 +64,7 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
 \end{tikzpicture}
 \caption{Intensities for two dyads}
 \end{subfigure}
-\caption[]{Illustration of relational event data and the assumptions of the model.  (a) A sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$. (b) The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{3,4}(t)$ (dotted).  We assume $\lambda_{3,4}(t)$ can only change after events sent or received by node 3. }
+\caption[]{Illustration of relational event data and the assumptions of the model.  (a) A sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$. (b) The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{3,4}(t)$ (dashed).  We assume $\lambda_{3,4}(t)$ can only change after events sent or received by node 3. }
 \label{fig:example}
 \end{figure}
 
