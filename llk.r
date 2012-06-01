@@ -1,16 +1,6 @@
 datasets <- c("synthetic-1", "eckmann-small", "classroom-16", "classroom-17", "classroom-27", #"classroom-29", "classroom-31",
               "realitymining-small", "twitter-small", "enron-small")#, "irvine")
-modelatts <- function(model) {
-  atts <- strsplit(model,"\\.")[[1]]
-  g <- function(x,y) as.numeric(strsplit(x,y)[[1]][2])
-  xs <- c("kinit","kmax","sm","nb","pshift","deg","trans","collapse","xsigalpha","xsigbeta")
-  a <- lapply(1:length(xs),function(i) g(atts[i],xs[i]))
-  names(a) <- xs
-  return(a)
-}
-modelnames <- function(folder) {
-  as.vector(sapply(dir(folder),function(x) strsplit(x,".rdata")[[1]][1]))
-}
+source("utils.r")
 
 library(brem)
 library(multicore)

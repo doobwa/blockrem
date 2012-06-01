@@ -219,13 +219,6 @@ posterior.mean.lrm <- function(strain,samples,ix,iters) {
   } 
   return(lrms[[1]])
 }
-posterior.mean.lrm.s <- function(strain,samples,ix,iters) {
-  lrms <- lapply(samples[iters],function(s) {
-    brem.lrm.fast.subset(strain, s$z, s$beta, ix)
-  })
-  lrm <- abind(lrms,along=4)
-  apply(lrm,1:3,mean)
-}
 
 ##' @title Same as eval.online, but for a particular baseline method
 ##' @param edgelist Mx3 matrix of (time, sender, receiver)

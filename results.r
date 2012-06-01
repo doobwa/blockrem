@@ -22,9 +22,10 @@ for (i in 1:length(r)) {
     for (k in 1:length(r[[i]][[j]])) {
       r[[i]][[j]][[k]] <- list(train=mean(r[[i]][[j]][[k]]$train),
                                test =mean(r[[i]][[j]][[k]]$test))
-    }
+    } 
   }
 }
+# recall(r$test,top=1:30)
 r <- melt(r)
 colnames(r)[2:5] <- c("type","metric","model","dataset")
 ma <- lapply(unique(r$model),function(m) data.frame(model=m,modelatts(m)))
