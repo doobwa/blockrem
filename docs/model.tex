@@ -81,9 +81,9 @@ As shown in Figure \ref{fig:example}, we only allow each intensity function $\la
 This is sensible in distributed settings where $i$ has limited knowledge about interactions among other actors.
 In the Supplementary Material we show how this assumption also reduces the computational complexity of computing the above likelihood.
 
-We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \propto 1$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(\alpha_{\sigma},\beta_{\sigma})$.
-The cluster assignments are given a non-parameteric prior $z_i \sim \mbox{CRP}(\alpha)$.
-{\color{red} TODO: Expand on this?}
+We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \propto N(0,1)$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(\alpha_{\sigma},\beta_{\sigma})$.
+The cluster assignments are given a non-parameteric prior $z_i \sim \mbox{CRP}(\alpha)$, allowing for a flexible number of clusters.
+% TODO: expand on this
 
 \subsection{Model specification}
 \label{sec:specification}
