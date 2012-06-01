@@ -279,15 +279,15 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [X] Move split merge entirely to appendix
 - [X] fix  description in paper for pshift ('ego' issue)
 - [ ] Incorporate SNRG note
-- [ ] cite reality mining paper and mcfarland and other data sets
+- [X] cite reality mining paper and mcfarland and other data sets
 - [ ] mention why we can't use EM
 - [ ] rotate plots for synthetic example
-- [ ] more convincing motivation in Section 1
+- [X] more convincing motivation in Section 1
 - [X] ditch handcock/schweinberger reference?
 - [X] change title
 - [X] mention continuous-time Markov jump process in Model section
 - [X] Add mention of the supplemental material.
-- [ ] Add NIPSy references: Xing, Teh.
+- [X] Add NIPSy references: Xing, Teh.
 - [ ] Add little bits of information/details.  e.g. Interestingly...
 - [X] Remove description of model specification with rich-get-richer bit
 - [X] Mention what happens with cluster pairs that have no data
