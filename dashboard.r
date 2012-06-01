@@ -29,7 +29,7 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-opts <- list(dataset="classroom-16",predictions=TRUE)
+opts <- list(dataset="synthetic-1",predictions=TRUE)
 dataset <- opts$dataset
 
 # Pull data from each saved file and grab the name of the fit
@@ -185,10 +185,10 @@ if (length(fx) > 0) {
   df <- melt(df)
   df$i <- z[df$Var1]
   df$j <- z[df$Var2]
-  df <- subset(df,Var3 != "AB-AB")
+  df <- subset(df,!Var3 %in% c("AB-AB","AB-XA","AB-XB"))
   df$Var3 <- factor(as.character(df$Var3))
-  levels(df$Var3) <- rev(list("AB-BA"="ab-ba","AB-BY"="ab-by","AB-XA"="ab-xa","AB-XB"="ab-xb","AB-AY"="ab-ay"))#,"AB-AB"="ab-ab"))
-  q3 <- qplot(Var3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="",y="count for a given dyad") + coord_flip()# +opts(axis.text.x=theme_text(angle=90)) 
+  levels(df$Var3) <- list("Total"="Total","AB-BA"="ab-ba","AB-BY"="ab-by","AB-AY"="ab-ay")
+  q3 <- qplot(Var3,value,data=df,geom="boxplot",outlier.size=0.1) + facet_grid(i ~ j) + theme_bw() + labs(x="",y="count for a given dyad") +opts(axis.text.x=theme_text(angle=-90)) 
   q3
   ggsave("figs/synthetic/counts.pdf",width=4,height=4)
 } else {
@@ -332,8 +332,9 @@ if (opts$dataset=="eckmann-small") {
 
 if (opts$dataset=="synthetic") {
 
+  chosen.model <- "kinit2.kmax2.sm0.nb0.pshift1.deg1.trans1.collapse1.xsigalpha1000.xsigbeta1000"
   load("data/synthetic-1.rdata")
-  load(paste("results/synthetic-1/",chosen.model,".rdata",sep=""))
+  load(paste("results/synthetic-1/fits/",chosen.model,".rdata",sep=""))
   b <- lapply(fit$samples,function(x) x$beta)
   b <- melt(b)
   colnames(b) <- c ("p","k1","k2","value","iter")
@@ -357,13 +358,13 @@ if (opts$dataset=="synthetic") {
   ignore <- c("ab-ab","ab-xa","ab-xb","total","rec. indegree","sen. indegree","rec. outdegree","sen. outdegree","dyad count")
   d <- subset(d,! p %in% ignore)
   tb <- subset(tb,! p %in% ignore)
-  d$p <- factor(as.character(d$p),rev(pnames[-c(7:13)]))
-  tb$p <- factor(as.character(tb$p),rev(pnames[-c(7:13)]))
-  
+  d$p <- factor(as.character(d$p),c("intercept","ab-ba","ab-by","ab-ay"))#rev(pnames[-c(7:13)]))
+  tb$p <- factor(as.character(tb$p),c("intercept","ab-ba","ab-by","ab-ay"))#rev(pnames[-c(7:13)]))
+
   ggplot(d) + geom_point(aes(x=p,y=mean),colour="white") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="white") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="white") + geom_point(colour="red",aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
   ggsave("figs/synthetic/params-true.pdf",width=5,height=4)
-  ggplot(d) + geom_point(aes(x=p,y=mean),colour="black") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="black") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="black") + geom_point(colour="red",alpha=.5,aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="value") + coord_flip()
-  ggsave("figs/synthetic/params-estimates.pdf",width=5,height=4)
+  ggplot(d) + geom_point(aes(x=p,y=mean),colour="black") +  geom_linerange(aes(x=p,ymin=`20%`,ymax=`80%`),colour="black") + geom_linerange(aes(x=p,ymin=`2.5%`,ymax=`97.5%`),colour="black") + geom_point(colour="red",alpha=.5,aes(x=p,y=value),data=tb) +facet_grid(k1~k2) + theme_bw() + labs(x="",y="") +opts(axis.text.x=theme_text(angle=-90)) # + coord_flip()
+  ggsave("figs/synthetic/params-estimates.pdf",width=3.5,height=3.5)
   
 }
 
