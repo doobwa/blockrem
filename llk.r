@@ -60,9 +60,9 @@ iters <- merge(iters,ma,by="model")
 save(llks,ks,iters,x,ma,file="results/llk.rdata")
 load("results/llk.rdata")
 
-ktb <- dcast(ks,type + dataset + xsigalpha + xsigbeta ~ kinit + kmax + pshift + deg, fun.aggregate=mean)
+ktb <- dcast(ks,dataset + xsigalpha + xsigbeta ~ kinit + kmax + pshift + deg, fun.aggregate=mean)
 ktb
-itb <- dcast(iters,type + dataset + xsigalpha + xsigbeta ~ kinit + kmax + pshift + deg, fun.aggregate=mean)
+itb <- dcast(iters,dataset + xsigalpha + xsigbeta ~ kinit + kmax + pshift + deg, fun.aggregate=mean)
 itb
 
 tmp <- dcast(x,xsigalpha +xsigbeta+type+ dataset ~ kinit + kmax + pshift + deg, fun.aggregate=mean)
@@ -73,8 +73,11 @@ colnames(tmp)[1:2] <- c("alpha","beta")
 tmp[,-c(1:4)] <- round(tmp[,-c(1:4)],3)
 chosen <- c(1:4,8,12,15,16,23)
 subset(tmp,alpha %in% c(1,5))[,chosen]
-z=subset(tmp,type=="test")[,chosen]
-z=subset(tmp,type=="test" & xsigalpha==1)[,c(1:4,8,12,15,16,23)]
 
-write.table(z,file="results-5.dat",sep="\t")
-write(print(z)
+res <- subset(tmp,alpha %in% c(5) & type=="test")[,c("dataset","2_1_1_1","2_10_0_0","2_2_1_1","2_3_1_1","2_10_1_1")]
+colnames(res) <- c("Dataset","K=1","SBM","K=2","K=3","K=10")
+
+library(xtable)
+xr <- xtable(res,caption="Comparing mean loglikelihood under different methods for each event in a given test set.  Larger values are better.  See text for details.",label="tab:results",digits=3)
+print(xr,include.rownames=FALSE,file=paste("figs/results-llk2.tex",sep=""),NA.string="",table.placement="t",size="footnotesize")
+

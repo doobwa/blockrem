@@ -1,8 +1,36 @@
+# Go through available pred objects.
+
+datasets <- c("synthetic-1","eckmann-small","classroom-16", "classroom-17", "classroom-27","realitymining-small","enron-small","twitter")
+
+res <- lapply(datasets,function(dataset) {
+  folder <- paste("results/",dataset,"/preds/",sep="")
+  models <- modelnames(folder)
+  r <- lapply(models,function(model) {
+    load(paste(folder,model,".rdata",sep=""))
+    return(pred)
+  })
+  names(r) <- models
+  return(r)
+})
+names(res) <- datasets
+
+r <- res
+ix <- which(sapply(r,length) == 0)
+if (length(ix) > 0) r <- r[-ix]
+for (i in 1:length(r)) {
+  for (j in 1:length(r[[i]])) {
+    for (k in 1:length(r[[i]][[j]])) {
+      r[[i]][[j]][[k]] <- list(train=mean(r[[i]][[j]][[k]]$train),
+                               test =mean(r[[i]][[j]][[k]]$test))
+    }
+  }
+}
+r <- melt(r)
 
 #datasets <- c("synthetic-1","eckmann-small","realitymining-small",
- datasets <- c("synthetic-1","eckmann-small","classroom-16", "classroom-17", "classroom-27","realitymining-small","enron-small")
+ datasets <- c("synthetic-1","eckmann-small","classroom-16", "classroom-17", "classroom-27","realitymining-small","enron-small","twitter")
 res <- lapply(datasets,function(x) {
-  f <-paste("results/",x,"/final/results.rdata",sep="")
+  f <- paste("results/",x,"/final/results.rdata",sep="")
   if (file.exists(f)) {
     load(f)
     return(df[,1:5])

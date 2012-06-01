@@ -29,7 +29,7 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-opts <- list(dataset="enron-small",predictions=TRUE)
+opts <- list(dataset="realitymining-small",predictions=TRUE)
 dataset <- opts$dataset
 
 # Pull data from each saved file and grab the name of the fit
@@ -38,10 +38,11 @@ load(paste("data/",opts$dataset,".rdata",sep=""))
 modelnames <- function(folder) {
   as.vector(sapply(dir(folder),function(x) strsplit(x,".rdata")[[1]][1]))
 }
+
 modelatts <- function(model) {
   atts <- strsplit(model,"\\.")[[1]]
   g <- function(x,y) as.numeric(strsplit(x,y)[[1]][2])
-  xs <- c("kinit","kmax","sm","nb","pshift","deg","trans","collapse")
+  xs <- c("kinit","kmax","sm","nb","pshift","deg","trans","collapse","xsigalpha","xsigbeta")
   a <- lapply(1:length(xs),function(i) g(atts[i],xs[i]))
   names(a) <- xs
   return(a)
@@ -68,18 +69,18 @@ llks <- merge(llks,atts,by="model")
 names(llks)[11] <- "coll"
 
 tmp <- subset(llks,iter > 3 & iter < 500)
-q1 <- qplot(iter,llk,data=tmp,geom="line",colour=factor(model)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(pshift + deg ~ coll + kmax,scales="free")
+q1 <- qplot(iter,llk,data=tmp,geom="line",colour=factor(model),linetype=factor(xsigalpha)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(pshift + deg ~ coll + kmax,scales="free")
 q1
 
 tmp <- subset(llks,iter > 5)# & coll == 1 & nb==0)
-q1 <- qplot(iter,llk,data=tmp,geom="line",colour=factor(nb),linetype=factor(coll)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(kinit~deg+pshift)
+q1 <- qplot(iter,llk,data=tmp,geom="line",colour=factor(nb),linetype=factor(coll)) + labs(x="iteration",y="log posterior",colour="model") + theme_bw() + facet_grid(kinit+xsigalpha~deg+pshift)
 q1
 
 
 cat("Trace plot of beta.\n")
 library(coda)
 t(t(names(fits)))
-fit <- fits[[8]]
+fit <- fits[[24]]
 z <- fit$params$z
 table(z)
 table(z[train[,2]],z[train[,3]])
