@@ -67,23 +67,21 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
 \label{fig:example}
 \end{figure}
 
-We aim to learn about the dynamics between subsets of nodes.   To facilitate this, we assume each node $i$ belongs to latent cluster $z_i$ and use a log linear model for the intensity functions
+{\color{red} (Need a better transition here.)}  We aim to learn about the dynamics between subsets of nodes.   To facilitate this, we assume each node $i$ belongs to latent cluster $z_i$ and use a log linear model for the intensity functions
 \begin{align*}
 \log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{\beta},\mathbf{z}) &= \boldsymbol{\beta}'_{z_i,z_j} \mathbf{s}(t,i,j,\mathcal{A}_t)
 %z_i &\sim \mbox{CRP}(\alpha) &
 %\boldsymbol{\beta}_{k,l} &\sim %\mbox{N}_p(\boldsymbol{\mu},\boldsymbol{\sigma}^2I)
 \end{align*}
 where for each pair of clusters $(k,l)$ we have a parameter vector $\boldsymbol{\beta}_{k,l} \sim \mbox{N}_P(\boldsymbol{\mu},\boldsymbol{\sigma}^2I)$ that corresponds to the $P$-dimensional vector of statistics $\mathbf{s}(t,i,j,\mathcal{A}_t)$ computed from the previous history $\mathcal{A}_t$.
-Thus, our model for the rate of $(i,j)$ events has the same parameters as for other events occurring between group $z_i$ and $z_j$.
+Thus, the rate of $(i,j)$ events has the same parameters as other events occurring between group $z_i$ and $z_j$.
 
- In practice we may believe an interaction between one dyad should not affect the rate of an entirely separate dyad.
+% In practice we may believe an interaction between one dyad should not affect the rate of an entirely separate dyad.
 As shown in Figure \ref{fig:example}, we only allow each intensity function $\lambda_{ij}(t)$ to change following an event where $i$ was the sender or the recipient.
 This is sensible in distributed settings where $i$ has limited knowledge about interactions among other actors.
 In the Supplementary Material we show how this assumption also reduces the computational complexity of computing the above likelihood.
-% TODO: Lead off with computational convenience, then justify?
-%\footnote{TODO: This is analogous to a Markov condition for this class of models.}
 
-We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \propto 1$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(\alpha_{\sigma},\beta{\sigma})$.
+We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \propto 1$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(\alpha_{\sigma},\beta_{\sigma})$.
 The cluster assignments are given a non-parameteric prior $z_i \sim \mbox{CRP}(\alpha)$.
 % TODO: Expand on this?
 
@@ -91,7 +89,7 @@ The cluster assignments are given a non-parameteric prior $z_i \sim \mbox{CRP}(\
 \label{sec:specification}
 
 
-In Table \ref{tab:stats} we list the statistics we use in our experiments for  $\mathbf{s}(t,i,j)$.
+Table \ref{tab:stats}  lists the statistics  $\mathbf{s}(t,i,j,\mathcal{A}_t)$ used in Section \ref{sec:experiments}.
 For example, a particular node sending often may indicate they will continue to be a sender in the future.
 We normalize these counts by the number of events up until a dyad's prior changepoint. %\footnote{This seems to avoid ``explosion'' when simulating from the model.  TODO: Explore the theory about these sorts of statistics.  Aalen has a few suggestions.}
 Other statistics could be of interest for particular substantive questions \cite{Butts2008,Vu2011}.  \footnote{Describe the form of $f()$.  Right now it is $f(x) = \log \frac{x+1}{m + N(N-1)}$.}
@@ -99,7 +97,7 @@ Other statistics could be of interest for particular substantive questions \cite
 % TODO: Awkward next sentence
 The next set of statistics are \emph{participation shift} effects inspired by research in conversational norms \cite{Gibson2003}.
 For example, an \texttt{ab-ba} effect indicates an increased propensity for reciprocity where the event $(a,b)$ is followed by $(b,a)$.
-Though we use only the statistics in Table \ref{tab:stats} in our experiments, one may use any quantity that is computed using the previous history of events or known covariates about nodes or dyads.
+Though only the statistics in Table \ref{tab:stats} are used in our experiments, one may use any quantity that is computed using the previous history of events or known covariates about nodes or dyads.
 The only restriction is that the statistic may not change in value between each observed event.\footnote{This prevents one from using the number of events occurring in some previous time window, as in \cite{Gunawardana2011}.}
 % TODO: Also, need to be restricted to ego conditions if we want it fast
 
