@@ -30,15 +30,6 @@ for (i in 1:length(r)) {
 }
 
 
-## rks <- list()
-## for (i in 1:length(r)) {
-##   for (j in 1:length(r[[i]])) {
-##     rks[[i]][[j]] <- list(train=recall(r[[i]][[j]][[k]]$train),
-2##                           test =recall(r[[i]][[j]][[k]]$test))
-##   }
-## }
-
-
 
 # recall(r$test,top=1:30)
 library(reshape2)
@@ -67,6 +58,51 @@ xr <- xtable(final,caption="Comparing mean loglikelihood for each event across m
 print(xr,include.rownames=FALSE,file=paste("figs/results-llk3.tex",sep=""),NA.string="",table.placement="t",size="footnotesize",sanitize.text.function=identity)
 
 
+r <- allpred
+ix <- which(sapply(r,length) == 0)
+if (length(ix) > 0) r <- r[-ix]
+rks <- list()
+for (i in 1:length(r)) {
+  rks[[i]] <- list()
+  for (j in 1:length(r[[i]])) {
+    tr <- recall(r[[i]][[j]]$rks$train)$recall#[c(5,20)]
+    te <- recall(r[[i]][[j]]$rks$test)$recall#[c(5,20)]
+    rks[[i]][[j]] <- list(train=list("5"=tr[1],"20"=tr[2]),
+                          test =list("5"=te[1],"20"=te[2]))
+  }
+  names(rks[[i]]) <- names(r[[i]])
+}
+names(rks) <- names(r)
+
+
+r <- melt(rks)
+colnames(r)[2:5] <- c("metric","type","model","dataset")
+ma <- lapply(unique(r$model),function(m) data.frame(model=m,modelatts(m)))
+ma <- do.call(rbind,ma)
+x <- merge(r,ma,by="model")
+tmp <- dcast(x,xsigalpha +xsigbeta+metric+type+ dataset ~ kinit + kmax + pshift + deg, fun.aggregate=mean)
+tmp$xsigalpha <- tmp$xsigalpha/1000
+tmp$xsigbeta  <- tmp$xsigbeta/1000
+colnames(tmp)[1:2] <- c("alpha","beta")
+subset(tmp,metric=="5" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
+subset(tmp,metric=="20" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
+
+cutoff <- "20"
+a <- subset(tmp,metric==cutoff & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
+b <- subset(x,model %in% c("online","marg","uniform"))
+b <- dcast(b,metric + type + dataset ~ model)
+b <- subset(b,metric==cutoff & type=="test")
+b <- b[,c(3,6,4,5)]
+a <- a[,-1]
+final <- cbind(b,a)[c(7,3,4,5,6),]
+colnames(final)[1:9] <- c("Dataset","\\texttt{unif}","\\texttt{marg}","\\texttt{online}","\\texttt{BM}","$K=1$","$K=2$","$K=3$","$K=10$")
+final[,1] <- c("Synthetic","Classroom","University Email","Enron Email","Mobile Phone Calls")#,"Twitter Direct Messages")
+library(xtable)
+xr <- xtable(final,caption=paste("Comparing recall at cutoff",cutoff,"across methods for each dataset.  Larger values are better.  See text for details."),label=paste("tab:recall",cutoff,sep=""),digits=3)
+print(xr,include.rownames=FALSE,file=paste("figs/results-recall-",cutoff,".tex",sep=""),NA.string="",table.placement="t",size="footnotesize",sanitize.text.function=identity)
+
+
+###################
 #datasets <- c("synthetic-1","eckmann-small","realitymining-small",
  datasets <- c("synthetic-1","eckmann-small","classroom-16", "classroom-17", "classroom-27","realitymining-small","enron-small","twitter")
 res <- lapply(datasets,function(x) {
