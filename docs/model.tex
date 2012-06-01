@@ -67,7 +67,7 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
 \label{fig:example}
 \end{figure}
 
-{\color{red} (Need a better transition here.)}  We aim to learn about the dynamics between subsets of nodes.   To facilitate this, we assume each node $i$ belongs to latent cluster $z_i$ and use a log linear model for the intensity functions
+Here, we aim to learn about the dynamics within and between subsets of nodes.   To facilitate this, we assume each node $i$ belongs to latent cluster $z_i$ and use a log linear model for the intensity functions
 \begin{align*}
 \log \lambda_{ij}(t | \mathcal{A}_t,\mathbf{\beta},\mathbf{z}) &= \boldsymbol{\beta}'_{z_i,z_j} \mathbf{s}(t,i,j,\mathcal{A}_t)
 %z_i &\sim \mbox{CRP}(\alpha) &

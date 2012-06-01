@@ -47,11 +47,9 @@ There is, however, a difference to be detected.  The bottom panels of Figure~\re
 %
 %comprised of several teams, each team may uncover different patterns for collaborating via email---individuals in one group may respond more quickly, while another group may preferentially send to highly active individuals.
 
-Borrowing from the intuition of stochastic blockmodels, we propose a novel continuous-time model of network-based event sequences where latent clusters of nodes share similar patterns of interaction.
+Borrowing from the intuition of stochastic blockmodels, we propose a novel continuous-time model family for network-based event sequences where latent clusters of nodes share similar patterns of interaction.
 Our approach employs a flexible framework for  specifying how the process depends on the previous history of events \cite{AalenOddO.2008, Butts2008}.
-In this way one can compare theories about the underlying processes and make predictions about future data conditioned on the past.
-{\color{red} ...and simultaneously adjust for heterogeneity in these
-  processes?}
+In this way one can compare theories about underlying processes and make predictions about future data conditioned on the past, simultaneously adjusting for unobserved heterogeneity.
 
 We describe how we learn the latent cluster assignments and model parameters via MCMC, and illustrate the behavior of the model with simulated data.
 Using several real-world social network data sets involving dyadic communication, we compare the predictive performance of the fitted models to standard baselines.
