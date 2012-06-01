@@ -27,6 +27,14 @@ z <- c(rep(1,5),rep(2,5))
 
 sim <- generate.brem(M,N,beta,z,ego=TRUE)
 
+pdf("figs/synthetic/counts2.pdf",width=3,height=3)
+par(mar=c(2,2,2,2),mgp=c(1,1,0))
+cols <- rev(grey.colors(100,start=0,end=.95,gamma=1))
+tb <- table(factor(A[,2],1:N),factor(A[,3],1:N))
+tb <- as.matrix(tb)
+image(1:N,1:N,tb,xaxt="n",yaxt="n",col=cols,xlab="Receiver",ylab="Sender",axes=FALSE)
+dev.off()
+
 A <- sim$edgelist
 plot(A[,1],type="l")
 
@@ -168,6 +176,7 @@ sim <- generate.brem(M,N,beta,z,ego=TRUE)
 y2 <- sim$edgelist
 
 pdf("figs/introexample/all.pdf",width=5.2,height=5)
+
 
 stext <- 1.3
 par(mfrow=c(2,2))
