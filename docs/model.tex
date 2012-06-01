@@ -83,7 +83,7 @@ In the Supplementary Material we show how this assumption also reduces the compu
 
 We allow the blocks to share information by placing a hierarchical prior on the collection of $\boldsymbol{\beta}_{k.l}$ where $\mu_p \propto 1$ and $\sigma_p^2 \sim \mbox{Inv-Gamma}(\alpha_{\sigma},\beta_{\sigma})$.
 The cluster assignments are given a non-parameteric prior $z_i \sim \mbox{CRP}(\alpha)$.
-% TODO: Expand on this?
+{\color{red} TODO: Expand on this?}
 
 \subsection{Model specification}
 \label{sec:specification}
@@ -91,8 +91,8 @@ The cluster assignments are given a non-parameteric prior $z_i \sim \mbox{CRP}(\
 
 Table \ref{tab:stats}  lists the statistics  $\mathbf{s}(t,i,j,\mathcal{A}_t)$ used in Section \ref{sec:experiments}.
 For example, a particular node sending often may indicate they will continue to be a sender in the future.
-We normalize these counts by the number of events up until a dyad's prior changepoint. %\footnote{This seems to avoid ``explosion'' when simulating from the model.  TODO: Explore the theory about these sorts of statistics.  Aalen has a few suggestions.}
-Other statistics could be of interest for particular substantive questions \cite{Butts2008,Vu2011}.  \footnote{Describe the form of $f()$.  Right now it is $f(x) = \log \frac{x+1}{m + N(N-1)}$.}
+We normalize these counts by the number of events up until a dyad's prior changepoint by using $f(x) = \log \frac{x+1}{m + N(N-1)}$. %\footnote{This seems to avoid ``explosion'' when simulating from the model.  TODO: Explore the theory about these sorts of statistics.  Aalen has a few suggestions.}
+Other statistics could be of interest for particular substantive questions \cite{Butts2008,Vu2011}.  
 
 % TODO: Awkward next sentence
 The next set of statistics are \emph{participation shift} effects inspired by research in conversational norms \cite{Gibson2003}.
@@ -107,7 +107,7 @@ Our formulation is reminiscent of the stochastic blockmodel \cite{Nowicki2001,Ke
 In the proposed method, however, the blockmodel structure facilitates the study of intra-group and inter-group dynamics via a continuous-time network model.
 
 The proposed family of models generalizes several important special cases.
-For example,  using only the intercept statistic $s_0(t,i,j) = 1$ is analogous to the stochastic block model for static networks.
+For example,  using only the intercept statistic $s_0(t,i,j,\mathcal{A}_t) = 1$ is analogous to the stochastic block model for static networks.
 Under this model each dyad is a homogeneous Poisson process and all dyad intensities $\lambda_{i,j}$ within block $(z_i,z_j)$ have the same intensity, $\exp\{\boldsymbol{\beta}_{z_i,z_j}\}$.
 As these intensities do not change under this specification, the likelihood simplifies to
 $$\mathcal{L}(\mathcal{A}|\beta) = \prod_{m=1}^M \lambda_{i_m,j_m} \prod_{(i,j) \in \mathcal{R}} \exp\{-t_M \lambda_{i,j}\}$$
@@ -117,7 +117,7 @@ Alternatively, if one models only the order of the events (ignoring the times at
 \mathcal{L}_{\mbox{mult}}(\mathcal{A}|\beta) = \prod_{m=1}^M \frac{\lambda_{i_m,j_m}(t_m | \cdot)}{\sum_{(i,j) \in \mathcal{R}} \lambda_{i,j}(t_m | \cdot)}.
 \label{eqn:multllk}
 \end{align}
-The functional form is similar to conditional logit models used for discrete choice data \cite{McFadden1984}, though here the possible choices are all the dyads in $\mathcal{R}$.
+The functional form is similar to conditional logit models used for discrete choice data \cite{McFadden1973}, though here the possible choices are all the dyads in $\mathcal{R}$.
 
 \begin{table}[t]
 \footnotesize
@@ -127,20 +127,20 @@ The functional form is similar to conditional logit models used for discrete cho
 Statistic & Formula\\
 \hline
 \hline
-Intercept& $s_{0}(t,i,j) = 1$\\
-Reciprocity (AB-BA)& $s_{1}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$\\
-Turn-continuing (AB-AY)& $s_{2}(t,i,j) =  I(i_m=i,j_m=j,i_{v_{mij}}=i,j_{v_{mij}}\ne j)$\\
-Turn-taking (AB-BY)&$s_{3}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}\ne i)$\\
+Intercept& $s_{0}(t,i,j,\mathcal{A}_t) = 1$\\
+Reciprocity (AB-BA)& $s_{1}(t,i,j,\mathcal{A}_t) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}=i)$\\
+Turn-continuing (AB-AY)& $s_{2}(t,i,j,\mathcal{A}_t) =  I(i_m=i,j_m=j,i_{v_{mij}}=i,j_{v_{mij}}\ne j)$\\
+Turn-taking (AB-BY)&$s_{3}(t,i,j,\mathcal{A}_t) = I(i_m=i,j_m=j,i_{v_{mij}}=j,j_{v_{mij}}\ne i)$\\
 %Turn-usurping (AB-XA)& $s_{7}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne j,j_{v_{mij}}=i)$\\
 %Turn-usurping (AB-XB)&$s_{8}(t,i,j) = I(i_m=i,j_m=j,i_{v_{mij}} \ne i,j_{v_{mij}}=j)$\\
-Sender out-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i) )$\\
-Sender in-degree& $s_{5}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=i) )$\\
-Dyad count& $s_{6}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
+Sender out-degree& $s_{4}(t,i,j,\mathcal{A}_t) = f(\sum_{m:t_m<t} I(i_m=i) )$\\
+Sender in-degree& $s_{5}(t,i,j,\mathcal{A}_t) = f(\sum_{m:t_m<t} I(j_m=i) )$\\
+Dyad count& $s_{6}(t,i,j,\mathcal{A}_t) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
 %Receiver out-degree& $s_{3}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=j))$\\
 %Receiver in-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=j))$\\
 \hline
 \end{tabular}
-\caption{Statistics used to specify intensity functions using the previous history $\mathcal{A}_t$, where $v_{mij}$ is the index of the changepoint for $\lambda_{ij}$ previous to event $m$.}
+\caption{Statistics used to specify intensity functions using the previous history $\mathcal{A}_t$, where $v_{mij}$ is the index of the changepoint for $\lambda_{i,j}(t)$ previous to event $m$.}
 \label{tab:stats}
 \end{table}
 
