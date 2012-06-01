@@ -90,9 +90,11 @@ In particular, we show that our proposed approach leads to improved predictive a
 Though prediction is not the main focus of the model, the results provide some evidence that having latent structure (i.e. K>1) can lead to improvements in predictive power. Our prediction results show that it is easy to overfit with this model. If we restrict to K=2 on these small data sets, we systematically outperform the K=1 model. % (TODO: confirm this).  
 However, as K increases beyond 2 (e.g., for the unrestrained CRP prior), the model is prone to overfit. This is not surprising, given that the number of fitted parameters scales as the square of the number of components K in the model. A natural future direction worth exploring for this model is a class of priors that are more resistant to overfitting.  
 
-Other theories could be explored by including relevant statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, and similarly one can use our method to study how the roles of these statistics vary across nodes.  
-One interesting extension, analogous to \cite{Airoldi2008}, would allow the latent class $z_i$ to be drawn from node-specific membership vectors $\pi_i$  after each change point.  
-We leave this to future work.
+Another direction to explore is that of including different statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, and using our approach to study how the roles of these statistics vary across nodes.  
+One potentially interesting extension, analogous to \cite{Airoldi2008}, would be to allow the latent class $z_i$ to be drawn from node-specific membership vectors $\pi_i$  after each change point---we leave this to future work.
+
+%Other theories could be explored by including relevant statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, and similarly one can use our method to study how the roles of these statistics vary across nodes.  
+%One interesting extension, analogous to \cite{Airoldi2008}, would allow the latent class $z_i$ to be drawn from node-specific membership vectors $\pi_i$  after each change point.  We leave this to future work.
 %Alternatively, if nodes change groups.
 %In some contexts such extensions might be substantively important and warrant future work.
 
