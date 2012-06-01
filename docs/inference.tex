@@ -8,9 +8,9 @@ We use Gibbs sampling to sample the latent class assignments $\mathbf{z}$ from t
 \begin{align*}
 p(z_r | \mathbf{z}_{-r},\mathcal{A},\alpha,\boldsymbol{\beta}) \propto&  p(\mathcal{A}|\mathbf{z},\boldsymbol{\beta}) p(z_r | \mathbf{z}_{-r},\alpha) \\
 p(\mathcal{A}|\mathbf{z},\boldsymbol{\beta}) \propto &
-\prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot)^{\mathbf{1}[r \in \{i_m,j_m\}]}  \prod_{(i,j) \in \mathcal{R}_r} \exp \{ -(t_m - t_{m-1}) \lambda_{ij}(t_m|\cdot)\}
+\prod_{m=1}^M \lambda_{i_m,j_m}(t_m|\cdot)^{\mathbf{1}[r \in \{i_m,j_m\}]}  \prod_{(i,j) \in \mathcal{U}_r} \exp \{ -(t_m - t_{m-1}) \lambda_{ij}(t_m|\cdot)\}
 \end{align*}
-where $\mathcal{R}_r = \{(i,j) \in \mathcal{R}: r \in \{i,j\}\}$ is the set of dyads involving node $r$.
+where $\mathcal{U}_r = \{(i,j) \in \mathcal{R}: r \in \{i,j\}\}$ is the set of dyads involving node $r$.
 Under a CRP($\alpha$) prior, we have $p(z_i = k | z_{-i},\alpha) = n_k $ and $p(z_i = \mbox{new} |  z_{-i},\alpha) = \alpha$ where $n_k$ is the number of nodes assigned to cluster $k$.
 
 \subsection{Sampling $\boldsymbol{\beta}$ given $\mathbf{z}$ and $\mathcal{A}$ }
