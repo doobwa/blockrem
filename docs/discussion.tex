@@ -88,7 +88,7 @@ Our approach has the ability to uncover systematic differences in dynamic behavi
 % across a variety of data sets.
 The analyses of Section \ref{sec:experiments} show that this model family has improved predictive accuracy over baseline methods on real data with respect to ranking tasks and the likelihood of unobserved data.
 In particular, our proposed approach leads to improved predictive accuracy when compared to both (a) relational event models that lack latent clusters, and (b) stochastic blockmodels for count data, both of which are special cases of our model family.
-Though prediction is not the main focus of our effort, these results provide evidence that having latent structure (i.e. K>1) can lead to improvements in predictive power. However, our prediction results also show that it is easy to overfit with this model family. 
+Though prediction is not the main focus of our effort, these results provide evidence that having latent structure (i.e. $K > 1$) can lead to improvements in predictive power. However, our prediction results also show that it is easy to overfit with this model family. 
 %If we restrict to K=2 on these small data sets, we systematically outperform the K=1 model. 
 %{\red (TODO: confirm this)}
  As K increases beyond 2 (e.g., for the unrestrained CRP prior), these models are prone to overfit. This is not surprising, given that the number of fitted parameters scales as the square of the number of components K in the model. A natural direction worth exploring for this family is a class of priors that are more resistant to overfitting (e.g., by imposing more structure on the parameters within each group).  
