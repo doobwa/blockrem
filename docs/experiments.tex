@@ -1,4 +1,5 @@
 \section{Model fitting and experiments}
+\label{sec:experiments}
 
 \subsection{Data}
 
@@ -18,7 +19,7 @@ We use the subset of 487 users who participated in more than one event, using a 
 
 \subsection{Model-based exploratory analysis}
 
-Figure \ref{fig:posteriorparams} uses a fitted model to provide an example of the differences in the dynamics that can exist between two groups of dyads with similar rate of occurrence.
+Figure \ref{fig:parmats} uses a fitted model to provide an example of the differences in the dynamics that can exist between two groups of dyads with similar rate of occurrence.
 We focus on the interactions between members of block 1 to members of block 3; 179 events occurred originating from a member of group 3 and 178 originated from group 1.
 For this example we fit a model with an intercept $s_0$, $\texttt{ab-ba}$ effects $s_1$, and $\texttt{ab-by}$ effects $s_3$.
 The two panels on the left show the variation in $s_0(t_M,i,j)$, $s_1(t_M,i,j)$ and $s_3(t_M,i,j)$ across the dyads $(i,j)$ in blocks $(1,3)$ and $(3,1)$, respectively.
@@ -48,7 +49,7 @@ Our method jointly models \emph{which} dyads occur and \emph{when} they occur.
 To compare the above baselines to our model using the likelihood of observed data, we assume each dyad is a Poisson process with estimated  rate $\hat{\lambda}_{i,j}(t_m) = \frac{M}{t_M} \frac{r_{b}(i,j) + \xi}{\sum_{ij} r_{b}(i,j) + \xi}$, where $r_b(i,j)$ is the statistic a baseline (described above) and $\xi=1$ is a smoothing parameter.
 
 
-\input{../figs/results-recall.tex}
+%\input{../figs/results-recall.tex}
 
 % \begin{figure}[t]
 % \center

@@ -111,11 +111,9 @@ Dyad count& $s_{6}(t,i,j) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
 %Receiver in-degree& $s_{4}(t,i,j) = f(\sum_{m:t_m<t} I(j_m=j))$\\
 \hline
 \end{tabular}
-\label{tab:stats}
 \caption{Statistics used to specify intensity functions using the previous history $\mathcal{A}_t$, where $v_{mij}$ is the index of the changepoint for $\lambda_{ij}$ previous to event $m$.}
+\label{tab:stats}
 \end{table}
-
-
 
 In Table \ref{tab:stats} we list the statistics we use in our experiments for  $\mathbf{s}(t,i,j)$.
 For example, a particular node sending often may indicate they will continue to be a sender in the future.
@@ -131,7 +129,7 @@ The only restriction is that the statistic may not change in value between each 
 
 \subsection{Relation to other models}
 
-Our formulation is reminiscent of the stochastic blockmodel \cite{Nowicki2001,Kemp} for static networkswhich models the probability of a dyad as $p(y_{ij}) =\mbox{logit}^{-1}( \eta_{z_i,z_j})$ where $\eta_{z_i,z_j}$ is interpreted as a mixing rate between group $z_i$ and group $z_j$.
+Our formulation is reminiscent of the stochastic blockmodel \cite{Nowicki2001,Kemp2006} for static networks which models the probability of a dyad as $p(y_{ij}) =\mbox{logit}^{-1}( \eta_{z_i,z_j})$ where $\eta_{z_i,z_j}$ is interpreted as a mixing rate between group $z_i$ and group $z_j$.
 In the proposed method, however, the blockmodel structure facilitates the study of intra-group and inter-group dynamics via a continuous-time network model.
 
 The proposed family of models generalizes several important special cases.
