@@ -12,12 +12,13 @@ A variety of real world data sets are used to explore the efficacy of the model.
 \item University email \cite{Eckmann2004}: 3300 dyadic emails among 88 people with at least 30
   emails each ($M_{test} = 1300$)
 \item Enron email \cite{Klimt2004}: 4000 dyadic emails among 141
-  individuals between TODO months ($M_{test} = 1000$)
+  individuals between July 2001 and August 2001 ($M_{test} = 1000$)
 %\item Irvine: dyadic interactions among 401 actors each having more than 30 events,  \cite{Opsahl}
 \item Twitter direct messages: Tweets from Twitter.com occurring between from May 11, 2009 to January 26, 2012 that contained the hashtag \texttt{\#rstats}.  This hashtag is used to denote messages pertaining to the R statistical computing environment and sometimes statistical discussion more generally.  We collect dyadic events by selecting tweets beginning with the \texttt{@} symbol (called a \emph{mention}), and mark the first mentioned user as the recipient.
 Of 28337 total tweets in this time period, 3926 were directed events among a total of 1079 users.
 We use a subset 4330 events among 487 users who participated in more than one event ($M_{test} = 1330$).\footnote{This dataset will be made publicly available.}
-\item MIT Reality Mining \cite{Eagle2009}: 2000 phone calls among the 89 recipients between the dates TODO ($M_{test}= 1000$).
+\item MIT Reality Mining \cite{Eagle2009}: 2000 phone calls among the
+  89 recipients between October 2001 and February 2002 ($M_{test}= 1000$).
 \end{itemize}
 
 \subsection{Model-based exploratory analysis}
@@ -42,10 +43,9 @@ The loglikelihood of the test set is computed sequentially using Equation \ref{e
 In addition, we compute recall to evaluate whether the next observed event is among the most likely according to the model.
 At each event $m$ we sort the predicted intensities of all possible events in decreasing order, find the rank of the observed event in the list of predicted intensities, and compute the mean rank across the $M$ events.
 
-{ \footnotesize
+{ \scriptsize
 \input{../figs/results-llk4.tex}
-\input{../figs/results-recall-5.tex}
-\input{../figs/results-recall-20.tex}
+\input{../figs/results-recall-all.tex}
 }
 %\subsection{Baselines}
 

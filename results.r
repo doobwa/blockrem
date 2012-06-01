@@ -44,14 +44,13 @@ tmp$xsigbeta  <- tmp$xsigbeta/1000
 colnames(tmp)[1:2] <- c("alpha","beta")
 subset(tmp,metric=="mllk" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
 
-
 a <- subset(tmp,metric=="llk" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
 b <- subset(x,model %in% c("online","marg","uniform"))
 b <- dcast(b,metric + type + dataset ~ model)
 b <- b[1:length(datasets),c(3,6,4,5)]
 a <- a[,-1]
 final <- cbind(b,a)[c(7,3,4,5,6,8),]
-colnames(final)[1:9] <- c("Dataset","\\texttt{unif}","\\texttt{marg}","\\texttt{online}","\\texttt{BM}","$K=1$","$K=2$","$K=3$","$K=10$")
+colnames(final)[1:9] <- c("Dataset","\\texttt{unif}","\\texttt{marg}","\\texttt{online}","\\texttt{BM}","$K^*=1$","$K^*=2$","$K^*=3$","$K^*=10$")
 final[,1] <- c("Synthetic","Classroom","University Email","Enron Email","Mobile Phone Calls","Twitter Dir. Messages")
 library(xtable)
 xr <- xtable(final,caption="Comparing mean loglikelihood for each event across methods for each dataset.  Larger values are better.  See text for details.",label="tab:results",digits=3)
@@ -93,26 +92,28 @@ colnames(r)[2:5] <- c("metric","type","model","dataset")
 ma <- lapply(unique(r$model),function(m) data.frame(model=m,modelatts(m)))
 ma <- do.call(rbind,ma)
 x <- merge(r,ma,by="model")
+x$metric <- factor(x$metric,c("5","20"))
 tmp <- dcast(x,xsigalpha +xsigbeta+metric+type+ dataset ~ kinit + kmax + pshift + deg, fun.aggregate=mean)
 tmp$xsigalpha <- tmp$xsigalpha/1000
 tmp$xsigbeta  <- tmp$xsigbeta/1000
 colnames(tmp)[1:2] <- c("alpha","beta")
-subset(tmp,metric=="5" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
-subset(tmp,metric=="20" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
 
-cutoff <- "20"
-a <- subset(tmp,metric==cutoff & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
+a <- subset(tmp,alpha==5 & type=="test")[,c("metric","dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
 b <- subset(x,model %in% c("online","marg","uniform"))
 b <- dcast(b,metric + type + dataset ~ model)
-b <- subset(b,metric==cutoff & type=="test")
-b <- b[,c(3,6,4,5)]
+b <- subset(b,type=="test")
+b <- b[,c(1,3,6,4,5)]
 a <- a[,-1]
-final <- cbind(b,a)[c(7,3,4,5,6),]
-colnames(final)[1:9] <- c("Dataset","\\texttt{unif}","\\texttt{marg}","\\texttt{online}","\\texttt{BM}","$K=1$","$K=2$","$K=3$","$K=10$")
-final[,1] <- c("Synthetic","Classroom","University Email","Enron Email","Mobile Phone Calls")#,"Twitter Direct Messages")
+final <- cbind(b,a)#[c(7,3,4,5,6),]
+final <- final[,-6]
+colnames(final)[1:10] <- c("Cutoff","Dataset","\\texttt{unif}","\\texttt{marg}","\\texttt{online}","\\texttt{BM}","$K^*=1$","$K^*=2$","$K^*=3$","$K^*=10$")
+final <- subset(final,!Dataset %in% c("classroom-16","classroom-17"))
+final[,2] <- rep(c("Synthetic","Classroom","University Email","Enron Email","Mobile Phone Calls","Twitter Dir. Messages"),2)
+final$Cutoff <- as.character(final$Cutoff)
+final$Cutoff[c(2:6,8:12)] <- ""
 library(xtable)
-xr <- xtable(final,caption=paste("Comparing recall at cutoff",cutoff,"across methods for each dataset.  Larger values are better.  See text for details."),label=paste("tab:recall",cutoff,sep=""),digits=3)
-print(xr,include.rownames=FALSE,file=paste("figs/results-recall-",cutoff,".tex",sep=""),NA.string="",table.placement="t",size="footnotesize",sanitize.text.function=identity)
+xr <- xtable(final,caption=paste("Comparing recall at cutoff 5 and 20 across methods for each test data set.  Larger values are better.  See text for details."),label=paste("tab:recall",cutoff,sep=""),digits=3)
+print(xr,include.rownames=FALSE,file=paste("figs/results-recall-all.tex",sep=""),NA.string="",table.placement="t",size="footnotesize",sanitize.text.function=identity)
 
 
 ###################
