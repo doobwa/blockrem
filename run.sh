@@ -3,11 +3,17 @@
 
 ./brem.r --dataset "classroom-16" --kinit 2 --kmax 2 --numiterations 500 --splitmerge FALSE --pshifts TRUE --degrees TRUE --negbinom FALSE --collapse TRUE --numextra 5 --force TRUE --sigma.hyper 0.001 --crp.hyper 1
 
+ "enron-small" "realitymining-small" "twitter-small"
 
-./parallel --sshlogin 8/d5,8/d7,8/d8,4/d9,4/d10,8/d11,4/d12 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --kinit 2 --kmax {2} --numiterations 500 --splitmerge FALSE --pshifts {3} --degrees {4} --negbinom FALSE --collapse TRUE --numextra 5 --force TRUE --sigma.hyper.alpha {5} --sigma.hyper.beta {6} --crp.hyper 1' :::  "synthetic-1" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "realitymining-small" "twitter-small" ::: 1 2 3 10 ::: TRUE FALSE ::: TRUE FALSE ::: 5 1 ::: 1
+./parallel --sshlogin 8/d5,4/d6,8/d7,8/d8,8/d10 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --kinit 2 --kmax {2} --numiterations 500 --splitmerge FALSE --pshifts {3} --degrees {4} --negbinom FALSE --collapse TRUE --numextra 5 --force TRUE --sigma.hyper.alpha {5} --sigma.hyper.beta {6} --crp.hyper 1' ::: "classroom-29" "classroom-31" ::: 1 2 3 10 ::: TRUE FALSE ::: TRUE FALSE ::: 5 1 ::: 1
 
-./parallel --sshlogin  4/d5,4/d8,4/d11,4/d12 'cd /extra/duboisc0/blockrem;./predict.r --dataset {1} --force {2} --baselines {3} --niters {4}' :::  "synthetic-1" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "realitymining-small" "twitter-small" ::: TRUE ::: TRUE FALSE ::: 10
+./parallel --sshlogin  1/d5,1/d8,1/d10 'cd /extra/duboisc0/blockrem;./predict.r --dataset {1} --niters {2}' :::  "synthetic-1" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" ::: 50
 
+./parallel --sshlogin  1/d9,1/d10,1/d11 'cd /extra/duboisc0/blockrem;./predict.r --dataset {1} --niters {2}' :::  "twitter-small" ::: 10
+
+./parallel --sshlogin  1/d9,1/d10,1/d11 'cd /extra/duboisc0/blockrem;./predict.r --dataset {1} --niters {2}' :::  "classroom-16" "classroom-17" "classroom-27" ::: 10
+
+./parallel --sshlogin  1/d9,1/d10,1/d11 'cd /extra/duboisc0/blockrem;./predict.r --dataset {1} --niters {2}' :::  "enron-small" "realitymining-small" ::: 10
 
 
 

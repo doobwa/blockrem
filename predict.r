@@ -1,21 +1,19 @@
 #!/usr/bin/env Rscript
 suppressPackageStartupMessages(library(optparse))
 suppressPackageStartupMessages(library(brem))
-suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(reshape2))
+suppressPackageStartupMessages(library(multicore))
 
 option_list <- list(
   make_option(c("-d", "--dataset"), 
               help="Name of dataset with data at /data/[dataset].rdata 
                     and results at /results/[dataset]/."),
-  make_option("--force", default=FALSE),
-  make_option("--baselines", default=FALSE),
   make_option("--niters", type="integer", default=10)  )
 parser <- OptionParser(usage = "%prog [options]", option_list=option_list)
 opts   <- parse_args(OptionParser(option_list=option_list))
 
 #
-library(brem);library(reshape2);opts <- list(dataset="eckmann-small",baselines=FALSE,force=TRUE,niters=1)
+#library(brem);library(reshape2);library(multicore);opts <- list(dataset="twitter-small",niters=10)
 source("utils.r")
 
 options(verbose=FALSE)
@@ -24,26 +22,45 @@ dataset <- opts$dataset
 load(paste("data/",dataset,".rdata",sep=""))
 train.ix <- 1:nrow(train)
 test.ix <- (1:nrow(A))[-train.ix]
-file.remove("progress.rdata")
-dir.create(paste("results/",dataset,"/preds/",sep=""),showWarnings=FALSE)
 
-for (model in c("online","uniform","marg")) {
-  progress(dataset,model,"started")
-  pred <- evaluate.baseline(A,N,train.ix,test.ix,model)
-  save(pred,opts,file=paste("results/",dataset,"/preds/",model,".rdata",sep=""))
-  progress(dataset,model,"completed")  
-}
+dir.create(paste("results/",dataset,"/preds/",sep=""),showWarnings=FALSE)
+pf <- "progress.rdata"
+
 
 folder <- paste("results/",opts$dataset,"/fits",sep="")
 models <- modelnames(folder)
-for (model in models) {
-  progress(dataset,model,"started")
+options(cores=8)
+
+for (model in models) progress(pf,c(dataset,model,"started",""))
+
+x <- mclapply(models,function(model) {
+#for (model in models) {
+  st <- proc.time()
   f <- paste(folder,"/",model,".rdata",sep="")
-  load(f)
-  pred <- evaluate(A,N,train.ix,test.ix,fit,niters=as.numeric(opts$niters))
-  save.pred(pred,dataset,model)
-  progress(dataset,model,"completed")
-}
+  if (!file.exists(f)) {
+    progress(pf,c(dataset,model,"failed","no model file"))
+  } else {
+    load(f)
+    if (opts$niters >= fit$iter) {
+      progress(pf,c(dataset,model,"failed","not enough samples"))
+    } else {
+      pred <- evaluate(A,N,train.ix,test.ix,fit,niters=as.numeric(opts$niters))
+      save(pred,opts,file=paste("results/",dataset,"/preds/",model,".rdata",sep=""))
+      progress(pf,c(dataset,model,"complete",proc.time()[3] - st[3]))
+    }
+  }
+})
+
+models <- c("online","uniform","marg")
+x <- mclapply(models,function(model) {
+#for (model in c("online","uniform","marg")) {
+  st <- proc.time()  
+  progress(pf,c(dataset,model,"started",""))
+  pred <- evaluate.baseline(A,N,train.ix,test.ix,model)
+  save(pred,opts,file=paste("results/",dataset,"/preds/",model,".rdata",sep=""))
+  progress(pf,c(dataset,model,"completed",proc.time()[3] - st[3]))
+})
+
 
 if (opts$dataset == "synthetic-1") {
   niter <- 500

@@ -29,25 +29,13 @@ opts   <- parse_args(OptionParser(option_list=option_list))
 options(verbose=FALSE)
 library(brem)
 library(ggplot2)
-opts <- list(dataset="realitymining-small",predictions=TRUE)
+opts <- list(dataset="classroom-16",predictions=TRUE)
 dataset <- opts$dataset
 
 # Pull data from each saved file and grab the name of the fit
 folder <- paste("results/",opts$dataset,"/fits",sep="")
 load(paste("data/",opts$dataset,".rdata",sep=""))
-modelnames <- function(folder) {
-  as.vector(sapply(dir(folder),function(x) strsplit(x,".rdata")[[1]][1]))
-}
-
-modelatts <- function(model) {
-  atts <- strsplit(model,"\\.")[[1]]
-  g <- function(x,y) as.numeric(strsplit(x,y)[[1]][2])
-  xs <- c("kinit","kmax","sm","nb","pshift","deg","trans","collapse","xsigalpha","xsigbeta")
-  a <- lapply(1:length(xs),function(i) g(atts[i],xs[i]))
-  names(a) <- xs
-  return(a)
-}
-
+source("utils.r")
 fs <- list.files(folder,full.names=TRUE)
 models <- modelnames(folder)
 atts <- lapply(models,function(m) as.data.frame(modelatts(m)))
@@ -80,7 +68,7 @@ q1
 cat("Trace plot of beta.\n")
 library(coda)
 t(t(names(fits)))
-fit <- fits[[24]]
+fit <- fits[[35]]
 z <- fit$params$z
 table(z)
 table(z[train[,2]],z[train[,3]])
@@ -90,7 +78,7 @@ mus <- lapply(fit$samples[1:fit$iter],function(s) {
   as.matrix(s$mu)
 })
 r <- melt(mus)
-q1c <- qplot(L1,value,data=subset(r, Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw()# + facet_grid(Var2~Var3,scales="free")
+q1c <- qplot(L1,value,data=subset(r, L1 > 20 & Var1 %in% fit$priors$px), colour=factor(Var1),geom="line") + labs(colour="parameters for\n each block",x="iteration") + theme_bw()# + facet_grid(Var2~Var3,scales="free")
 q1c
 
 # Trace plot of upper level sigmas

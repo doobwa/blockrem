@@ -1,6 +1,6 @@
 # Go through available pred objects.
-
-datasets <- c("synthetic-1","eckmann-small","classroom-16", "classroom-17", "classroom-27","realitymining-small","enron-small","twitter")
+source("utils.r")
+datasets <- c("synthetic-1","classroom-16", "classroom-17", "classroom-27","eckmann-small","realitymining-small","enron-small","twitter")
 
 res <- lapply(datasets,function(dataset) {
   folder <- paste("results/",dataset,"/preds/",sep="")
@@ -13,6 +13,9 @@ res <- lapply(datasets,function(dataset) {
   return(r)
 })
 names(res) <- datasets
+allpred <- res
+
+save(allpred,file="results/allpred.rdata")
 
 r <- res
 ix <- which(sapply(r,length) == 0)
@@ -25,7 +28,20 @@ for (i in 1:length(r)) {
     } 
   }
 }
+
+
+## rks <- list()
+## for (i in 1:length(r)) {
+##   for (j in 1:length(r[[i]])) {
+##     rks[[i]][[j]] <- list(train=recall(r[[i]][[j]][[k]]$train),
+2##                           test =recall(r[[i]][[j]][[k]]$test))
+##   }
+## }
+
+
+
 # recall(r$test,top=1:30)
+library(reshape2)
 r <- melt(r)
 colnames(r)[2:5] <- c("type","metric","model","dataset")
 ma <- lapply(unique(r$model),function(m) data.frame(model=m,modelatts(m)))
@@ -35,8 +51,21 @@ tmp <- dcast(x,xsigalpha +xsigbeta+metric+type+ dataset ~ kinit + kmax + pshift 
 tmp$xsigalpha <- tmp$xsigalpha/1000
 tmp$xsigbeta  <- tmp$xsigbeta/1000
 colnames(tmp)[1:2] <- c("alpha","beta")
+subset(tmp,metric=="mllk" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
 
-subset(tmp,metric=="llk" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
+
+a <- subset(tmp,metric=="llk" & alpha==5 & type=="test")[,c("dataset","2_10_0_0","2_1_1_1","2_2_1_1","2_3_1_1","2_10_1_1")]
+b <- subset(x,model %in% c("online","marg","uniform"))
+b <- dcast(b,metric + type + dataset ~ model)
+b <- b[1:nrow(ans),c(3,6,4,5)]
+a <- a[,-1]
+final <- cbind(b,a)[c(7,3,4,5,6),]
+colnames(final)[1:9] <- c("Dataset","\\texttt{unif}","\\texttt{marg}","\\texttt{online}","\\texttt{BM}","$K=1$","$K=2$","$K=3$","$K=10$")
+final[,1] <- c("Synthetic","Classroom","University Email","Enron Email","Mobile Phone Calls")#,"Twitter Direct Messages")
+library(xtable)
+xr <- xtable(final,caption="Comparing mean loglikelihood for each event across methods for each dataset.  Larger values are better.  See text for details.",label="tab:results",digits=3)
+print(xr,include.rownames=FALSE,file=paste("figs/results-llk3.tex",sep=""),NA.string="",table.placement="t",size="footnotesize",sanitize.text.function=identity)
+
 
 #datasets <- c("synthetic-1","eckmann-small","realitymining-small",
  datasets <- c("synthetic-1","eckmann-small","classroom-16", "classroom-17", "classroom-27","realitymining-small","enron-small","twitter")
@@ -105,4 +134,3 @@ print(xr,include.rownames=FALSE,file=paste("figs/results-llk.tex",sep=""),NA.str
 
 xr <- xtable(b,caption="Predictive accuracy on a recall task.  Larger values are better.  See text for details.",label="tab:results",digits=3)
 print(xr,include.rownames=FALSE,file=paste("figs/results-recall.tex",sep=""),NA.string="",table.placement="t",size="footnotesize")
-
