@@ -63,7 +63,7 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
 \end{tikzpicture}
 \caption{Intensities for two dyads}
 \end{subfigure}
-\caption[]{Illustration of relational event data and the assumptions of the model.  (a) A sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$. (b) The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{3,4}(t)$ (dotted).  We assume $\lambda_{3,4}$ can only change after events sent or received by node 3. }
+\caption[]{Illustration of relational event data and the assumptions of the model.  (a) A sequence of two events among four nodes: (1,2) occurs at time $t_1$ and (2,3) occurs at time $t_2$. (b) The intensity functions $\lambda_{1,2}(t)$ (solid) and $\lambda_{3,4}(t)$ (dotted).  We assume $\lambda_{3,4}(t)$ can only change after events sent or received by node 3. }
 \label{fig:example}
 \end{figure}
 
@@ -146,7 +146,12 @@ Dyad count& $s_{6}(t,i,j,\mathcal{A}_t) = f(\sum_{m:t_m<t} I(i_m=i,j_m=j) )$\\
 
 
 \subsection{Related work}
-The proposed model is an extension of recent work on modeling event-based social network data using an event history approach \cite{Butts2008,Brandes2009,Perry2011,Stadtfeld2010,Stadtfeld2011,Opsahl2011,Vu2011,Vu2011a}. % \cite{AalenOddO.2008} 
+Stochastic blockmodels have been extended to longitudinal network data
+involving a sequence of networks occurring at discrete times
+\cite{Ishiguro2010, Rodriguez2011}, while we focus on methods for
+analyzing a stream of relational events. 
+The proposed model is an extension of recent work on modeling event-based social network data using an event history approach \cite{Butts2008,Brandes2009,Perry2011,Stadtfeld2011,Opsahl2011,Vu2011,Vu2011a}. % \cite{AalenOddO.2008} 
 Relational event models such as these require a knot at each observed event, while other approaches such as \cite{Gunawardana2011} learn the regions where an intensity is constant.
 By using decision trees,  \cite{Gunawardana2011} also allow for a nonlinear relationship between statistics and intensity functions.  
-We instead use latent variables to allow for heterogeneity in intensities across possible events.
+We instead use latent variables to allow for heterogeneity in intensities across the set of possible events.
+
