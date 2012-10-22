@@ -16,8 +16,6 @@
 ./parallel --sshlogin  1/d9,1/d10,1/d11 'cd /extra/duboisc0/blockrem;./predict.r --dataset {1} --niters {2}' :::  "enron-small" "realitymining-small" ::: 10
 
 
-
-
 ./parallel --sshlogin 8/d5,8/d7,8/d8,4/d9,4/d10,8/d11,8/d12 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --kinit {2} --kmax {3} --numiterations 500 --splitmerge FALSE --pshifts {4} --degrees {5} --negbinom FALSE --collapse TRUE --numextra 5 --force FALSE --sigma.hyper 1 --crp.hyper 1' :::  "synthetic-1" "eckmann-small" "classroom-16" "classroom-17" "classroom-27" "enron-small" "realitymining-small" ::: 1 ::: 1 ::: TRUE FALSE ::: TRUE FALSE
 
 ./parallel --sshlogin 8/d12 'cd /extra/duboisc0/blockrem;./brem.r --dataset {1} --kinit {2} --kmax {3} --numiterations 500 --splitmerge FALSE --pshifts {4} --degrees {5} --negbinom FALSE --collapse TRUE --numextra 5 --force FALSE --sigma.hyper 1 --crp.hyper 1' :::  "twitter-small" "irvine" ::: 1 ::: 1 ::: TRUE FALSE ::: TRUE FALSE

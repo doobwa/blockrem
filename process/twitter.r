@@ -17,6 +17,8 @@ load("rstats/heroic.oauth.rdata")
 # http://www.google.com/reader/atom/feed%2Fhttp%3A%2F%2Fsearch.twitter.com%2Fsearch.atom%3Fq%3D%2523rstats?n=1000&c=CPHpgbSjipwC
 # reference: http://code.google.com/p/pyrfeed/wiki/GoogleReaderAPI
 
+# CMv0oIPAt7AC
+
 # Xpath code found here: http://heuristically.wordpress.com/2011/04/08/text-data-mining-twitter-r/
 
 grab.tweets.from.xml <- function(f) {
@@ -41,7 +43,8 @@ grab.tweets.from.xml <- function(f) {
   return(df)
 }
 
-fs <- paste("data/rstats/rstats.",0:33,".xml",sep="")
+fs <- list.files("data/rstats",full.names=TRUE)
+fs <- fs[grep("xml",fs)]
 df <- lapply(fs,function(f) grab.tweets.from.xml(f))
 df <- do.call(rbind,df)
 save(df,file="data/rstats/rstats.tweets.rdata")
@@ -62,6 +65,7 @@ save(urls,file="data/rstats/rstats.urls.rdata")
 
 # Try grabbing directed messages among #rstats tweets
 load("data/rstats.tweets.rdata")
+
 get.mentions <- function(tweet) {
   w <- strsplit(as.character(tweet)," ")[[1]]
   fl <- sapply(w,substr,0,1)
@@ -95,5 +99,3 @@ r <- unlist(rec[ix])
 datetime <- strptime(df$date[ix],format="%Y-%m-%dT%H:%M:%S")
 A <- data.frame(datetime=datetime,s=s,r=r)
 save(A,file="data/rstats/rstats.interaction.rdata")
-
-

@@ -302,3 +302,8 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [X] Look at predictions from *last* sample
 - [X] Add option for hard upper limit on number of clusters
 - [ ] Consider other hyperparameter settings
+* Reviews
+- Table 3:
+  - enron dataset not bolded
+  - twitter: incorrect entry bolded
+  - classroom: no bolded entry

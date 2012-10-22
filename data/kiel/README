@@ -1,1 +1,13 @@
 Obtained from: http://web.archive.org/web/20100928004952/http://www.itp.uni-bremen.de/complex/email_net.html
+
+Data described in:
+H. Ebel, L.-I. Mielsch, and S. Bornholdt, Scale-free topology of e-mail networks, Phys. Rev. E 66 (2002) 035103(R).
+
+Description of the data
+
+The data are in a gzipped ascii file with the following format. Each line corresponds to one link (i.e., e-mail) from the first to the second address. As described in detail in the above paper, e-mail addresses correspond to internal ("s") and external ("x") nodes. An exemplary line of the file is explained below. Users and domains were made anonymous by the service provider. 
+
+Example
+
+month	day	time	internal/external	user(source)    @	domain(source)	internal/external	user(destination)	@	domain(destination)
+sep	16	03:36:25	x	00004066	@	00002192	s	00006210	@	00001208
