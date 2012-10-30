@@ -400,6 +400,14 @@ private:
   vector< vector<int> > u;
 };
 
+double LogLambdaContinuous(int i, int j, vector<double> s, Rcpp::NumericVector beta, Rcpp::NumericVector phi, int N, int K, int P) {
+  double lam = 0;
+  //  double lam = beta[threeDIndex(0,zi,zj,P,K,K)]; // intercept
+  for (int p = 1; p < 12; p++) {
+    //    lam += s[p] * beta[threeDIndex(p,zi,zj,P,K,K)];
+  }
+  return lam;
+}
 
 // Use the precomputed set of statistics to copmute lambda
 

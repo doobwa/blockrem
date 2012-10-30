@@ -1,3 +1,63 @@
+#' At each time t:
+#' for each (i,j) 
+#'   compute lambda_ij(t|.) = sum_kl exp{ phi_ik + phi_jl + beta_kl s_ij(t|.)}
+#' draw (i,j) ~ lambda_ij/sum_ij lambda_ij
+#' draw next t ~ Exp(sum_ij lambda_ij)
+
+CLogLambda <- function(i,j,beta,phi,s) {
+  lam <- 0
+  for (k in 1:K) {
+    for (l in 1:K) {
+      lam <- lam + 
+    }
+  }
+}
+
+simulate.cbrem.cond <- function(beta,phi,train,M,N,ego=FALSE) {
+  K <- dim(beta)[2]
+  P <- dim(beta)[1]
+  edgelist <- train[nrow(train),,drop=FALSE]
+  time <- edgelist[1]
+  s <- InitializeStatisticsArray(N,P);
+  for (m in 1:nrow(train)) {
+    i <- train[m,2]
+    j <- train[m,3]
+    s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
+  }
+  lambda <- matrix(0,N,N)
+  for (i in 1:N) {
+    for (j in 1:N) {
+      lambda[i,j] <- LogLambda(i-1,j-1,z[i]-1,z[j]-1,s,beta,N,K,P)
+    }
+  }
+  for (m in 1:M) {
+    for (r in 1:N) {
+      lambda[j,r] <- LogLambda(j-1,r-1,z[j]-1,z[r]-1,s,beta,N,K,P)
+      lambda[i,r] <- LogLambda(i-1,r-1,z[i]-1,z[r]-1,s,beta,N,K,P)
+      if (!ego) {
+        lambda[r,j] <- LogLambda(r-1,j-1,z[r]-1,z[j]-1,s,beta,N,K,P)
+        lambda[r,i] <- LogLambda(r-1,i-1,z[r]-1,z[i]-1,s,beta,N,K,P)
+      }
+    }
+    diag(lambda) <- -Inf
+    cells <- cbind(as.vector(row(lambda)), as.vector(col(lambda)), exp(as.vector(lambda)))
+    if (any(is.nan(cells[,3]))) {
+      stop("Intensity explosion: infinite lambda_ij present")
+    }
+    drawcell <- sample(1:NROW(cells),1,prob=cells[,3])
+    i <- cells[drawcell,1]
+    j <- cells[drawcell,2]
+    time <- time + rexp(1,sum(cells[,3]))
+    edgelist <- rbind(edgelist,c(time,i,j))
+
+    s <- UpdateStatisticsArray(s,m-1,i-1,j-1,N,P)
+  }
+  dimnames(edgelist) <- NULL
+  edgelist <- edgelist[-1,]
+  return(list(edgelist=edgelist,s=s,N=N))
+}
+
+
 lpz <- function(count,priors) {
   lp <- switch(priors$type,
                "crp" = log(count + priors$alpha),
