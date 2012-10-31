@@ -1,4 +1,21 @@
-* TODO Week 1:
+* Paper revisions
+** TODO Zoomed in version of EDA results need a bounding box
+** DONE Add more discussion of experimental results
+** DONE add indicator function
+** TODO We apologize for the confusion from lines 317-320 (they refer to an earlier version of Figure 4) and agree it would be better to use this space to elaborate on the plots shown in Figure 4
+** TODO Move line 367
+** TODO mention experiments use all of the effects in Table 1
+** TODO The specific novel generalization of prior work is the introduction of latent clusters z_i, just below Equation 2.  For relational event models (equation 2) this is new and has not been proposed before.
+** TODO Likelihood computation essentially depends on the number of changepoints (i.e. knots) in all of the intensity functions being modeled.  The Supplementary Material mentions one attempt at speeding this up, for larger graphs, but additional assumptions/approximations are likely needed for scalability.  
+** TODO Data in Section 5.1/Figure 4 is the University data
+** TODO Slice sampling (Neal 2001) is a standard MCMC technique.
+** TODO The risk set R is the set of all possible dyadic events (line 106-107).
+** TODO The statistics in Table 1 are somewhat standard for these types of models, as discussed in lines 148-157.
+
+** TODO intuitive examples for “relational events” (expanding on Figure 2a)
+** TODO better explanation of terminology not be familiar to the broad NIPS readership (e.g. ab-ba abbreviations)
+* OLD
+** TODO Week 1:
 - [X] Need to change block.ps to instead look at dyad-specific p-shifts.
 [done?] Use a visualization of these p-shifts to explore the properities of the synthetic data.
 - [X] Fix llk, writeup to account for sender/receiver for both i and j
@@ -9,7 +26,7 @@
 - [X] Write sampler for blockmodel.
 - [X] Fit blockmodel to synthetic data.
 
-* TODO Week 2: 
+** TODO Week 2: 
 - [X] Write SBM code.
 - [X] Fit SBM to subset of Eckmann (dyadic only)
 - [X] Fit REM separately to each block.
@@ -29,7 +46,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Pass tests with one that computes mp ahead of time.
 - Determine what's slowing things down.  Overhead?
 
-* TODO Week 3:
+** TODO Week 3:
 - [X] Add features for saving progress during MCMC
 - [X] Clean up experiment code so that you can fit all needed models on arbitrary dataset
 - [X] Pull out code for plotting results from experiment
@@ -37,7 +54,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [X] Include degree effects (transform: sqrt? log?)
 - [X] Get test suite to display results on all test scripts.
 - [X] Make into a package.
-* TODO Week 4:
+** TODO Week 4:
 - [x] Try eckmann-small and synthetic dataset with degree effects.  
   - [x] Tinker with simulating with degree effects.  Perhaps come up with
     other parameterization that is less sensitive to explosion.
@@ -80,7 +97,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
   - Implement shared partners in statistics.
 - [x] Understand why we outperform true model in synthetic example
   (i.e. this is a bug and wasn't there before) (see if it's still present)
-* TODO Week 5
+** TODO Week 5
 - [x] Learn twitter z's with K=2.  Compare to fixed z's.  Do we learn to
   put users into high activity group / low activity grou;?  [No.]
 - [x] Implement loglik. for baselines and compare to models' train/test
@@ -99,7 +116,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [x] Reduce memory for prediction task
 - [x] Compare baserates model for eckmann, synthetic
 
-* Final crunch for deadline
+** Final crunch for deadline
 - Look closely at predictions of online model to see why test llk is
   so high.
 - Compare log prob score of online vs brem with K=1
@@ -114,7 +131,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
     around a few values.  For example, many lambda_ij's are 0 even
     much later in the event sequence.
 
-* Week 7
+** Week 7
 - Debugging synthetic example:
   - Identifiability and intercept terms?
   - Fixing intercepts and degree effects: slice converges quickly
@@ -163,7 +180,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Try prediction task where the test set is smaller
 - 
 
-* Other
+** Other
 - Add tests for Gibbs equations.  For example, start with true data
   and learn z's.
 - Add tests for synthetic fitting?
@@ -189,13 +206,13 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - Initialize with guess at z's, rather than guess at beta.
 - Research maximization of beta rather than sampling.
 
-* Low priority:
+** Low priority:
 - Port simulator over to Rcpp.
 
-* Bugs:
+** Bugs:
 - old likelihood does not use the baserates when computing first event for the likelihood computation
 
-* Restarting
+** Restarting
 - [X] Clean up some files
 - [ ] Shift samplers to use qmcmc package
 - [ ] Get sampler tests and gibbs tests to pass
@@ -203,7 +220,7 @@ Debug issues with whether to include intercept term or not. (Understand collinea
 - [ ] Bug in sample_phi: restricted range for k1 and k2
 - [ ] 
 
-* Final week
+** Final week
 - [X] get synthetic example working again with new sampler
 - [X] fix sample_phi to use block() for computing lposterior
 - [X] why does lposterior not have alpha in it?
@@ -251,7 +268,7 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [ ] implement recency stats
 - [ ] Fit Eckmann and Twitter (w/o pshifts)
 - [ ] Compare llk timing to Carter's code
-* Paper
+** Paper
 - [X] Fix up notation borrowing notation from HierRelEvent paper.
 - [-] Ask Padhraic: 
   - [X] I've followed the advice Carter gave for the other paper and
@@ -292,17 +309,17 @@ Make sure that LlkActor(z_i=1) - LlkActor(z_i=2) = Llk(z_i=1)-Llk(z_i=2)
 - [X] Remove description of model specification with rich-get-richer bit
 - [X] Mention what happens with cluster pairs that have no data
 - [X] Mention sensitivity of hyperparameters to overfitting
-* Bugs
+** Bugs
 - [X] TODO NANs created by llk_node in gibbs().  Only happening on Twitter occasionally.
 - [X] TODO Huge hit in loglikelihood as soon as a new cluster appears?
 - [X] add statistic transformation as an option in brem()
 - [X] Small sigma hyperparameters crashing things. (From extreme
   normals that get generated after large sigma is generated.)
-* Smyth meeting
+** Smyth meeting
 - [X] Look at predictions from *last* sample
 - [X] Add option for hard upper limit on number of clusters
 - [ ] Consider other hyperparameter settings
-* Reviews
+** Reviews
 - Table 3:
   - enron dataset not bolded
   - twitter: incorrect entry bolded
