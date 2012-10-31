@@ -12,9 +12,11 @@
 ** TODO Slice sampling (Neal 2001) is a standard MCMC technique.
 ** DONE The risk set R is the set of all possible dyadic events (line 106-107).
 ** TODO The statistics in Table 1 are somewhat standard for these types of models, as discussed in lines 148-157.
-** TODO intuitive examples for “relational events” (expanding on Figure 2a)
+** DONE intuitive examples for “relational events” (expanding on Figure 2a)
 ** TODO Fix participation shift discussion
 ** TODO better explanation of terminology not be familiar to the broad NIPS readership (e.g. ab-ba abbreviations)
+** TODO Dicuss other hierarchical modeling approachs
+** TODO Discuss other extensions other than piecewise constant
 ** DONE Incorporate supplementary material into paper
 
 * OLD TODO ITEMS
