@@ -151,3 +151,5 @@ tmp*
 /results/twitter-small/shared.2.rdata
 /results/twitter-small/shared.3.rdata
 /results/twitter-small/shared.4.rdata
+/pkg/src/brem.o
+/pkg/src/brem.so
