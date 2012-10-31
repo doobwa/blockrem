@@ -1,4 +1,4 @@
-* Paper revisions
+* Paper revision 
 ** TODO Zoomed in version of EDA results need a bounding box
 ** DONE Add more discussion of experimental results
 ** DONE add indicator function
@@ -6,16 +6,18 @@
 ** TODO elaborate on the plots shown in Figure 4
 ** DONE Move line 367
 ** DONE mention experiments use all of the effects in Table 1
-** TODO The specific novel generalization of prior work is the introduction of latent clusters z_i, just below Equation 2.  For relational event models (equation 2) this is new and has not been proposed before.
-** TODO Likelihood computation essentially depends on the number of changepoints (i.e. knots) in all of the intensity functions being modeled.  The Supplementary Material mentions one attempt at speeding this up, for larger graphs, but additional assumptions/approximations are likely needed for scalability.  
-** TODO Data in Section 5.1/Figure 4 is the University data
+** DONE The specific novel generalization of prior work is the introduction of latent clusters z_i, just below Equation 2.  For relational event models (equation 2) this is new and has not been proposed before.
+** DONE Likelihood computation essentially depends on the number of changepoints (i.e. knots) in all of the intensity functions being modeled.  The Supplementary Material mentions one attempt at speeding this up, for larger graphs, but additional assumptions/approximations are likely needed for scalability.  
+** DONE Data in Section 5.1/Figure 4 is the University data
 ** TODO Slice sampling (Neal 2001) is a standard MCMC technique.
-** TODO The risk set R is the set of all possible dyadic events (line 106-107).
+** DONE The risk set R is the set of all possible dyadic events (line 106-107).
 ** TODO The statistics in Table 1 are somewhat standard for these types of models, as discussed in lines 148-157.
-
 ** TODO intuitive examples for “relational events” (expanding on Figure 2a)
+** TODO Fix participation shift discussion
 ** TODO better explanation of terminology not be familiar to the broad NIPS readership (e.g. ab-ba abbreviations)
-* OLD
+** DONE Incorporate supplementary material into paper
+
+* OLD TODO ITEMS
 ** TODO Week 1:
 - [X] Need to change block.ps to instead look at dyad-specific p-shifts.
 [done?] Use a visualization of these p-shifts to explore the properities of the synthetic data.
