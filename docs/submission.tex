@@ -98,7 +98,7 @@ We conclude by showing that the parameter estimates reveal interpretable structu
 
 \begin{figure}
 \centering
-\includegraphics[scale=.45]{../figs/introexample/all}
+\includegraphics[scale=.5]{../figs/introexample/all}
 \caption{Illustration of differentiation by rate of interaction versus by dynamic behavior.  The left column shows an example where within-block communication is large, and there is a higher tendency for reciprocity within a block.  In the situation where the two groups are not differentiated by rate, as in the right column, a standard blockmodel is unable to distinguish between groups A and B.  The proposed method can, however, learn such groups by employing more flexible definitions of shared dynamics.}
 \label{fig:introexample}
 \end{figure}
@@ -129,7 +129,7 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
 \begin{figure*}
 \begin{subfigure}[b]{0.45\linewidth}
 \centering
-  \begin{tikzpicture}[scale=.65,transform shape,thick]
+  \begin{tikzpicture}[scale=.8,transform shape,thick]
     \node[vertex] (n1) at (0,0)  {1};
     \node[vertex] (n2) at (2,2)  {2};
     \node[vertex] (n3) at (4,0) {3};
@@ -175,7 +175,7 @@ The likelihood of an observed event history $\mathcal{A}_{t_M}$ (extending from 
 \label{fig:example}
 \end{figure*}
 
-Here, we aim to learn about the dynamics within and between subsets of nodes.   To facilitate this, we propose a novel extension which assumes each node $i$ belongs to latent cluster $z_i$ and use a log linear model for the intensity functions
+Here, we aim to learn about the dynamics within and between subsets of nodes.   To facilitate this, we propose a novel extension which assumes each node $i$ belongs to latent cluster $z_i$ while still using a log linear model for the intensity functions
 \begin{align*}
 \log \lambda_{i,j}(t | \mathcal{A}_t,\mathbf{\beta},\mathbf{z}) &= \boldsymbol{\beta}'_{z_i,z_j} \mathbf{s}(t,i,j,\mathcal{A}_t)
 %z_i &\sim \mbox{CRP}(\alpha) &
@@ -203,11 +203,12 @@ We use $\mathbf{I}$ to denote the indicator function where $\mathbf{I}(A) = 1$ i
 We normalize these counts by the number of events up until a dyad's prior changepoint by using $f(x) = \log \frac{x+1}{m + N(N-1)}$. %\footnote{This seems to avoid ``explosion'' when simulating from the model.  TODO: Explore the theory about these sorts of statistics.  Aalen has a few suggestions.}
 Other statistics could be of interest for particular substantive questions \cite{Butts2008,Vu2011}.  
 
-{\color{red} TODO: Awkward next sentence...}
-The next set of statistics are \emph{participation shift} effects inspired by research in conversational norms \cite{Gibson2003}.
+The next set of statistics aim to capture various types of \emph{participation shift} that play a role conversational norms \cite{Gibson2003}.
 For example, an \texttt{ab-ba} effect indicates an increased propensity for reciprocity where the event $(a,b)$ is followed by $(b,a)$.
+{\color{red} Another example is a \emph{turn-taking} effect where an event $(a,b)$ is followed by $b$ initiating an event with an individual other than $a$, denoted \texttt{ab-by}.
+These statistics are binary and simply indicate whether or not the event in question can be classified as an example of that particular transition. }
 Though only the statistics in Table \ref{tab:stats} are used in our experiments, one may use any quantity that is computed using the previous history of events or known covariates about nodes or dyads.
-The only restriction is that the statistic may not change in value between each observed event.%\footnote{This prevents one from using the number of events occurring in some previous time window, as in \cite{Gunawardana2011}.}
+The only restriction within the proposed framework is that the statistic may not change in value between each observed event.%\footnote{This prevents one from using the number of events occurring in some previous time window, as in \cite{Gunawardana2011}.}
 % TODO: Also, need to be restricted to ego conditions if we want it fast
 
 \subsection{Relation to other models}
@@ -330,20 +331,20 @@ We take advantage of our restriction on the types of statistics $\mathbf{s}$ to 
 %\centering
 \begin{subfigure}[b]{0.25\textwidth}
 \centering
-\includegraphics[width=1.5in]{../figs/synthetic/mat.pdf} %counts2.pdf
+\includegraphics[width=1.8in]{../figs/synthetic/mat.pdf} %counts2.pdf
 \vspace{.25cm}
 \caption{}
 \end{subfigure}
 ~
 \begin{subfigure}[b]{0.3\textwidth}
 \centering
-\includegraphics[width=2in]{../figs/synthetic/counts.pdf}
+\includegraphics[width=2.4in]{../figs/synthetic/counts.pdf}
 \caption{}
 \end{subfigure}
 ~
 \begin{subfigure}[b]{0.3\textwidth}
 \centering
-\includegraphics[width=2.1in]{../figs/synthetic/params-estimates.pdf}
+\includegraphics[width=2.5in]{../figs/synthetic/params-estimates.pdf}
 \vspace{-.5cm}
 \caption{}
 \end{subfigure}
@@ -387,16 +388,14 @@ We use a subset 4330 events among 487 users who participated in more than one ev
 
 \subsection{Model-based exploratory analysis}
 
-Figure \ref{fig:parmats} uses a fitted model to provide an example of the differences in the dynamics that can exist between two groups of dyads with similar rate of occurrence.  In this particular example we used the University data set and fit the proposed model with an intercept $s_0$, $\texttt{ab-ba}$ effects $s_1$, and $\texttt{ab-by}$ effects $s_3$.  
+Figure \ref{fig:parmats} uses a fitted model to provide an example of the differences in the dynamics that can exist between two groups of dyads with similar rate of occurrence.  In this particular example we used the University data set and fit the proposed model with an intercept $s_0$, $\texttt{ab-ba}$ effects $s_1$, and $\texttt{ab-by}$ effects $s_3$. {\color{red} In Figure \ref{fig:parmats}a we show the observed number of times each dyadic event occurred over the course of the dataset.   The rows and columns have been sorted according to block membership.  In Figure \ref{fig:parmats}b-d we show estimates of the parameters corresponding to each of the statistics included in our model of the dyadic intensities $\lambda_{i,j}$.   The intercept estimates, for example, reveal the general propensity at which two blocks tend to communicate.  One salient feature of the parameter estimates is the symmetry in the block structure of the overall communication rates: if a member of group $A$ sends an email to a member of group $B$, the reverse occurs at a similar rate.
 
-We focus on the interactions between members of block 1 to members of block 3; 179 events occurred originating from a member of group 3 and 178 originated from group 1.
-% The two panels on the left show the variation in $s_0(t_M,i,j,\mathcal{A}_t)$, $s_1(t_M,i,j,\mathcal{A}_t)$ and $s_3(t_M,i,j,\mathcal{A}_t)$ across the dyads $(i,j)$ in blocks $(1,3)$ and $(3,1)$, respectively.
-%The boxplots on the right describe the posterior samples of the corresponding parameters $\beta_{1,3,p}$ and $\beta_{3,1,p}$.
-% Under the model, events from group 3 to group 1 occur roughly $e^1$ times as often.
- block (3,1) has a higher propensity for \texttt{ab-by} transitions under the model.
+However, the asymmetries that the model reveals may often be of particular interest.  An assymetry in intercept estimates between two blocks reveals that for a particular pair of groups that one tends to be the sender and the other tends to be the recipient.  Assymetries for other effects are similarly interpretable.  Consider interactions initiated by a member of block $B_1$ and directed to a member of block $B_2$.  If the estimate for the $\texttt{ab-ba}$ parameter is larger for the set of $(B_1,B_2)$ interactions than for $(B_2,B_1)$ interactions, then the model suggests that those in block $B_2$ tend to respond to emails from those in $B_1$ than vice versa.  
+
+Such asymmetric behavior exists in the University data between block 1 and block 3.  Figure \ref{fig:parmats}e-h focuses on the interactions between members of block 1 to members of block 3.  In this example the between-group events are for a similar number of events to the 179 events occurred originating from a member of group 3 and 178 originated from group 1.  Under the model, the block (3,1) has a higher propensity for \texttt{ab-by} transitions under the model.  
+Though such assymetries are unsurprising from a sociological point of view, our model has allowed us to examine this tendency while accounting for the overall propensity for interaction.
 The model has learned that this structure exists in the data, and furthermore our inferences from the parameter estimates are sensible given the observed statistics.
-{\color{red} TODO: Elaborate on what this figure shows.}
-
+}
 \subsection{Prediction experiments}
 
 We evaluate the predictive ability of the fitted models by comparing models based on the loglikelihood and recall for held-out data.  Throughout the experiments we use all of the statistics found in Table ~\ref{tab:stats}.
@@ -479,7 +478,7 @@ Note that the model with $K^*=1$ is an important baseline -- it is simply a rela
 
 For the synthetic data example introduced in Section \ref{sec:simulation} the fitted models with $K>1$ have predictive performance comparable to the true model; a standard relational event model does not perform as well because it does not have the flexibility to model the dynamics of each block separately.  For the classroom data set we see only a slight improvement with $K>1$, while with the mobile phone calls the $K=3$ model performs best.
 
-In Table~\ref{tab:recall20} we include the corresponding results for the recall experiment at a cutoff of 5 and 20, respectively.  The results there are similar. As an example, using the Mobile data we are making a prediction of the next event among $89^2$ possible events: e.g., the next event is among the 5 highest-ranked edges 16.3 percent of the time by the $K*$=2 model. This is 1291 times more often than predicting events with our uniform baseline. Note that the absolute numbers for the baselines (e.g., zero in the 1st 3 decimal places for uniform) are so low because of the very large number of outcomes (e.g, $89^2$). For ranking, relative to all baselines including K*=1, on the synthetic data set and Enron there are small systematic improvements, while on the phone and University data there are large systematic improvements.   Note that we used ranking performance (Table 3) to investigate the predictive power of the proposed models, as a function of $K*$, rather than only evaluating test log-likelihood; the latter is what the model was optimized for and thus the optimal $K*$ for Tables 2 and 3 need not agree.
+In Table~\ref{tab:recall20} we include the corresponding results for the recall experiment at a cutoff of 5 and 20, respectively.  The results there are similar. As an example, using the Mobile data we are making a prediction of the next event among $89^2$ possible events: e.g., the next event is among the 5 highest-ranked edges 16.3 percent of the time by the $K*$=2 model. This is 1291 times more often than predicting events with our uniform baseline. Note that the absolute numbers for the baselines (e.g., zero in the 1st 3 decimal places for uniform) are so low because of the very large number of outcomes (e.g, $89^2$). For ranking, relative to all baselines including $K^*$=1, on the synthetic data set and Enron there are small systematic improvements, while on the phone and University data there are large systematic improvements.   Note that we used ranking performance (Table 3) to investigate the predictive power of the proposed models, as a function of $K^*$, rather than only evaluating test log-likelihood; the latter is what the model was optimized for and thus the optimal $K^*$ for Tables 2 and 3 need not agree.
 
 \section{Discussion}
 
@@ -501,16 +500,17 @@ In particular, our proposed approach leads to improved predictive accuracy when 
 Though prediction is not the main focus of our effort, these results provide evidence that having latent structure (i.e. $K > 1$) can lead to improvements in predictive power. However, our prediction results also show that it is easy to overfit with this model family. 
 %If we restrict to K=2 on these small data sets, we systematically outperform the K=1 model. 
 %{\red (TODO: confirm this)}
- As $K$ increases beyond 2 (e.g., for the unrestrained CRP prior), these models are prone to overfit. This is not surprising, given that the number of fitted parameters scales as the square of the number of components $K$ in the model. A natural direction worth exploring for this family is a class of priors that are more resistant to overfitting (e.g., by imposing more structure on the parameters within each group).  
+ As $K$ increases beyond 2 (e.g., for the unrestrained CRP prior), these models are prone to overfit. 
+This is not surprising, given that the number of fitted parameters scales as the square of the number of components $K$ in the model. A natural direction worth exploring for this family is a class of priors that are more resistant to overfitting (e.g., by imposing more structure on the parameters within each group).
+%  {\color{red} The choice of hierarchical structure would depend on the problem of interest, but such an approach could be of use when modeling multiple sequences simultaneously \cite{Arxiv?}.}
 
-Another direction to explore is that of including different statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, and using our approach to study how the roles of these statistics vary across nodes.  
+Another direction to explore is that of including different statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, modifying on the prior on each block's $\beta$ that induces some sparsity in the parameter estimates, and using our approach to study how the roles of these statistics vary across nodes.  
 One potentially interesting extension, analogous to \cite{Airoldi2008}, would be to allow the latent class $z_i$ to be drawn from node-specific membership vectors $\pi_i$  after each change point.  Allowing underlying dynamics to be governed by a latent membership structure opens the door to a wide range of possibilities, with many opportunities for further elaboration.
 
 %Other theories could be explored by including relevant statistics in the specification of $\mathbf{s}(t,i,j,\mathcal{A}_t)$, and similarly one can use our method to study how the roles of these statistics vary across nodes.  
 %One interesting extension, analogous to \cite{Airoldi2008}, would allow the latent class $z_i$ to be drawn from node-specific membership vectors $\pi_i$  after each change point.  We leave this to future work.
 %Alternatively, if nodes change groups.
 %In some contexts such extensions might be substantively important and warrant future work.
-
 
 %Our method learns about event dynamics within latent groups of individuals, but other types of heterogeneity likely exist in some data sets.  
 %For example, dynamics might change over time \cite{Vu2011}.

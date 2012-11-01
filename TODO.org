@@ -15,7 +15,8 @@
 ** DONE intuitive examples for “relational events” (expanding on Figure 2a)
 ** TODO Fix participation shift discussion
 ** TODO better explanation of terminology not be familiar to the broad NIPS readership (e.g. ab-ba abbreviations)
-** TODO Dicuss other hierarchical modeling approachs
+** TODO Discuss other hierarchical modeling approachs
+** TODO Discuss the use of sparsity to do model selection
 ** TODO Discuss other extensions other than piecewise constant
 ** DONE Incorporate supplementary material into paper
 
