@@ -407,8 +407,12 @@ The loglikelihood of the test set is computed sequentially using Equation \ref{e
 In addition, we compute recall to evaluate whether the next observed event is among the most likely according to the model.
 At each event $m$ we sort the predicted intensities of all possible events in decreasing order, find the rank of the observed event in the list of predicted intensities, and compute the mean number of events ranking above cutoffs $\kappa=5$ and $\kappa=20$. 
 
-\input{../figs/results-llk4.tex}
-\input{../figs/results-recall-all.tex}
+% Tables created by results.r, then hand edited a bit:
+% - Added verticle and horizontal lines to make it easier
+% - Removed synthetic results
+% - Added headers
+\input{results-llk4.tex}
+\input{results-recall-all.tex}
 
 Several baselines are included for comparison: 
 \begin{enumerate}
