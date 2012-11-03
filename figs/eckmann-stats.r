@@ -58,8 +58,9 @@ mu.hat <- colMeans(mus)
 sigmas <- do.call(rbind,lapply(fit$samples[iters],function(s) s$sigma))
 sigma.hat <- colMeans(sigmas)
 
-## Order rows according to z from last sample
+## Order rows according to z from most common from last 50 samples
 z <- fit$params$z
+
 # Switch 2 and 3 so that the "zoom in" example works a little better
 label_switch <- function(z,i,j) {
   ix <- which(z==i)
@@ -70,6 +71,20 @@ label_switch <- function(z,i,j) {
 }
 z <- label_switch(z, 1, 2)
 z <- label_switch(z, 2, 10)
+
+zs <- matrix(0,length(z), 50)
+for (i in 1:50) {
+  zi <- fit$samples[[length(fit$samples) - i]]$z
+  zi <- label_switch(zi, 1, 2)
+  zi <- label_switch(zi, 2, 10)
+  zs[,i] <- zi
+}
+for (i in 1:nrow(zs)) {
+  tb <- tabulate(zs[i,])
+  ix <- which(tb == max(tb))
+  if (length(ix) > 1) ix = ix[1]
+  z[i] <- ix
+}
 o <- order(z)
 
 ## # Plot observed data with cols nad rows sorted
@@ -105,6 +120,10 @@ tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
 pdf("figs/eckmann-small/parmat/observed.pdf",height=4,width=4)
 par(mar=c(0,0,0,0))
 image(log(tb[o,o]+1),xaxt="n",yaxt="n",col=cols)
+lines(rep(0,1+siz/eps),seq(0,siz,by=eps),col="red",lwd=3)
+lines(seq(0,siz,by=eps),rep(siz,1+siz/eps),col="red",lwd=3)
+lines(rep(siz,1+siz/eps),seq(0,siz,by=eps),col="red",lwd=3)
+lines(seq(0,siz,by=eps),rep(0,1+siz/eps),col="red",lwd=3)
 dev.off()
 
 # Plot matrix of each effect
