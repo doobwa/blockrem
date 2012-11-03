@@ -18,6 +18,13 @@
 ** TODO Discuss other hierarchical modeling approachs
 ** TODO Discuss the use of sparsity to do model selection
 ** TODO Discuss other extensions other than piecewise constant
+** TODO Move Figure 3 and 4 (p.5,6 resp.)
+** TODO paragraph 2 in Fig. 4 description takes focus away from figure
+** TODO smooth out "symmetric" description of figure 4
+** TODO More space after top row of Fig. 4
+** TODO Change tables.
+** TODO Emphasize that all bold values correspond to REM and beats out baselines 
+** TODO "There's evidence to support the possibility that this heterogeneity exists and is predictive of future events in the sequence."
 ** DONE Incorporate supplementary material into paper
 
 * OLD TODO ITEMS
