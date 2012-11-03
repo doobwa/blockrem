@@ -1,4 +1,3 @@
-
 library(brem)
 library(reshape2)
 library(ggplot2)
@@ -61,37 +60,44 @@ sigma.hat <- colMeans(sigmas)
 
 ## Order rows according to z from last sample
 z <- fit$params$z
+# Switch 2 and 3 so that the "zoom in" example works a little better
+label_switch <- function(z,i,j) {
+  ix <- which(z==i)
+  jx <- which(z==j)
+  z[ix] <- j
+  z[jx] <- i
+  return(z)
+}
+z <- label_switch(z, 1, 2)
+z <- label_switch(z, 2, 10)
 o <- order(z)
 
-par(mfrow=c(3,3),mar=c(3,1,1,1))
+## # Plot observed data with cols nad rows sorted
+## pdf("figs/eckmann-small/parmat/all.pdf",width=10,height=10)
+## par(mfrow=c(3,3),mar=c(3,1,1,1))
+## tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
+## image(log(tb[o,o]+1),xaxt="n",yaxt="n",col=rev(grey.colors(100)))
+## #image(mats[[1]][o,o],xaxt="n",yaxt="n",col=grey.colors(100))
+## #par(mar=c(0,0,0,0))
+## px <- fit$priors$px
 
-# Plot observed data with cols nad rows sorted
-tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
-image(log(tb[o,o]+1),xaxt="n",yaxt="n",col=rev(grey.colors(100)))
-#image(mats[[1]][o,o],xaxt="n",yaxt="n",col=grey.colors(100))
-#par(mar=c(0,0,0,0))
-px <- fit$priors$px
-
-# Plot blocks
-plot(1,xlim=c(1,N),ylim=c(1,N),xaxt="n",yaxt="n")
-zs <- sort(z)
-for (i in 2:N) {
-  if (zs[i] != zs[i-1]) {
-    print(i)
-    text(i,i,label=paste(zs[i],zs[i]))
-    abline(v=i,h=i)
-  }
-}
-
-# Plot matrix of each effect
-for (p in px) {
-  mat <- (mats[[p]] - mu.hat[p]) / sigma.hat[p]
-  mat <- mat[o,o]
-  image(mat,xaxt="n",yaxt="n",col=rev(grey.colors(100)),main=effs[p])
-}
-
-dev.off()
-
+## # Plot blocks
+## plot(1,xlim=c(1,N),ylim=c(1,N),xaxt="n",yaxt="n")
+## zs <- sort(z)
+## for (i in 2:N) {
+##   if (zs[i] != zs[i-1]) {
+##     print(i)
+##     text(i,i,label=paste(zs[i],zs[i]))
+##     abline(v=i,h=i)
+##   }
+## }
+## # Plot matrix of each effect
+## for (p in px) {
+##   mat <- (mats[[p]] - mu.hat[p]) / sigma.hat[p]
+##   mat <- mat[o,o]
+##   image(mat,xaxt="n",yaxt="n",col=rev(grey.colors(100)),main=effs[p])
+## }
+## dev.off()
 
 # Plot observed data with cols nad rows sorted
 cols <- rev(grey.colors(100,start=0,end=.95,gamma=1))
@@ -107,12 +113,18 @@ for (p in px) {
   mat <- mat[o,o]
   pdf(paste("figs/eckmann-small/parmat/",p,".pdf",sep=""),height=4,width=4)
   par(mar=c(0,0,0,0))
+  eps <- .001
+  siz <- 23/88
   image(mat,xaxt="n",yaxt="n",col=cols)
+  lines(rep(0,1+siz/eps),seq(0,siz,by=eps),col="red",lwd=3)
+  lines(seq(0,siz,by=eps),rep(siz,1+siz/eps),col="red",lwd=3)
+  lines(rep(siz,1+siz/eps),seq(0,siz,by=eps),col="red",lwd=3)
+  lines(seq(0,siz,by=eps),rep(0,1+siz/eps),col="red",lwd=3)
   dev.off()
 }
 
 # Zoom in plots
-ix <- o[which(z[o] %in% c(1,3))]  # members of 1 or 3
+ix <- o[which(z[o] %in% c(1,2))]  # members of 1 or 2
 tb <- table(factor(train[,2],1:N),factor(train[,3],1:N))
 pdf("figs/eckmann-small/parmat/observed-zoom.pdf",height=4,width=4)
 par(mar=c(0,0,0,0))
